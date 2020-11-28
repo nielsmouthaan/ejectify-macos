@@ -12,16 +12,17 @@ Ejectify is a simple but useful menu bar app, that automatically unmounts extern
 
 * [X] Prevents annoying "Disk not ejected properly" notifications when your Mac wakes up.
 * [X] Prevents connected external disks and their volumes to get corrupted.
-* [X] Configure what volumes should be unmounted automatically (all by default).
+* [X] Configure what volumes should be (un)mounted automatically.
 * [X] Configure when volumes should be unmounted:
   * When the screensaver starts.
   * When the screen is locked.
   * When the screens started sleeping.
-  * When the system starts sleeping (default).
+  * When the system starts sleeping.
 
 
 ## Download
-A binary will soon be available for download. Until then, feel free to clone this repository and build your own binary.
+
+[Download Ejectify](https://gum.co/ejectify) by supporting me via Gumroad, something I would really appreciate! This helps me covering development costs. Otherwise feel free to clone this repository and build a runnable binary yourself.
   
 ## Communication
 
