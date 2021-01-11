@@ -152,7 +152,7 @@ class StatusBarMenu: NSMenu {
     }
     
     @objc private func aboutClicked() {
-        NSWorkspace.shared.open(URL(string: "https://github.com/nielsmouthaan/ejectify-macos")!)
+        NSWorkspace.shared.open(URL(string: "https://ejectify.app")!)
     }
     
     @objc private func quitClicked() {
