@@ -27,6 +27,7 @@
 		B89F412C25AC9FD800E0B8C1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B89F412F25ACA09700E0B8C1 /* String+Localized.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Localized.swift"; sourceTree = "<group>"; };
 		B89F413225ACA19B00E0B8C1 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		B89F413425ACA62200E0B8C1 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B8AF59E52569569A003481A8 /* Ejectify.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ejectify.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8AF59E82569569A003481A8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B8AF59EC2569569B003481A8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -165,6 +166,7 @@
 				en,
 				Base,
 				nl,
+				de,
 			);
 			mainGroup = B8AF59DC2569569A003481A8;
 			packageReferences = (
@@ -236,6 +238,7 @@
 			children = (
 				B89F412C25AC9FD800E0B8C1 /* en */,
 				B89F413225ACA19B00E0B8C1 /* nl */,
+				B89F413425ACA62200E0B8C1 /* de */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
