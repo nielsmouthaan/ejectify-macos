@@ -46,7 +46,7 @@ class StatusBarMenu: NSMenu {
     private func buildVolumesMenu() {
         
         // Title
-        let title = volumes.count == 0 ? "No volumes" : "Volumes"
+        let title = volumes.count == 0 ? "No volumes".localized : "Volumes".localized
         let titleItem = NSMenuItem(title: title, action: nil, keyEquivalent: "")
         titleItem.isEnabled = false
         addItem(titleItem)
@@ -65,18 +65,18 @@ class StatusBarMenu: NSMenu {
         addItem(NSMenuItem.separator())
         
         // Title
-        let titleItem = NSMenuItem(title: "Preferences", action: nil, keyEquivalent: "")
+        let titleItem = NSMenuItem(title: "Preferences".localized, action: nil, keyEquivalent: "")
         titleItem.isEnabled = false
         addItem(titleItem)
         
         // Launch at login
-        let launchAtLoginItem = NSMenuItem(title: "Launch at login", action: #selector(launchAtLoginClicked(menuItem:)), keyEquivalent: "")
+        let launchAtLoginItem = NSMenuItem(title: "Launch at login".localized, action: #selector(launchAtLoginClicked(menuItem:)), keyEquivalent: "")
         launchAtLoginItem.target = self
         launchAtLoginItem.state = Preference.launchAtLogin ? .on : .off
         addItem(launchAtLoginItem)
         
         // Unmount when menu
-        let unmountWhenItem = NSMenuItem(title: "Unmount when", action: nil, keyEquivalent: "")
+        let unmountWhenItem = NSMenuItem(title: "Unmount when".localized, action: nil, keyEquivalent: "")
         unmountWhenItem.submenu = buildUnmountWhenMenu()
         addItem(unmountWhenItem)
     }
@@ -86,24 +86,24 @@ class StatusBarMenu: NSMenu {
     private var unmountWhenScreensStartedSleepingItem: NSMenuItem?
     private var unmountWhenSystemStartsSleepingItem: NSMenuItem?
     private func buildUnmountWhenMenu() -> NSMenu {
-        let unmountWhenMenu = NSMenu(title: "Unmount when")
+        let unmountWhenMenu = NSMenu(title: "Unmount when".localized)
         
-        unmountWhenScreensaverStartedItem = NSMenuItem(title: "Screensaver started", action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
+        unmountWhenScreensaverStartedItem = NSMenuItem(title: "Screensaver started".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
         unmountWhenScreensaverStartedItem!.target = self
         unmountWhenScreensaverStartedItem!.state = Preference.unmountWhen == .screensaverStarted ? .on : .off
         unmountWhenMenu.addItem(unmountWhenScreensaverStartedItem!)
         
-        unmountWhenScreenIsLocked = NSMenuItem(title: "Screen is locked", action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
+        unmountWhenScreenIsLocked = NSMenuItem(title: "Screen is locked".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
         unmountWhenScreenIsLocked!.target = self
         unmountWhenScreenIsLocked!.state = Preference.unmountWhen == .screenIsLocked ? .on : .off
         unmountWhenMenu.addItem(unmountWhenScreenIsLocked!)
         
-        unmountWhenScreensStartedSleepingItem = NSMenuItem(title: "Screens started sleeping", action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
+        unmountWhenScreensStartedSleepingItem = NSMenuItem(title: "Screen started sleeping".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
         unmountWhenScreensStartedSleepingItem!.target = self
         unmountWhenScreensStartedSleepingItem!.state = Preference.unmountWhen == .screensStartedSleeping ? .on : .off
         unmountWhenMenu.addItem(unmountWhenScreensStartedSleepingItem!)
         
-        unmountWhenSystemStartsSleepingItem = NSMenuItem(title: "System starts sleeping", action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
+        unmountWhenSystemStartsSleepingItem = NSMenuItem(title: "System starts sleeping".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
         unmountWhenSystemStartsSleepingItem!.target = self
         unmountWhenSystemStartsSleepingItem!.state = Preference.unmountWhen == .systemStartsSleeping ? .on : .off
         unmountWhenMenu.addItem(unmountWhenSystemStartsSleepingItem!)
@@ -115,12 +115,12 @@ class StatusBarMenu: NSMenu {
         addItem(NSMenuItem.separator())
         
         // About
-        let aboutItem = NSMenuItem(title: "About", action: #selector(aboutClicked), keyEquivalent: "")
+        let aboutItem = NSMenuItem(title: "About Ejectify".localized, action: #selector(aboutClicked), keyEquivalent: "")
         aboutItem.target = self
         addItem(aboutItem)
         
         // Quit
-        let quitItem = NSMenuItem(title: "Quit", action: #selector(quitClicked), keyEquivalent: "")
+        let quitItem = NSMenuItem(title: "Quit Ejectify".localized, action: #selector(quitClicked), keyEquivalent: "")
         quitItem.target = self
         addItem(quitItem)
     }
