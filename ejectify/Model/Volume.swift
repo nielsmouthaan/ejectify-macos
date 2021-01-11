@@ -80,6 +80,10 @@ class Volume {
             return nil
         }
         
+        if disk.isDiskImage() {
+            return nil
+        }
+        
         return Volume.fromDisk(disk: disk)
     }
     
