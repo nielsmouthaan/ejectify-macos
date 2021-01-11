@@ -10,9 +10,9 @@
 "Volumes" = "Volumes";
 "Preferences" = "Voorkeuren";
 "Launch at login" = "Start bij inloggen";
-"Unmount when" = "Verwijder wanneer";
+"Unmount when" = "Deactiveer wanneer";
 "Screensaver started" = "Screensaver is gestart";
-"Screen is locked" = "Beeldscherm is vergrendeld";
+"Screen is locked" = "Scherm is vergrendeld";
 "Screen started sleeping" = "Beeldscherm is uitgeschakeld";
 "System starts sleeping" = "Sluimerstand wordt ingeschakeld";
 "About Ejectify" = "Over Ejectify";
