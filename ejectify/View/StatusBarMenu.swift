@@ -98,7 +98,7 @@ class StatusBarMenu: NSMenu {
         unmountWhenScreenIsLocked!.state = Preference.unmountWhen == .screenIsLocked ? .on : .off
         unmountWhenMenu.addItem(unmountWhenScreenIsLocked!)
         
-        unmountWhenScreensStartedSleepingItem = NSMenuItem(title: "Screen started sleeping".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
+        unmountWhenScreensStartedSleepingItem = NSMenuItem(title: "Display turned off".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
         unmountWhenScreensStartedSleepingItem!.target = self
         unmountWhenScreensStartedSleepingItem!.state = Preference.unmountWhen == .screensStartedSleeping ? .on : .off
         unmountWhenMenu.addItem(unmountWhenScreensStartedSleepingItem!)

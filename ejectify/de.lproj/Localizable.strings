@@ -13,7 +13,7 @@
 "Unmount when" = "Deaktivieren wenn";
 "Screensaver started" = "Bildschirmschoner gestartet";
 "Screen is locked" = "Bildschirm ist gesperrt";
-"Screen started sleeping" = "Monitor ist ausgeschaltet";
+"Display turned off" = "Monitor ist ausgeschaltet";
 "System starts sleeping" = "Ruhezustand wird aktiviert";
 "About Ejectify" = "Über Ejectify";
 "Quit Ejectify" = "Ejectify beenden";
