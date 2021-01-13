@@ -9,7 +9,7 @@
 "No volumes" = "ボリュームがありません";
 "Volumes" = "ボリューム";
 "Preferences" = "環境設定";
-"Launch at login" = "ログイン時に起動する";
+"Launch at login" = "ログイン時に起動";
 "Unmount when" = "マウント解除";
 "Screensaver started" = "スクリーンセーバーを起動したとき";
 "Screen is locked" = "画面をロックしたとき";
