@@ -6,14 +6,14 @@
   
 */
 
-"No volumes" = "Kein Volumes";
+"No volumes" = "Keine Volumes";
 "Volumes" = "Volumes";
 "Preferences" = "Einstellungen";
 "Launch at login" = "Beim Login starten";
-"Unmount when" = "Deaktivieren wenn";
-"Screensaver started" = "Bildschirmschoner gestartet";
-"Screen is locked" = "Bildschirm ist gesperrt";
-"Display turned off" = "Monitor ist ausgeschaltet";
-"System starts sleeping" = "Ruhezustand wird aktiviert";
+"Unmount when" = "Auswerfen, sobald";
+"Screensaver started" = "Bildschirmschoner startet";
+"Screen is locked" = "Bildschirm gesperrt wird";
+"Display turned off" = "Ruhezustand für Monitor aktiviert wird";
+"System starts sleeping" = "Ruhezustand für Computer aktiviert wird";
 "About Ejectify" = "Über Ejectify";
 "Quit Ejectify" = "Ejectify beenden";
