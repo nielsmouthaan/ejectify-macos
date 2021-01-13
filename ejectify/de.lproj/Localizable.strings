@@ -10,7 +10,7 @@
 "Volumes" = "Volumes";
 "Preferences" = "Einstellungen";
 "Launch at login" = "Beim Login starten";
-"Unmount when" = "Auswerfen, sobald";
+"Unmount when" = "Deaktivieren, sobald";
 "Screensaver started" = "Bildschirmschoner startet";
 "Screen is locked" = "Bildschirm gesperrt wird";
 "Display turned off" = "Ruhezustand für Monitor aktiviert wird";
