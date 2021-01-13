@@ -9,9 +9,9 @@
 "No volumes" = "Pas de volumes";
 "Volumes" = "Volumes";
 "Preferences" = "Préférences";
-"Launch at login" = "Lancer à la connexion";
-"Unmount when" = "Démonter quand";
-"Screensaver started" = "L'économiseur d'écran démarré";
+"Launch at login" = "Lancer au démarrage";
+"Unmount when" = "Éjecter dès que";
+"Screensaver started" = "L'économiseur d'écran démarre";
 "Screen is locked" = "L'écran est verrouillé";
 "Display turned off" = "L'écran est éteint";
 "System starts sleeping" = "Le système est suspendu";
