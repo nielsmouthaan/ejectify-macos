@@ -1,0 +1,19 @@
+/* 
+  Localizable.strings
+  Ejectify
+
+  Created by Niels Mouthaan on 11/01/2021.
+  
+*/
+
+"No volumes" = "ボリュームがありません";
+"Volumes" = "ボリューム";
+"Preferences" = "環境設定";
+"Launch at login" = "ログイン時に起動する";
+"Unmount when" = "マウント解除";
+"Screensaver started" = "スクリーンセーバーを起動したとき";
+"Screen is locked" = "画面をロックしたとき";
+"Display turned off" = "ディスプレイをオフにしたとき";
+"System starts sleeping" = "システムをスリープしたとき";
+"About Ejectify" = "Ejectify について";
+"Quit Ejectify" = "Ejectify を終了";
