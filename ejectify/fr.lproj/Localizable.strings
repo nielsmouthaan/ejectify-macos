@@ -10,7 +10,7 @@
 "Volumes" = "Volumes";
 "Preferences" = "Préférences";
 "Launch at login" = "Lancer au démarrage";
-"Unmount when" = "Éjecter dès que";
+"Unmount when" = "Démonter dès que";
 "Screensaver started" = "L'économiseur d'écran démarre";
 "Screen is locked" = "L'écran est verrouillé";
 "Display turned off" = "L'écran est éteint";
