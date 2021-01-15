@@ -1,0 +1,19 @@
+/* 
+  Localizable.strings
+  Ejectify
+
+  Created by Niels Mouthaan on 11/01/2021.
+  
+*/
+
+"No volumes" = "Não tem volumes";
+"Volumes" = "Volumes";
+"Preferences" = "Preferências";
+"Launch at login" = "Lançar ao login";
+"Unmount when" = "Desmontar quando";
+"Screensaver started" = "O descanso de tela começar";
+"Screen is locked" = "A tela bloquear";
+"Display turned off" = "A tela se desligar";
+"System starts sleeping" = "O sistema entrar em modo suspensão";
+"About Ejectify" = "Sobre Ejectify";
+"Quit Ejectify" = "Sair de Ejectify";

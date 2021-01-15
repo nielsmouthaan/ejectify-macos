@@ -25,6 +25,7 @@
 		B82E12D22570FF0F004547C7 /* Preference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preference.swift; sourceTree = "<group>"; };
 		B85E03F025AF54D300CA51C5 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B85E03F225AF5B8A00CA51C5 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		B85E03F525B1DAAB00CA51C5 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		B89F412425AC9D7200E0B8C1 /* DADisk+DiskImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DADisk+DiskImage.swift"; sourceTree = "<group>"; };
 		B89F412C25AC9FD800E0B8C1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B89F412F25ACA09700E0B8C1 /* String+Localized.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Localized.swift"; sourceTree = "<group>"; };
@@ -175,6 +176,7 @@
 				es,
 				ru,
 				ja,
+				"pt-PT",
 			);
 			mainGroup = B8AF59DC2569569A003481A8;
 			packageReferences = (
@@ -251,6 +253,7 @@
 				B89F413925AEE6F200E0B8C1 /* es */,
 				B85E03F025AF54D300CA51C5 /* ru */,
 				B85E03F225AF5B8A00CA51C5 /* ja */,
+				B85E03F525B1DAAB00CA51C5 /* pt-PT */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
