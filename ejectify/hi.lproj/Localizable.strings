@@ -11,9 +11,9 @@
 "Preferences" = "प्राथमिकताएँ";
 "Launch at login" = "लॉगिन पर लॉन्च करें";
 "Unmount when" = "अनमाउंट करें जब";
-"Screensaver started" = "स्क्रीनसेवर शुरू हुआ";
-"Screen is locked" = "स्क्रीन लॉक हुआ";
-"Display turned off" = "प्रदर्शन बंद हुआ";
+"Screensaver started" = "स्क्रीनसेवर शुरू होता है";
+"Screen is locked" = "स्क्रीन लॉक होता है";
+"Display turned off" = "प्रदर्शन बंद होता है";
 "System starts sleeping" = "सिस्टम स्लीप करना शुरू करता है";
 "About Ejectify" = "Ejectify के बारे में";
 "Quit Ejectify" = "Ejectify से बाहर निकलें";
