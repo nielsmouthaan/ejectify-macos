@@ -23,6 +23,8 @@
 - When the screens started sleeping.
 - When the system starts sleeping.
 
+⭐ Available in 🇬🇧 🇳🇱 🇫🇷 🇩🇪 🇮🇳 🇯🇵 🇵🇹 🇷🇺 🇪🇸.
+
 
 ## Download
 
