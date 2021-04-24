@@ -43,6 +43,17 @@ class Preference {
         }
     }
     
+    private static var userDefaultsKeyForceUnmount = "preference.forceUnmount"
+    static var forceUnmount: Bool {
+        get {
+            return UserDefaults.standard.bool(forKey: userDefaultsKeyForceUnmount)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: userDefaultsKeyForceUnmount)
+            UserDefaults.standard.synchronize()
+        }
+    }
+    
     private static var userDefaultsKeyMountAfterDelay = "preference.mountAfterDelay"
     static var mountAfterDelay: Bool {
         get {

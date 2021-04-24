@@ -17,6 +17,7 @@
 "Screen is locked" = "La pantalla está bloqueada";
 "Display turned off" = "La pantalla está apagada";
 "System starts sleeping" = "El sistema entra en suspensión";
+"Force unmount" = "Forzar desmontar";
 "Mount after delay" = "Montar después de la demora";
 "About Ejectify" = "Acerca de Ejectify";
 "Quit Ejectify" = "Salir de Ejectify";

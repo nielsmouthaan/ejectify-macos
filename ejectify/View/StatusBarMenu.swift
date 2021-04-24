@@ -95,6 +95,12 @@ class StatusBarMenu: NSMenu {
         unmountWhenItem.submenu = buildUnmountWhenMenu()
         addItem(unmountWhenItem)
         
+        // Force unmount
+        let forceUnmountItem = NSMenuItem(title: "Force unmount".localized, action: #selector(forceUnmountClicked(menuItem:)), keyEquivalent: "")
+        forceUnmountItem.target = self
+        forceUnmountItem.state = Preference.forceUnmount ? .on : .off
+        addItem(forceUnmountItem)
+        
         // Mount after delay
         let mountAfterDelay = NSMenuItem(title: "Mount after delay".localized, action: #selector(mountAfterDelayClicked(menuItem:)), keyEquivalent: "")
         mountAfterDelay.target = self
@@ -149,7 +155,7 @@ class StatusBarMenu: NSMenu {
     @objc private func unmountAllClicked(menuItem: NSMenuItem) {
         volumes.filter { $0.enabled }
             .forEach { (volume) in
-                volume.unmount()
+                volume.unmount(force: Preference.forceUnmount)
             }
         updateMenu()
     }
@@ -177,6 +183,11 @@ class StatusBarMenu: NSMenu {
         } else if menuItem == unmountWhenSystemStartsSleepingItem {
             Preference.unmountWhen = .systemStartsSleeping
         }
+        updateMenu()
+    }
+    
+    @objc private func forceUnmountClicked(menuItem: NSMenuItem) {
+        Preference.forceUnmount = menuItem.state == .off ? true : false
         updateMenu()
     }
     

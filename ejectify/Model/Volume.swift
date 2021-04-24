@@ -45,8 +45,9 @@ class Volume {
         self.removable = removable
     }
     
-    func unmount() {
-        DADiskUnmount(disk, DADiskUnmountOptions(kDADiskUnmountOptionDefault), nil, nil)
+    func unmount(force: Bool = false) {
+        let option = force ? kDADiskUnmountOptionForce : kDADiskUnmountOptionDefault
+        DADiskUnmount(disk, DADiskUnmountOptions(option), nil, nil)
     }
     
     func mount() {

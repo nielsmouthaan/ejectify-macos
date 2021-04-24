@@ -17,6 +17,7 @@
 "Screen is locked" = "画面をロックしたとき";
 "Display turned off" = "ディスプレイをオフにしたとき";
 "System starts sleeping" = "システムをスリープしたとき";
+"Force unmount" = "強制的にアンマウント";
 "Mount after delay" = "遅れてマウントする";
 "About Ejectify" = "Ejectify について";
 "Quit Ejectify" = "Ejectify を終了";

@@ -17,6 +17,7 @@
 "Screen is locked" = "Bildschirm gesperrt wird";
 "Display turned off" = "Ruhezustand für Monitor aktiviert wird";
 "System starts sleeping" = "Ruhezustand für Computer aktiviert wird";
+"Force unmount" = "Deaktivierung erzwingen";
 "Mount after delay" = "Nach Verzögerung aktivieren";
 "About Ejectify" = "Über Ejectify";
 "Quit Ejectify" = "Ejectify beenden";

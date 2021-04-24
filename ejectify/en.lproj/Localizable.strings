@@ -17,6 +17,7 @@
 "Screen is locked" = "Screen is locked";
 "Display turned off" = "Display turned off";
 "System starts sleeping" = "System starts sleeping";
+"Force unmount" = "Force unmount";
 "Mount after delay" = "Mount after delay";
 "About Ejectify" = "About Ejectify";
 "Quit Ejectify" = "Quit Ejectify";

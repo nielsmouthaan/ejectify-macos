@@ -44,7 +44,7 @@ class ActivityController {
     @objc func unmountVolumes() {
         unmountedVolumes = Volume.mountedVolumes().filter{ $0.enabled }
         unmountedVolumes.forEach { (volume) in
-            volume.unmount()
+            volume.unmount(force: Preference.forceUnmount)
         }
     }
     

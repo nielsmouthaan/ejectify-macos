@@ -17,6 +17,7 @@
 "Screen is locked" = "Scherm is vergrendeld";
 "Display turned off" = "Beeldscherm is uitgeschakeld";
 "System starts sleeping" = "Sluimerstand wordt ingeschakeld";
+"Force unmount" = "Forceer deactivatie";
 "Mount after delay" = "Activeer na vertraging";
 "About Ejectify" = "Over Ejectify";
 "Quit Ejectify" = "Stop Ejectify";
