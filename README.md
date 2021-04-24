@@ -14,7 +14,9 @@
 
 ⭐ Prevents connected external disks and their volumes to get corrupted.
 
-⭐ Configure what volumes should be (un)mounted automatically.
+⭐ Configure what volumes should be (un)mounted automatically, optionally forcefully.
+
+⭐ Available in English, Dutch, German, French, Spanish, Russian, Japanese, Portuguese, Hindi and Arabic.
 
 ⭐ Configure when volumes should be unmounted:
 
@@ -23,7 +25,9 @@
 - When the screens started sleeping.
 - When the system starts sleeping.
 
-⭐ Available in 🇬🇧 🇳🇱 🇫🇷 🇩🇪 🇮🇳 🇯🇵 🇵🇹 🇷🇺 🇪🇸.
+⭐ Automatically mounts volumes again when your Mac or screens wake up, optionally after a configurable delay.
+
+⭐ Unmount all volumes instantly with the click of a button.
 
 
 ## Download
