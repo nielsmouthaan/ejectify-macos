@@ -1,0 +1,22 @@
+/* 
+  Localizable.strings
+  Ejectify
+
+  Created by Niels Mouthaan on 11/01/2021.
+  
+*/
+
+"No volumes" = "لا توجد وحدات تخزين";
+"Unmount all" = "قم بإلغاء تحميل الكل";
+"Volumes" = "وحدات التخزين";
+"Preferences" = "التفضيلات";
+"Launch at login" = "تشغيل عند تسجيل الدخول";
+"Unmount when" = "إخراج عند";
+"Screensaver started" = "بدء شاشة التوقف";
+"Screen is locked" = "قفل الشاشة";
+"Display turned off" = "إيقاف العرض";
+"System starts sleeping" = "الدخول في وضع السكون";
+"Force unmount" = "قوة فك";
+"Mount after delay" = "جبل بعد التأخير";
+"About Ejectify" = "Ejectify حول";
+"Quit Ejectify" = "Ejectify يقلع";

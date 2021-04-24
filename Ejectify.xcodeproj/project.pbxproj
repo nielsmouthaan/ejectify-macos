@@ -23,6 +23,7 @@
 
 /* Begin PBXFileReference section */
 		B82E12D22570FF0F004547C7 /* Preference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preference.swift; sourceTree = "<group>"; };
+		B835A2852634529D002D232D /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B85E03F025AF54D300CA51C5 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B85E03F225AF5B8A00CA51C5 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B85E03F525B1DAAB00CA51C5 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -179,6 +180,7 @@
 				ja,
 				"pt-PT",
 				hi,
+				ar,
 			);
 			mainGroup = B8AF59DC2569569A003481A8;
 			packageReferences = (
@@ -257,6 +259,7 @@
 				B85E03F225AF5B8A00CA51C5 /* ja */,
 				B85E03F525B1DAAB00CA51C5 /* pt-PT */,
 				B85E040225B1EA1700CA51C5 /* hi */,
+				B835A2852634529D002D232D /* ar */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
