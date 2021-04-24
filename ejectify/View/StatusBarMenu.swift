@@ -94,6 +94,12 @@ class StatusBarMenu: NSMenu {
         let unmountWhenItem = NSMenuItem(title: "Unmount when".localized, action: nil, keyEquivalent: "")
         unmountWhenItem.submenu = buildUnmountWhenMenu()
         addItem(unmountWhenItem)
+        
+        // Mount after delay
+        let mountAfterDelay = NSMenuItem(title: "Mount after delay".localized, action: #selector(mountAfterDelayClicked(menuItem:)), keyEquivalent: "")
+        mountAfterDelay.target = self
+        mountAfterDelay.state = Preference.mountAfterDelay ? .on : .off
+        addItem(mountAfterDelay)
     }
     
     private var unmountWhenScreensaverStartedItem: NSMenuItem?
@@ -171,6 +177,11 @@ class StatusBarMenu: NSMenu {
         } else if menuItem == unmountWhenSystemStartsSleepingItem {
             Preference.unmountWhen = .systemStartsSleeping
         }
+        updateMenu()
+    }
+    
+    @objc private func mountAfterDelayClicked(menuItem: NSMenuItem) {
+        Preference.mountAfterDelay = menuItem.state == .off ? true : false
         updateMenu()
     }
     

@@ -49,9 +49,11 @@ class ActivityController {
     }
     
     @objc func mountVolumes() {
-        unmountedVolumes.forEach { (volume) in
-            volume.mount()
+        DispatchQueue.main.asyncAfter(deadline: .now() + (Preference.mountAfterDelay ? 5 : 0)) {
+            self.unmountedVolumes.forEach { (volume) in
+                volume.mount()
+            }
+            self.unmountedVolumes = []
         }
-        unmountedVolumes = []
     }
 }

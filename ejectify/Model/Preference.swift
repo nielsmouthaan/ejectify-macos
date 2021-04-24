@@ -42,4 +42,15 @@ class Preference {
             AppDelegate.shared.activityController?.startMonitoring()
         }
     }
+    
+    private static var userDefaultsKeyMountAfterDelay = "preference.mountAfterDelay"
+    static var mountAfterDelay: Bool {
+        get {
+            return UserDefaults.standard.bool(forKey: userDefaultsKeyMountAfterDelay)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: userDefaultsKeyMountAfterDelay)
+            UserDefaults.standard.synchronize()
+        }
+    }
 }

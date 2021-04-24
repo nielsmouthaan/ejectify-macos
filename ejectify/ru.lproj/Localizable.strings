@@ -17,5 +17,6 @@
 "Screen is locked" = "Экран заблокирован";
 "Display turned off" = "Дисплей выключен";
 "System starts sleeping" = "Система перешла в сон";
+"Mount after delay" = "Смонтировать после задержки";
 "About Ejectify" = "Об Ejectify";
 "Quit Ejectify" = "Выйти из Ejectify";
