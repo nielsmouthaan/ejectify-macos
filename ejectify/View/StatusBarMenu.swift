@@ -40,7 +40,7 @@ class StatusBarMenu: NSMenu {
         self.removeAllItems()
         buildActionsMenu()
         buildVolumesMenu()
-        buildOptionsMenu()
+        buildPreferencesMenu()
         buildAppMenu()
     }
     
@@ -76,7 +76,7 @@ class StatusBarMenu: NSMenu {
         }
     }
     
-    private func buildOptionsMenu() {
+    private func buildPreferencesMenu() {
         addItem(NSMenuItem.separator())
         
         // Title
