@@ -38,15 +38,22 @@ class StatusBarMenu: NSMenu {
     
     private func updateMenu() {
         self.removeAllItems()
-        buildUnmountAllMenu()
+        buildActionsMenu()
         buildVolumesMenu()
         buildOptionsMenu()
         buildAppMenu()
     }
     
-    private func buildUnmountAllMenu() {
-        let unmountAllItem = NSMenuItem(title: "Unmount All".localized, action: #selector(unmountAllClicked(menuItem:)), keyEquivalent: "")
-        unmountAllItem.target = volumes.count > 0 ? self : nil
+    private func buildActionsMenu() {
+        
+        // Title
+        let titleItem = NSMenuItem(title: "Actions".localized, action: nil, keyEquivalent: "")
+        titleItem.isEnabled = false
+        addItem(titleItem)
+        
+        // Unmount all
+        let unmountAllItem = NSMenuItem(title: "Unmount all".localized, action: #selector(unmountAllClicked(menuItem:)), keyEquivalent: "")
+        unmountAllItem.target = self
         addItem(unmountAllItem)
     }
 

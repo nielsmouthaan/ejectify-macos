@@ -6,6 +6,8 @@
   
 */
 
+"Actions" = "Действия";
+"Unmount all" = "Извлечь все";
 "No volumes" = "Нет томов";
 "Volumes" = "Тома";
 "Preferences" = "Настройки";

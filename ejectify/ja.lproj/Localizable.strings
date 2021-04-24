@@ -6,6 +6,8 @@
   
 */
 
+"Actions" = "行動";
+"Unmount all" = "すべてアンマウント";
 "No volumes" = "ボリュームがありません";
 "Volumes" = "ボリューム";
 "Preferences" = "環境設定";
