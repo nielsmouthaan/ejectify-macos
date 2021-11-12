@@ -11,11 +11,11 @@
 "No volumes" = "No hay volúmenes";
 "Volumes" = "Volúmenes";
 "Preferences" = "Preferencias";
-"Launch at login" = "Comenzar al iniciar sesión";
+"Launch at login" = "Abrir automaticamente al iniciar sesión";
 "Unmount when" = "Desmontar cuando";
 "Screensaver started" = "El protector de pantalla comience";
 "Screen is locked" = "La pantalla está bloqueada";
-"Display turned off" = "La pantalla está apagada";
+"Display turned off" = "La pantalla está apagada";
 "System starts sleeping" = "El sistema entra en suspensión";
 "Force unmount" = "Forzar desmontar";
 "Mount after delay" = "Montar después de la demora";
