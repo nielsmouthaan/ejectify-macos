@@ -50,7 +50,7 @@ Make sure [Ejectify](https://ejectify.app) runs from your Applications folder. I
 
 ### Why do I still receive notifications?
 
-Ejectify works by (trying to) eject disks before your screensaver starts, screen locks, display(s) turns off, or the system starts sleeping. Sometimes this doesn't result in the desired behavior. In this case, try the following:
+Ejectify works by (trying to) unmount volumes (on external disks) before your screensaver starts, screen locks, display(s) turns off, or the system starts sleeping. Sometimes this doesn't result in the desired behavior. In this case, try the following:
 
 - Ensure the correct volumes are checked in Ejectify's status bar menu. Ejectify will only attempt to unmount those.
 
@@ -60,7 +60,7 @@ Ejectify works by (trying to) eject disks before your screensaver starts, screen
 
 - Temporary check `Force unmount` to see if that makes a difference. This (unsafe) option (almost) immediately eject disks, even when apps or macOS are still using it, which could result in data loss. When this resolves the issue, it's likely that an app or macOS is causing the issue. See [this page](https://serverfault.com/a/159428) to find out which app.
 
-- Use the [Console app](https://support.apple.com/en-gb/guide/console/welcome/mac) to see if any warnings or errors are popping up that might indicate why Ejectify isn't able to unmount the disk.
+- Use the [Console app](https://support.apple.com/en-gb/guide/console/welcome/mac) to see if any warnings or errors are popping up that might indicate why Ejectify isn't able to (un)mount the disk. Specifically look for a message starting with `Dissenter status`, which includes the result of the (un)mount process. 
 
 ## License
 
