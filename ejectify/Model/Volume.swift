@@ -23,8 +23,6 @@ class Volume {
     let disk: DADisk
     let id: String
     let name: String
-    let ejectable: Bool
-    let removable: Bool
     
     private static var userDefaultsKeyPrefixVolume = "volume."
     var enabled: Bool {
@@ -37,12 +35,10 @@ class Volume {
         }
     }
     
-    init(disk: DADisk, id: String, name: String, ejectable: Bool, removable: Bool) {
+    init(disk: DADisk, id: String, name: String) {
         self.disk = disk
         self.id = id
         self.name = name
-        self.ejectable = ejectable
-        self.removable = removable
     }
     
     func unmount(force: Bool = false) {
@@ -94,8 +90,6 @@ class Volume {
         }
         
         guard let name = diskInfo[kDADiskDescriptionVolumeNameKey] as? String,
-              let ejectable = diskInfo[kDADiskDescriptionMediaEjectableKey] as? Bool,
-              let removable = diskInfo[kDADiskDescriptionMediaRemovableKey] as? Bool,
               let uuid = diskInfo[kDADiskDescriptionVolumeUUIDKey]
         else {
             return nil
@@ -110,6 +104,6 @@ class Volume {
             return nil
         }
         
-        return Volume(disk: disk, id: id as String, name: name, ejectable: ejectable, removable: removable)
+        return Volume(disk: disk, id: id as String, name: name)
     }
 }
