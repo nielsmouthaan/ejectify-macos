@@ -9,17 +9,17 @@ import AppKit
 
 class StatusBarMenu: NSMenu {
     
-    private var volumes: [Volume]
+    private var volumes: [ExternalVolume]
     
     required init(coder: NSCoder) {
-        volumes = Volume.mountedVolumes()
+        volumes = ExternalVolume.mountedVolumes()
         super.init(coder: coder)
         updateMenu()
         listenForDiskNotifications()
     }
     
     init() {
-        volumes = Volume.mountedVolumes()
+        volumes = ExternalVolume.mountedVolumes()
         super.init(title: "Ejectify")
         updateMenu()
         listenForDiskNotifications()
@@ -32,7 +32,7 @@ class StatusBarMenu: NSMenu {
     }
     
     @objc private func disksChanged() {
-        volumes = Volume.mountedVolumes()
+        volumes = ExternalVolume.mountedVolumes()
         updateMenu()
     }
     
@@ -161,7 +161,7 @@ class StatusBarMenu: NSMenu {
     }
 
     @objc private func volumeClicked(menuItem: NSMenuItem) {
-        guard let volume = menuItem.representedObject as? Volume else {
+        guard let volume = menuItem.representedObject as? ExternalVolume else {
             return
         }
         volume.enabled = menuItem.state == .off ? true : false

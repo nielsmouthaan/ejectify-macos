@@ -16,7 +16,7 @@
 		B8AF59ED2569569B003481A8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B8AF59EC2569569B003481A8 /* Assets.xcassets */; };
 		B8AF59F32569569B003481A8 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B8AF59F12569569B003481A8 /* Main.storyboard */; };
 		B8DFADB5256CF511009E9296 /* StatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB0256CF511009E9296 /* StatusBar.swift */; };
-		B8DFADB6256CF511009E9296 /* Volume.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB2256CF511009E9296 /* Volume.swift */; };
+		B8DFADB6256CF511009E9296 /* ExternalVolume.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB2256CF511009E9296 /* ExternalVolume.swift */; };
 		B8DFADB7256CF511009E9296 /* StatusBarMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */; };
 		B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB9256D0565009E9296 /* ActivityController.swift */; };
 /* End PBXBuildFile section */
@@ -42,7 +42,7 @@
 		B8AF59F42569569B003481A8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B8AF59F52569569B003481A8 /* Ejectify.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Ejectify.entitlements; sourceTree = "<group>"; };
 		B8DFADB0256CF511009E9296 /* StatusBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusBar.swift; sourceTree = "<group>"; };
-		B8DFADB2256CF511009E9296 /* Volume.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Volume.swift; sourceTree = "<group>"; };
+		B8DFADB2256CF511009E9296 /* ExternalVolume.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExternalVolume.swift; sourceTree = "<group>"; };
 		B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusBarMenu.swift; sourceTree = "<group>"; };
 		B8DFADB9256D0565009E9296 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -112,7 +112,7 @@
 		B8DFADB1256CF511009E9296 /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				B8DFADB2256CF511009E9296 /* Volume.swift */,
+				B8DFADB2256CF511009E9296 /* ExternalVolume.swift */,
 				B82E12D22570FF0F004547C7 /* Preference.swift */,
 			);
 			path = Model;
@@ -234,7 +234,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B8DFADB7256CF511009E9296 /* StatusBarMenu.swift in Sources */,
-				B8DFADB6256CF511009E9296 /* Volume.swift in Sources */,
+				B8DFADB6256CF511009E9296 /* ExternalVolume.swift in Sources */,
 				B89F413025ACA09700E0B8C1 /* String+Localized.swift in Sources */,
 				B8AF59E92569569A003481A8 /* AppDelegate.swift in Sources */,
 				B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */,

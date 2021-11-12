@@ -16,7 +16,7 @@ private enum VolumeReservedNames: String {
     case Volumes = "Volumes"
 }
 
-class Volume {
+class ExternalVolume {
     
     static let sharedDASession: DASession? = DASessionCreate(kCFAllocatorDefault)
     
@@ -27,10 +27,10 @@ class Volume {
     private static var userDefaultsKeyPrefixVolume = "volume."
     var enabled: Bool {
         get {
-            return UserDefaults.standard.object(forKey: Volume.userDefaultsKeyPrefixVolume + id) != nil ? UserDefaults.standard.bool(forKey: Volume.userDefaultsKeyPrefixVolume + id) : true // By default all volumes automatically unmount
+            return UserDefaults.standard.object(forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id) != nil ? UserDefaults.standard.bool(forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id) : true // By default all volumes automatically unmount
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: Volume.userDefaultsKeyPrefixVolume + id)
+            UserDefaults.standard.set(newValue, forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id)
             UserDefaults.standard.synchronize()
         }
     }
@@ -50,15 +50,15 @@ class Volume {
         DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), nil, nil)
     }
     
-    static func mountedVolumes() -> [Volume] {
+    static func mountedVolumes() -> [ExternalVolume] {
         guard let mountedVolumeURLs = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys:nil, options: []) else {
             return []
         }
         
         let mountedVolumes = mountedVolumeURLs.filter {
-            Volume.isVolumeURL($0)
+            ExternalVolume.isVolumeURL($0)
         }.compactMap {
-            Volume.fromURL(url: $0)
+            ExternalVolume.fromURL(url: $0)
         }
         
         return mountedVolumes
@@ -68,8 +68,8 @@ class Volume {
         url.pathComponents.count > 1 && url.pathComponents[VolumeComponent.root.rawValue] == VolumeReservedNames.Volumes.rawValue
     }
     
-    static func fromURL(url: URL) -> Volume? {
-        guard let session = Volume.sharedDASession else {
+    static func fromURL(url: URL) -> ExternalVolume? {
+        guard let session = ExternalVolume.sharedDASession else {
             return nil
         }
         
@@ -81,11 +81,18 @@ class Volume {
             return nil
         }
         
-        return Volume.fromDisk(disk: disk)
+        return ExternalVolume.fromDisk(disk: disk)
     }
     
-    static func fromDisk(disk: DADisk) -> Volume? {
+    static func fromDisk(disk: DADisk) -> ExternalVolume? {
         guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
+            return nil
+        }
+        
+        guard let internalDisk = diskInfo[kDADiskDescriptionDeviceInternalKey] as? Bool else {
+            return nil
+        }
+        if internalDisk {
             return nil
         }
         
@@ -104,6 +111,6 @@ class Volume {
             return nil
         }
         
-        return Volume(disk: disk, id: id as String, name: name)
+        return ExternalVolume(disk: disk, id: id as String, name: name)
     }
 }

@@ -9,7 +9,7 @@ import AppKit
 
 class ActivityController {
     
-    private var unmountedVolumes: [Volume] = []
+    private var unmountedVolumes: [ExternalVolume] = []
     
     init() {
         startMonitoring()
@@ -42,7 +42,7 @@ class ActivityController {
     }
     
     @objc func unmountVolumes() {
-        unmountedVolumes = Volume.mountedVolumes().filter{ $0.enabled }
+        unmountedVolumes = ExternalVolume.mountedVolumes().filter{ $0.enabled }
         unmountedVolumes.forEach { (volume) in
             volume.unmount(force: Preference.forceUnmount)
         }
