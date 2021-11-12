@@ -43,11 +43,15 @@ class ExternalVolume {
     
     func unmount(force: Bool = false) {
         let option = force ? kDADiskUnmountOptionForce : kDADiskUnmountOptionDefault
-        DADiskUnmount(disk, DADiskUnmountOptions(option), nil, nil)
+        DADiskUnmount(disk, DADiskUnmountOptions(option), { disk, dissenter, context in
+            dissenter?.log()
+        }, nil)
     }
     
     func mount() {
-        DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), nil, nil)
+        DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), { disk, dissenter, context in
+            dissenter?.log()
+        }, nil)
     }
     
     static func mountedVolumes() -> [ExternalVolume] {

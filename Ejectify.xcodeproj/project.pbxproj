@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B8006C05273E745900E7434F /* DAReturn+Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8006C04273E745900E7434F /* DAReturn+Message.swift */; };
+		B8006C07273E98F900E7434F /* DADissenter+Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8006C06273E98F900E7434F /* DADissenter+Log.swift */; };
 		B82E12D32570FF0F004547C7 /* Preference.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82E12D22570FF0F004547C7 /* Preference.swift */; };
 		B82E12D825710006004547C7 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = B82E12D725710006004547C7 /* LaunchAtLogin */; };
 		B89F412525AC9D7200E0B8C1 /* DADisk+DiskImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89F412425AC9D7200E0B8C1 /* DADisk+DiskImage.swift */; };
@@ -22,6 +24,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B8006C04273E745900E7434F /* DAReturn+Message.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DAReturn+Message.swift"; sourceTree = "<group>"; };
+		B8006C06273E98F900E7434F /* DADissenter+Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DADissenter+Log.swift"; sourceTree = "<group>"; };
 		B82E12D22570FF0F004547C7 /* Preference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preference.swift; sourceTree = "<group>"; };
 		B835A2852634529D002D232D /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B85E03F025AF54D300CA51C5 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -64,6 +68,8 @@
 			children = (
 				B89F412425AC9D7200E0B8C1 /* DADisk+DiskImage.swift */,
 				B89F412F25ACA09700E0B8C1 /* String+Localized.swift */,
+				B8006C04273E745900E7434F /* DAReturn+Message.swift */,
+				B8006C06273E98F900E7434F /* DADissenter+Log.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -236,9 +242,11 @@
 				B8DFADB7256CF511009E9296 /* StatusBarMenu.swift in Sources */,
 				B8DFADB6256CF511009E9296 /* ExternalVolume.swift in Sources */,
 				B89F413025ACA09700E0B8C1 /* String+Localized.swift in Sources */,
+				B8006C07273E98F900E7434F /* DADissenter+Log.swift in Sources */,
 				B8AF59E92569569A003481A8 /* AppDelegate.swift in Sources */,
 				B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */,
 				B82E12D32570FF0F004547C7 /* Preference.swift in Sources */,
+				B8006C05273E745900E7434F /* DAReturn+Message.swift in Sources */,
 				B89F412525AC9D7200E0B8C1 /* DADisk+DiskImage.swift in Sources */,
 				B8DFADB5256CF511009E9296 /* StatusBar.swift in Sources */,
 			);
