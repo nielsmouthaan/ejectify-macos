@@ -26,6 +26,8 @@
 /* Begin PBXFileReference section */
 		B8006C04273E745900E7434F /* DAReturn+Message.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DAReturn+Message.swift"; sourceTree = "<group>"; };
 		B8006C06273E98F900E7434F /* DADissenter+Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DADissenter+Log.swift"; sourceTree = "<group>"; };
+		B8006C10273E9E6500E7434F /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Main.strings; sourceTree = "<group>"; };
+		B8006C11273E9E6500E7434F /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B82E12D22570FF0F004547C7 /* Preference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preference.swift; sourceTree = "<group>"; };
 		B835A2852634529D002D232D /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B85E03F025AF54D300CA51C5 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -187,6 +189,7 @@
 				"pt-PT",
 				hi,
 				ar,
+				it,
 			);
 			mainGroup = B8AF59DC2569569A003481A8;
 			packageReferences = (
@@ -268,6 +271,7 @@
 				B85E03F525B1DAAB00CA51C5 /* pt-PT */,
 				B85E040225B1EA1700CA51C5 /* hi */,
 				B835A2852634529D002D232D /* ar */,
+				B8006C11273E9E6500E7434F /* it */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -276,6 +280,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				B8AF59F22569569B003481A8 /* Base */,
+				B8006C10273E9E6500E7434F /* it */,
 			);
 			name = Main.storyboard;
 			sourceTree = "<group>";
