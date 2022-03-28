@@ -46,7 +46,7 @@
 
 ### The app doesn't start. What can I do?
 
-Make sure [Ejectify](https://ejectify.app) runs from your Applications folder. It will only start from there. Also, note that the app lives in your system's status bar. There's no other user interface that pops up when you start it.
+Make sure Ejectify is copied into your Applications directory and run from there. Also, note that the app lives in the menu bar of your Mac. There should be an eject icon somewhere near your clock. There is no other user interface that pops up when you start it.
 
 ### Why do I still receive notifications?
 
