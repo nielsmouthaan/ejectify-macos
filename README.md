@@ -60,7 +60,9 @@ Ejectify works by (trying to) unmount volumes (on external disks) before your sc
 
 - Temporary check `Force unmount` to see if that makes a difference. This (unsafe) option (almost) immediately eject disks, even when apps or macOS are still using it, which could result in data loss. When this resolves the issue, it's likely that an app or macOS is causing the issue. See [this page](https://serverfault.com/a/159428) to find out which app.
 
-- Use the [Console app](https://support.apple.com/en-gb/guide/console/welcome/mac) to see if any warnings or errors are popping up that might indicate why Ejectify isn't able to (un)mount the disk. Specifically look for a message starting with `Dissenter status`, which includes the result of the (un)mount process. 
+- Use the [Console app](https://support.apple.com/en-gb/guide/console/welcome/mac) to see if any warnings or errors are popping up that might indicate why Ejectify isn't able to (un)mount the disk. Specifically look for a message starting with `Dissenter status`, which includes the result of the (un)mount process.
+
+Ejectify might not (always) prevent notifications to appear. This is mostly caused by external hardware (such as USB hubs). Contact me via [this form](https://ejectify.app/#contact) and provide the email address used to purchase Ejectify so I can initiate a refund.
 
 ## License
 
