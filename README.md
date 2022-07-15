@@ -64,6 +64,10 @@ Ejectify works by (trying to) unmount volumes (on external disks) before your sc
 
 Ejectify might not (always) prevent notifications to appear. This is mostly caused by external hardware (such as USB hubs). Contact me via [this form](https://ejectify.app/#contact) and provide the email address used to purchase Ejectify so I can initiate a refund.
 
+### Does Ejectify support Apple Silicon (M1 & M2)?
+
+Yes it does. Ejectify is built as an [Universal macOS Binary](https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary) meaning it natively supports Intel and Apple Silicon processors.
+
 ## License
 
 Ejectify is available under the MIT license and uses source code from open source projects. See the [LICENSE](https://github.com/nielsmouthaan/ejectify-macos/blob/main/LICENSE) file for more info.
