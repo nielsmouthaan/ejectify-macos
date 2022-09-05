@@ -62,6 +62,8 @@ Ejectify works by (trying to) unmount volumes (on external disks) before your sc
 
 - Use the [Console app](https://support.apple.com/en-gb/guide/console/welcome/mac) to see if any warnings or errors are popping up that might indicate why Ejectify isn't able to (un)mount the disk. Specifically look for a message starting with `Dissenter status`, which includes the result of the (un)mount process.
 
+- Verify whether the volume is [encrypted](https://support.apple.com/guide/disk-utility/dskutl35612/mac). Users have [reported issues](https://github.com/nielsmouthaan/ejectify-macos/issues/34) with Ejectify when using encrypted volumes. If you experience the same, try [running Ejectify with administrator rights](https://github.com/nielsmouthaan/ejectify-macos/issues/34#issuecomment-1038299356) and verify if this (temporarily) solves the issue.
+
 Ejectify might not (always) prevent notifications to appear. This is mostly caused by external hardware (such as USB hubs). Contact me via [this form](https://ejectify.app/#contact) and provide the email address used to purchase Ejectify so I can initiate a refund.
 
 ### Does Ejectify support Apple Silicon (M1 & M2)?
