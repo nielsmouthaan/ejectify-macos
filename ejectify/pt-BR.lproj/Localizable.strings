@@ -1,0 +1,23 @@
+/*
+  Localizable.strings
+  Ejectify
+
+  Created by Niels Mouthaan on 11/01/2021.
+
+*/
+
+"Actions" = "Ações";
+"Unmount all" = "Ejetar todos";
+"No volumes" = "Sem volumes";
+"Volumes" = "Volumes";
+"Preferences" = "Preferências";
+"Launch at login" = "Abrir ao iniciar sessão";
+"Unmount when" = "Ejetar quando";
+"Screensaver started" = "Protetor de tela começar";
+"Screen is locked" = "Tela bloquear";
+"Display turned off" = "Monitor desligar";
+"System starts sleeping" = "Sistema iniciar repouso";
+"Force unmount" = "Forçar ejeção";
+"Mount after delay" = "Montar após atraso";
+"About Ejectify" = "Sobre Ejectify";
+"Quit Ejectify" = "Fechar Ejectify";

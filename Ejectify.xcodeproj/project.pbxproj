@@ -50,6 +50,7 @@
 		B8DFADB2256CF511009E9296 /* ExternalVolume.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExternalVolume.swift; sourceTree = "<group>"; };
 		B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusBarMenu.swift; sourceTree = "<group>"; };
 		B8DFADB9256D0565009E9296 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
+		F22E193528F67EE100899BDE /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -189,6 +190,7 @@
 				hi,
 				ar,
 				it,
+				"pt-BR",
 			);
 			mainGroup = B8AF59DC2569569A003481A8;
 			packageReferences = (
@@ -271,6 +273,7 @@
 				B85E040225B1EA1700CA51C5 /* hi */,
 				B835A2852634529D002D232D /* ar */,
 				B8006C11273E9E6500E7434F /* it */,
+				F22E193528F67EE100899BDE /* pt-BR */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
