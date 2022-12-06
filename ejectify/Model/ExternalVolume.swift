@@ -93,13 +93,6 @@ class ExternalVolume {
             return nil
         }
         
-        guard let internalDisk = diskInfo[kDADiskDescriptionDeviceInternalKey] as? Bool else {
-            return nil
-        }
-        if internalDisk {
-            return nil
-        }
-        
         guard let name = diskInfo[kDADiskDescriptionVolumeNameKey] as? String,
               let uuid = diskInfo[kDADiskDescriptionVolumeUUIDKey]
         else {
