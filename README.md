@@ -7,7 +7,6 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Follow](https://img.shields.io/twitter/follow/nielsmouthaan?style=social)
-[![Build Status](https://app.bitrise.io/app/cb954929dc35d7d8/status.svg?token=20ple7v5CsOiHP3_cNmAaw&branch=main)](https://app.bitrise.io/app/cb954929dc35d7d8)
 
 ![Header](Header.jpg)
 
