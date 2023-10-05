@@ -1,4 +1,4 @@
-| This project is no longer maintained. No support or assistance will be provided. |
+| This project comes without assistance or support. |
 | --- |
 
 # Ejectify for Mac
