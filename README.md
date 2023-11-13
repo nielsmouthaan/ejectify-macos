@@ -37,6 +37,9 @@
 
 ## Frequently asked questions
 
+### I'm running into an issue. How can I get help?
+Ejectify comes without (human) support. Check the frequently asked questions below to solve most common issues. If you want to test Ejectify before purchasing (to cover Apple's Developer Program fee), feel free to clone this repository (for free) and build a runnable application yourself.
+
 ### The app doesn't start. What can I do?
 
 Make sure Ejectify is copied into your Applications directory and run from there. Also, note that the app lives in the menu bar of your Mac. There should be an eject icon somewhere near your clock. There is no other user interface that pops up when you start it.
