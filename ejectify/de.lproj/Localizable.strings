@@ -7,17 +7,17 @@
 */
 
 "Actions" = "Aktionen";
-"Unmount all" = "Deaktiviere alle";
+"Unmount all" = "Alle auswerfen";
 "No volumes" = "Keine Volumes";
 "Volumes" = "Volumes";
 "Preferences" = "Einstellungen";
-"Launch at login" = "Beim Login starten";
-"Unmount when" = "Deaktivieren, sobald";
+"Launch at login" = "Beim Anmelden starten";
+"Unmount when" = "Auswerfen, wenn";
 "Screensaver started" = "Bildschirmschoner startet";
 "Screen is locked" = "Bildschirm gesperrt wird";
 "Display turned off" = "Ruhezustand für Monitor aktiviert wird";
 "System starts sleeping" = "Ruhezustand für Computer aktiviert wird";
-"Force unmount" = "Deaktivierung erzwingen";
-"Mount after delay" = "Nach Verzögerung aktivieren";
+"Force unmount" = "Auswerfen erzwingen";
+"Mount after delay" = "Mit Verzögerung einhängen";
 "About Ejectify" = "Über Ejectify";
 "Quit Ejectify" = "Ejectify beenden";
