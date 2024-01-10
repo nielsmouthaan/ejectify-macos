@@ -1,0 +1,23 @@
+/* 
+  Localizable.strings
+  Ejectify
+
+  Created by Ali Karahisar on 14/11/2021.
+  
+*/
+
+"Actions" = "Eylemler";
+"Unmount all" = "Tümünü çıkar";
+"No volumes" = "Birim yok";
+"Volumes" = "Birimler";
+"Preferences" = "Tercihler";
+"Launch at login" = "Başlangıçta çalıştır";
+"Unmount when" = "Ne zaman bağlantı kesilsin";
+"Screensaver started" = "Ekran koruyucu başladığında";
+"Screen is locked" = "Ekran kilitlendiğinde";
+"Display turned off" = "Ekran kapatıldığında";
+"System starts sleeping" = "Sistem uyku moduna girince";
+"Force unmount" = "Çıkarmaya zorla";
+"Mount after delay" = "Gecikmeden sonra ekle";
+"About Ejectify" = "Ejectify Hakkında";
+"Quit Ejectify" = "Ejectify'dan Çık";
