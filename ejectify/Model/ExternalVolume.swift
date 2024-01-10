@@ -99,6 +99,18 @@ class ExternalVolume {
             return nil
         }
         
+        guard let internalDisk = diskInfo[kDADiskDescriptionDeviceInternalKey] as? Bool else {
+            return nil
+        }
+        if internalDisk {
+            guard let ejectable = diskInfo[kDADiskDescriptionMediaEjectableKey] as? Bool else {
+                return nil
+            }
+            if !ejectable {
+                return nil
+            }
+        }
+
         guard name != VolumeReservedNames.EFI.rawValue else {
             return nil
         }
