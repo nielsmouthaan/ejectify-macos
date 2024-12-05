@@ -1,6 +1,3 @@
-| This project comes without assistance or support. |
-| --- |
-
 # Ejectify for Mac
 
 [Ejectify](https://ejectify.app) automatically unmounts external volumes when your Mac starts sleeping and mounts them again after it wakes up. It becomes handy when you have connected a USB drive to an external display that gets powered off when your Mac starts sleeping, causing the drive to be ejected forcefully.  
@@ -33,12 +30,13 @@
 
 ## Download
 
-[Get Ejectify](https://nielsmouthaan.lemonsqueezy.com/buy/ee57c50b-fddb-428d-8f61-9b202cf38bd0) via Lemon Squeezy. Alternatively, feel free to clone this repository and build a runnable application yourself.
+[Get Ejectify](https://nielsmouthaan.lemonsqueezy.com/buy/ee57c50b-fddb-428d-8f61-9b202cf38bd0) via Lemon Squeezy or check out this repository and build it yourself.
 
 ## Frequently asked questions
 
-### I'm running into an issue. How can I get help?
-Ejectify comes without (human) support. Check the frequently asked questions below to solve most common issues. If you want to test Ejectify before purchasing (to cover Apple's Developer Program fee), feel free to clone this repository (for free) and build a runnable application yourself.
+### How can I get support?
+
+First, check the [frequently asked questions](https://github.com/nielsmouthaan/ejectify-macos#frequently-asked-questions). If your question isn't answered, [create](https://github.com/nielsmouthaan/ejectify-macos/issues/new) an issue.
 
 ### The app doesn't start. What can I do?
 
