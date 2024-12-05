@@ -33,7 +33,7 @@
 
 ## Download
 
-[Download Ejectify](https://gum.co/ejectify) via Gumroad. A small fee is requested to cover Apple's Developer Program fee. Alternatively, feel free to clone this repository (for free) and build a runnable application yourself.
+[Get Ejectify](https://nielsmouthaan.lemonsqueezy.com/buy/ee57c50b-fddb-428d-8f61-9b202cf38bd0) via Lemon Squeezy. Alternatively, feel free to clone this repository and build a runnable application yourself.
 
 ## Frequently asked questions
 
