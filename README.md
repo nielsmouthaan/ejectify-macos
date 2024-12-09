@@ -30,7 +30,7 @@
 
 ## Download
 
-[Get Ejectify](https://nielsmouthaan.lemonsqueezy.com/buy/ee57c50b-fddb-428d-8f61-9b202cf38bd0) via Lemon Squeezy or check out this repository and build it yourself.
+[Get Ejectify](https://ejectify.app/get) via Lemon Squeezy or check out this repository and build it yourself.
 
 ## Frequently asked questions
 
