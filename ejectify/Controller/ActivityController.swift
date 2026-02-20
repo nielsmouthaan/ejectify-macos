@@ -6,8 +6,10 @@
 //
 
 import AppKit
+import OSLog
 
 class ActivityController {
+    private let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
     
     private var unmountedVolumes: [ExternalVolume] = []
     
@@ -43,16 +45,20 @@ class ActivityController {
     
     @objc func unmountVolumes() {
         unmountedVolumes = ExternalVolume.mountedVolumes().filter{ $0.enabled }
+        os_log("Unmount trigger received. %{public}@ enabled volumes queued.", log: self.log, type: .default, String(self.unmountedVolumes.count))
         unmountedVolumes.forEach { (volume) in
             volume.unmount(force: Preference.forceUnmount)
         }
     }
     
     @objc func mountVolumes() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + (Preference.mountAfterDelay ? 5 : 0)) {
+        let delay = Preference.mountAfterDelay ? 5 : 0
+        os_log("Mount trigger received. %{public}@ volumes queued. Delay: %{public}@s.", log: self.log, type: .default, String(self.unmountedVolumes.count), String(delay))
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(delay)) {
             self.unmountedVolumes.forEach { (volume) in
                 volume.mount()
             }
+            os_log("Mount pass finished. Clearing queued volumes.", log: self.log, type: .default)
             self.unmountedVolumes = []
         }
     }
