@@ -135,7 +135,12 @@ class ExternalVolume {
             return nil
         }
 
-        let encrypted = diskInfo[kDADiskDescriptionMediaEncryptedKey] as? Bool ?? false
+        let encrypted: Bool
+        if #available(macOS 10.14.4, *) {
+            encrypted = diskInfo[kDADiskDescriptionMediaEncryptedKey] as? Bool ?? false
+        } else {
+            encrypted = false
+        }
 
         return ExternalVolume(disk: disk, id: id as String, name: name, bsdName: bsdName, encrypted: encrypted)
     }
