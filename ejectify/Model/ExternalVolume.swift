@@ -17,13 +17,14 @@ private enum VolumeReservedNames: String {
 }
 
 class ExternalVolume {
-    
+
     static let sharedDASession: DASession? = DASessionCreate(kCFAllocatorDefault)
-    
+
     let disk: DADisk
     let id: String
     let name: String
-    
+    let bsdName: String
+
     private static var userDefaultsKeyPrefixVolume = "volume."
     var enabled: Bool {
         get {
@@ -34,71 +35,73 @@ class ExternalVolume {
             UserDefaults.standard.synchronize()
         }
     }
-    
-    init(disk: DADisk, id: String, name: String) {
+
+    init(disk: DADisk, id: String, name: String, bsdName: String) {
         self.disk = disk
         self.id = id
         self.name = name
+        self.bsdName = bsdName
     }
-    
+
     func unmount(force: Bool = false) {
         let option = force ? kDADiskUnmountOptionForce : kDADiskUnmountOptionDefault
         DADiskUnmount(disk, DADiskUnmountOptions(option), { disk, dissenter, context in
             dissenter?.log()
         }, nil)
     }
-    
+
     func mount() {
         DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), { disk, dissenter, context in
             dissenter?.log()
         }, nil)
     }
-    
+
     static func mountedVolumes() -> [ExternalVolume] {
         guard let mountedVolumeURLs = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys:nil, options: []) else {
             return []
         }
-        
+
         let mountedVolumes = mountedVolumeURLs.filter {
             ExternalVolume.isVolumeURL($0)
         }.compactMap {
             ExternalVolume.fromURL(url: $0)
         }
-        
+
         return mountedVolumes
     }
-    
+
     static func isVolumeURL(_ url: URL) -> Bool {
         url.pathComponents.count > 1 && url.pathComponents[VolumeComponent.root.rawValue] == VolumeReservedNames.Volumes.rawValue
     }
-    
+
     static func fromURL(url: URL) -> ExternalVolume? {
         guard let session = ExternalVolume.sharedDASession else {
             return nil
         }
-        
+
         guard let disk = DADiskCreateFromVolumePath(kCFAllocatorDefault, session, url as CFURL) else {
             return nil
         }
-        
+
         if disk.isDiskImage() {
             return nil
         }
-        
+
         return ExternalVolume.fromDisk(disk: disk)
     }
-    
+
     static func fromDisk(disk: DADisk) -> ExternalVolume? {
         guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
             return nil
         }
-        
+
         guard let name = diskInfo[kDADiskDescriptionVolumeNameKey] as? String,
-              let uuid = diskInfo[kDADiskDescriptionVolumeUUIDKey]
+              let uuid = diskInfo[kDADiskDescriptionVolumeUUIDKey],
+              let bsdName = diskInfo[kDADiskDescriptionMediaBSDNameKey] as? String
         else {
             return nil
         }
-        
+
         guard let internalDisk = diskInfo[kDADiskDescriptionDeviceInternalKey] as? Bool else {
             return nil
         }
@@ -114,12 +117,26 @@ class ExternalVolume {
         guard name != VolumeReservedNames.EFI.rawValue else {
             return nil
         }
-       
+
         let volumeUuid = uuid as! CFUUID
         guard let id = CFUUIDCreateString(kCFAllocatorDefault, volumeUuid) else {
             return nil
         }
-        
-        return ExternalVolume(disk: disk, id: id as String, name: name)
+
+        return ExternalVolume(disk: disk, id: id as String, name: name, bsdName: bsdName)
+    }
+
+    static func fromBSDName(_ bsdName: String) -> ExternalVolume? {
+        guard let session = ExternalVolume.sharedDASession else {
+            return nil
+        }
+
+        return bsdName.withCString { bsdNameCStr in
+            guard let disk = DADiskCreateFromBSDName(kCFAllocatorDefault, session, bsdNameCStr) else {
+                return nil
+            }
+
+            return ExternalVolume.fromDisk(disk: disk)
+        }
     }
 }
