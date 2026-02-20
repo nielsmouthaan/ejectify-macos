@@ -69,20 +69,15 @@ class ActivityController {
             return
         }
 
-        let initialDelay: TimeInterval = Preference.mountAfterDelay ? 5 : 0
-        os_log("Mount trigger received. %{public}@ volumes queued. Delay: %{public}@s.", log: self.log, type: .default, String(self.pendingRemountVolumesByID.count), String(Int(initialDelay)))
+        os_log("Mount trigger received. %{public}@ volumes queued.", log: self.log, type: .default, String(self.pendingRemountVolumesByID.count))
         remountTask = Task { [weak self] in
-            await self?.runRemountCycle(initialDelay: initialDelay)
+            await self?.runRemountCycle()
         }
     }
 
     /// Retries remounting until all queued volumes are mounted or retries are exhausted.
-    private func runRemountCycle(initialDelay: TimeInterval) async {
+    private func runRemountCycle() async {
         do {
-            if initialDelay > 0 {
-                try await sleep(seconds: initialDelay)
-            }
-
             var attemptIndex = 0
             while !pendingRemountVolumesByID.isEmpty {
                 os_log("Mount attempt %{public}@ started for %{public}@ queued volumes.", log: self.log, type: .default, String(attemptIndex + 1), String(self.pendingRemountVolumesByID.count))

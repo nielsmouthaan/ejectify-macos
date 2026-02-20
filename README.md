@@ -24,7 +24,7 @@
 - When the screens started sleeping.
 - When the system starts sleeping.
 
-⭐ Automatically mount volumes again when your Mac or screens wake up, optionally after a delay.
+⭐ Automatically mount volumes again when your Mac or screens wake up.
 
 ⭐ Unmount all volumes instantly with the click of a button.
 

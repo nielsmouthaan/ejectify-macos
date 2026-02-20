@@ -101,11 +101,6 @@ class StatusBarMenu: NSMenu {
         forceUnmountItem.state = Preference.forceUnmount ? .on : .off
         addItem(forceUnmountItem)
         
-        // Mount after delay
-        let mountAfterDelay = NSMenuItem(title: "Mount after delay".localized, action: #selector(mountAfterDelayClicked(menuItem:)), keyEquivalent: "")
-        mountAfterDelay.target = self
-        mountAfterDelay.state = Preference.mountAfterDelay ? .on : .off
-        addItem(mountAfterDelay)
     }
     
     private var unmountWhenScreensaverStartedItem: NSMenuItem?
@@ -188,11 +183,6 @@ class StatusBarMenu: NSMenu {
     
     @objc private func forceUnmountClicked(menuItem: NSMenuItem) {
         Preference.forceUnmount = menuItem.state == .off ? true : false
-        updateMenu()
-    }
-    
-    @objc private func mountAfterDelayClicked(menuItem: NSMenuItem) {
-        Preference.mountAfterDelay = menuItem.state == .off ? true : false
         updateMenu()
     }
     

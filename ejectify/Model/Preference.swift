@@ -56,14 +56,4 @@ class Preference {
         }
     }
     
-    private static let userDefaultsKeyMountAfterDelay = "preference.mountAfterDelay"
-    static var mountAfterDelay: Bool {
-        get {
-            return UserDefaults.standard.bool(forKey: userDefaultsKeyMountAfterDelay)
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: userDefaultsKeyMountAfterDelay)
-            UserDefaults.standard.synchronize()
-        }
-    }
 }
