@@ -26,7 +26,7 @@ class Preference {
         }
     }
     
-    private static var userDefaultsKeyUnmountWhen = "preference.unmountWhen"
+    private static let userDefaultsKeyUnmountWhen = "preference.unmountWhen"
     static var unmountWhen: UnmountWhen {
         get {
             if let rawValue = UserDefaults.standard.string(forKey: userDefaultsKeyUnmountWhen) {
@@ -39,11 +39,13 @@ class Preference {
         set {
             UserDefaults.standard.set(newValue.rawValue, forKey: userDefaultsKeyUnmountWhen)
             UserDefaults.standard.synchronize()
-            AppDelegate.shared.activityController?.startMonitoring()
+            Task { @MainActor in
+                AppDelegate.shared.activityController?.startMonitoring()
+            }
         }
     }
     
-    private static var userDefaultsKeyForceUnmount = "preference.forceUnmount"
+    private static let userDefaultsKeyForceUnmount = "preference.forceUnmount"
     static var forceUnmount: Bool {
         get {
             return UserDefaults.standard.bool(forKey: userDefaultsKeyForceUnmount)
@@ -54,7 +56,7 @@ class Preference {
         }
     }
     
-    private static var userDefaultsKeyMountAfterDelay = "preference.mountAfterDelay"
+    private static let userDefaultsKeyMountAfterDelay = "preference.mountAfterDelay"
     static var mountAfterDelay: Bool {
         get {
             return UserDefaults.standard.bool(forKey: userDefaultsKeyMountAfterDelay)

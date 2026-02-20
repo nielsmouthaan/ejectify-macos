@@ -201,6 +201,8 @@ class StatusBarMenu: NSMenu {
     }
     
     @objc private func quitClicked() {
-        NSApplication.shared.terminate(self)
+        Task { @MainActor in
+            NSApplication.shared.terminate(nil)
+        }
     }
 }

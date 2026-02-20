@@ -8,6 +8,7 @@
 import Cocoa
 
 @main
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     
     static let shared = NSApplication.shared.delegate as! AppDelegate
@@ -20,4 +21,3 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         activityController = ActivityController.init()
     }
 }
-

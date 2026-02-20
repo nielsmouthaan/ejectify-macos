@@ -7,6 +7,7 @@
 
 import AppKit
 
+@MainActor
 class StatusBar {
     
     private var statusItem: NSStatusItem

@@ -20,7 +20,9 @@ private enum VolumeReservedNames: String {
 class ExternalVolume {
     private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ExternalVolume")
 
-    static let sharedDASession: DASession? = DASessionCreate(kCFAllocatorDefault)
+    private static var diskArbitrationSession: DASession? {
+        DASessionCreate(kCFAllocatorDefault)
+    }
 
     let disk: DADisk
     let id: String
@@ -28,7 +30,7 @@ class ExternalVolume {
     let bsdName: String
     let encrypted: Bool
 
-    private static var userDefaultsKeyPrefixVolume = "volume."
+    private static let userDefaultsKeyPrefixVolume = "volume."
     var enabled: Bool {
         get {
             return UserDefaults.standard.object(forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id) != nil ? UserDefaults.standard.bool(forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id) : true // By default all volumes automatically unmount
@@ -89,7 +91,7 @@ class ExternalVolume {
     }
 
     static func fromURL(url: URL) -> ExternalVolume? {
-        guard let session = ExternalVolume.sharedDASession else {
+        guard let session = ExternalVolume.diskArbitrationSession else {
             return nil
         }
 
@@ -143,7 +145,7 @@ class ExternalVolume {
     }
 
     static func fromBSDName(_ bsdName: String) -> ExternalVolume? {
-        guard let session = ExternalVolume.sharedDASession else {
+        guard let session = ExternalVolume.diskArbitrationSession else {
             return nil
         }
 

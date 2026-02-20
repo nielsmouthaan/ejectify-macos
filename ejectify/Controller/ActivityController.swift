@@ -8,7 +8,9 @@
 import AppKit
 import OSLog
 
+@MainActor
 class ActivityController {
+    /// Tracks volumes that should be remounted after wake.
     private struct PendingRemountVolume {
         let id: String
         let bsdName: String
@@ -17,7 +19,7 @@ class ActivityController {
     private let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
     private let retryDelays: [TimeInterval] = [0, 1, 2, 4, 8, 15]
     private var pendingRemountVolumesByID: [String: PendingRemountVolume] = [:]
-    private var remountWorkItem: DispatchWorkItem?
+    private var remountTask: Task<Void, Never>?
 
     init() {
         startMonitoring()
@@ -50,6 +52,7 @@ class ActivityController {
     }
 
     @objc func unmountVolumes() {
+        remountTask?.cancel()
         let volumesToUnmount = ExternalVolume.mountedVolumes().filter { $0.enabled }
         os_log("Unmount trigger received. %{public}@ enabled volumes queued.", log: self.log, type: .default, String(volumesToUnmount.count))
         volumesToUnmount.forEach { volume in
@@ -59,7 +62,7 @@ class ActivityController {
     }
 
     @objc func mountVolumes() {
-        remountWorkItem?.cancel()
+        remountTask?.cancel()
 
         guard !pendingRemountVolumesByID.isEmpty else {
             os_log("Mount trigger received with no queued volumes.", log: self.log, type: .default)
@@ -68,53 +71,65 @@ class ActivityController {
 
         let initialDelay: TimeInterval = Preference.mountAfterDelay ? 5 : 0
         os_log("Mount trigger received. %{public}@ volumes queued. Delay: %{public}@s.", log: self.log, type: .default, String(self.pendingRemountVolumesByID.count), String(Int(initialDelay)))
-        scheduleRemountAttempt(index: 0, delay: initialDelay)
+        remountTask = Task { [weak self] in
+            await self?.runRemountCycle(initialDelay: initialDelay)
+        }
     }
 
-    private func scheduleRemountAttempt(index: Int, delay: TimeInterval) {
-        let workItem = DispatchWorkItem { [weak self] in
-            self?.performRemountAttempt(index: index)
-        }
-
-        remountWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
-    }
-
-    private func performRemountAttempt(index: Int) {
-        guard !pendingRemountVolumesByID.isEmpty else {
-            return
-        }
-
-        os_log("Mount attempt %{public}@ started for %{public}@ queued volumes.", log: self.log, type: .default, String(index + 1), String(self.pendingRemountVolumesByID.count))
-        pendingRemountVolumesByID.values.forEach { pendingVolume in
-            if let freshVolume = ExternalVolume.fromBSDName(pendingVolume.bsdName) {
-                freshVolume.mount()
+    /// Retries remounting until all queued volumes are mounted or retries are exhausted.
+    private func runRemountCycle(initialDelay: TimeInterval) async {
+        do {
+            if initialDelay > 0 {
+                try await sleep(seconds: initialDelay)
             }
-        }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.reconcileRemountState(afterAttemptAt: index)
+            var attemptIndex = 0
+            while !pendingRemountVolumesByID.isEmpty {
+                os_log("Mount attempt %{public}@ started for %{public}@ queued volumes.", log: self.log, type: .default, String(attemptIndex + 1), String(self.pendingRemountVolumesByID.count))
+                pendingRemountVolumesByID.values.forEach { pendingVolume in
+                    if let freshVolume = ExternalVolume.fromBSDName(pendingVolume.bsdName) {
+                        freshVolume.mount()
+                    }
+                }
+
+                try await sleep(seconds: 1)
+                reconcileRemountState()
+
+                if pendingRemountVolumesByID.isEmpty {
+                    os_log("Mount queue completed successfully.", log: self.log, type: .default)
+                    return
+                }
+
+                attemptIndex += 1
+                if attemptIndex >= retryDelays.count {
+                    os_log("Mount retries exhausted. %{public}@ volumes still pending.", log: self.log, type: .error, String(self.pendingRemountVolumesByID.count))
+                    return
+                }
+
+                let retryDelay = retryDelays[attemptIndex]
+                if retryDelay > 0 {
+                    try await sleep(seconds: retryDelay)
+                }
+            }
+        } catch is CancellationError {
+            os_log("Mount queue cancelled.", log: self.log, type: .default)
+        } catch {
+            os_log("Mount queue failed with unexpected error: %{public}@", log: self.log, type: .error, String(describing: error))
         }
     }
 
-    private func reconcileRemountState(afterAttemptAt index: Int) {
+    /// Removes volumes from the remount queue once they are mounted again.
+    private func reconcileRemountState() {
         let currentlyMountedVolumeIDs = Set(ExternalVolume.mountedVolumes().map { $0.id })
 
         pendingRemountVolumesByID = pendingRemountVolumesByID.filter { id, _ in
             !currentlyMountedVolumeIDs.contains(id)
         }
+    }
 
-        if pendingRemountVolumesByID.isEmpty {
-            os_log("Mount queue completed successfully.", log: self.log, type: .default)
-            return
-        }
-
-        let nextAttemptIndex = index + 1
-        if nextAttemptIndex >= retryDelays.count {
-            os_log("Mount retries exhausted. %{public}@ volumes still pending.", log: self.log, type: .error, String(self.pendingRemountVolumesByID.count))
-            return
-        }
-
-        scheduleRemountAttempt(index: nextAttemptIndex, delay: retryDelays[nextAttemptIndex])
+    /// Sleeps for a wall-clock duration while preserving task cancellation.
+    private func sleep(seconds: TimeInterval) async throws {
+        let nanoseconds = UInt64(max(0, seconds) * 1_000_000_000)
+        try await Task.sleep(nanoseconds: nanoseconds)
     }
 }
