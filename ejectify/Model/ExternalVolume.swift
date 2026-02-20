@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 
 private enum VolumeComponent: Int {
     case root = 1
@@ -17,6 +18,7 @@ private enum VolumeReservedNames: String {
 }
 
 class ExternalVolume {
+    private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ExternalVolume")
     
     static let sharedDASession: DASession? = DASessionCreate(kCFAllocatorDefault)
     
@@ -43,12 +45,14 @@ class ExternalVolume {
     
     func unmount(force: Bool = false) {
         let option = force ? kDADiskUnmountOptionForce : kDADiskUnmountOptionDefault
+        os_log("Unmount attempt started for volume '%{public}@' [id: %{public}@] [bsd: %{public}@] [force: %{public}@]", log: ExternalVolume.log, type: .default, self.name, self.id, self.bsdNameOrUnknown(), force.description)
         DADiskUnmount(disk, DADiskUnmountOptions(option), { disk, dissenter, context in
             dissenter?.log()
         }, nil)
     }
     
     func mount() {
+        os_log("Mount attempt started for volume '%{public}@' [id: %{public}@] [bsd: %{public}@]", log: ExternalVolume.log, type: .default, self.name, self.id, self.bsdNameOrUnknown())
         DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), { disk, dissenter, context in
             dissenter?.log()
         }, nil)
@@ -121,5 +125,12 @@ class ExternalVolume {
         }
         
         return ExternalVolume(disk: disk, id: id as String, name: name)
+    }
+    
+    private func bsdNameOrUnknown() -> String {
+        guard let bsdName = DADiskGetBSDName(disk) else {
+            return "unknown"
+        }
+        return String(cString: bsdName)
     }
 }
