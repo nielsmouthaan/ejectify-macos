@@ -18,7 +18,19 @@ private enum VolumeReservedNames: String {
 }
 
 class ExternalVolume {
-    private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ExternalVolume")
+    private final class CallbackLogContext {
+        let volumeName: String
+        let bsdName: String
+        let unmountModePrefix: String?
+
+        init(volumeName: String, bsdName: String, unmountModePrefix: String? = nil) {
+            self.volumeName = volumeName
+            self.bsdName = bsdName
+            self.unmountModePrefix = unmountModePrefix
+        }
+    }
+
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ExternalVolume")
     private static var userDefaults: UserDefaults { UserDefaults.standard }
 
     private static var diskArbitrationSession: DASession? {
@@ -56,25 +68,52 @@ class ExternalVolume {
 
     func unmount(force: Bool = false) {
         let option = force ? kDADiskUnmountOptionForce : kDADiskUnmountOptionDefault
-        os_log("Unmount attempt started for volume '%{public}@' [id: %{public}@] [bsd: %{public}@] [force: %{public}@]", log: ExternalVolume.log, type: .default, self.name, self.id, self.bsdNameOrUnknown(), force.description)
-        DADiskUnmount(disk, DADiskUnmountOptions(option), { _, dissenter, _ in
-            dissenter?.log()
-        }, nil)
+        let bsdName = Self.bsdNameOrUnknown(self.disk)
+        let unmountModePrefix = force ? "Forced unmount" : "Unforced unmount"
+        Self.logger.info("\(unmountModePrefix) attempt started for \(self.name) (\(bsdName))")
+        let context = Unmanaged.passRetained(CallbackLogContext(volumeName: self.name, bsdName: bsdName, unmountModePrefix: unmountModePrefix)).toOpaque()
+        DADiskUnmount(disk, DADiskUnmountOptions(option), { _, dissenter, context in
+            guard let context else {
+                return
+            }
+            let callbackContext = Unmanaged<CallbackLogContext>.fromOpaque(context).takeRetainedValue()
+
+            guard let dissenter else {
+                ExternalVolume.logger.info("\(callbackContext.unmountModePrefix ?? "Unmount") completed for \(callbackContext.volumeName) (\(callbackContext.bsdName))")
+                return
+            }
+
+            let status = DADissenterGetStatus(dissenter)
+            ExternalVolume.logger.error("\(callbackContext.unmountModePrefix ?? "Unmount") failed for \(callbackContext.volumeName) (\(callbackContext.bsdName)): \(status.description)")
+        }, context)
     }
 
     func mount() {
-        os_log("Mount attempt started for volume '%{public}@' [id: %{public}@] [bsd: %{public}@]", log: ExternalVolume.log, type: .default, self.name, self.id, self.bsdNameOrUnknown())
+        let bsdName = Self.bsdNameOrUnknown(self.disk)
+        Self.logger.info("Mount attempt started for \(self.name) (\(bsdName))")
         if encrypted {
             if unlockEncryptedVolumeIfNeeded() {
-                os_log("Encrypted volume unlock succeeded for '%{public}@' [bsd: %{public}@]", log: ExternalVolume.log, type: .default, name, bsdName)
+                Self.logger.info("Encrypted volume unlock succeeded for \(self.name) (\(self.bsdName))")
             } else {
-                os_log("Encrypted volume unlock failed for '%{public}@' [bsd: %{public}@]. Falling back to direct mount attempt.", log: ExternalVolume.log, type: .error, name, bsdName)
+                Self.logger.warning("Encrypted volume unlock failed for \(self.name) (\(self.bsdName))")
             }
         }
 
-        DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), { _, dissenter, _ in
-            dissenter?.log()
-        }, nil)
+        let context = Unmanaged.passRetained(CallbackLogContext(volumeName: self.name, bsdName: bsdName)).toOpaque()
+        DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), { _, dissenter, context in
+            guard let context else {
+                return
+            }
+            let callbackContext = Unmanaged<CallbackLogContext>.fromOpaque(context).takeRetainedValue()
+
+            guard let dissenter else {
+                ExternalVolume.logger.info("Mount completed for \(callbackContext.volumeName) (\(callbackContext.bsdName))")
+                return
+            }
+
+            let status = DADissenterGetStatus(dissenter)
+            ExternalVolume.logger.error("Mount failed for \(callbackContext.volumeName) (\(callbackContext.bsdName)): \(status.description)")
+        }, context)
     }
 
     static func mountedVolumes() -> [ExternalVolume] {
@@ -161,44 +200,27 @@ class ExternalVolume {
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
         process.arguments = ["apfs", "unlockVolume", bsdName, "-nomount"]
 
-        let stdinPipe = Pipe()
-        let stdoutPipe = Pipe()
-        let stderrPipe = Pipe()
-        process.standardInput = stdinPipe
-        process.standardOutput = stdoutPipe
-        process.standardError = stderrPipe
-
         do {
             try process.run()
+            process.waitUntilExit()
         } catch {
-            os_log("Failed to start diskutil unlock process for '%{public}@' [bsd: %{public}@]: %{public}@", log: ExternalVolume.log, type: .error, name, bsdName, String(describing: error))
+            Self.logger.error("Failed to start diskutil unlock process for \(self.name) (\(self.bsdName)): \(String(describing: error))")
             return false
         }
 
-        stdinPipe.fileHandleForWriting.closeFile()
-        process.waitUntilExit()
-
-        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-        let output = (String(data: stdoutData, encoding: .utf8) ?? "") + (String(data: stderrData, encoding: .utf8) ?? "")
-        let normalizedOutput = output.lowercased()
-
-        if process.terminationStatus == 0 {
-            return true
+        guard process.terminationStatus == 0 else {
+            Self.logger.error("diskutil unlock failed for \(self.name) (\(self.bsdName)) with status \(process.terminationStatus)")
+            return false
         }
 
-        if normalizedOutput.contains("already unlocked") || normalizedOutput.contains("is not encrypted") {
-            return true
-        }
-
-        os_log("diskutil unlock failed for '%{public}@' [bsd: %{public}@] [status: %{public}@] [output: %{public}@]", log: ExternalVolume.log, type: .error, name, bsdName, String(process.terminationStatus), output)
-        return false
+        return true
     }
 
-    private func bsdNameOrUnknown() -> String {
+    private static func bsdNameOrUnknown(_ disk: DADisk) -> String {
         guard let bsdName = DADiskGetBSDName(disk) else {
             return "unknown"
         }
         return String(cString: bsdName)
     }
+
 }
