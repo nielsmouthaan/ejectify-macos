@@ -26,6 +26,7 @@ class ExternalVolume {
     let id: String
     let name: String
     let bsdName: String
+    let encrypted: Bool
 
     private static var userDefaultsKeyPrefixVolume = "volume."
     var enabled: Bool {
@@ -38,11 +39,12 @@ class ExternalVolume {
         }
     }
 
-    init(disk: DADisk, id: String, name: String, bsdName: String) {
+    init(disk: DADisk, id: String, name: String, bsdName: String, encrypted: Bool) {
         self.disk = disk
         self.id = id
         self.name = name
         self.bsdName = bsdName
+        self.encrypted = encrypted
     }
 
     func unmount(force: Bool = false) {
@@ -55,6 +57,14 @@ class ExternalVolume {
 
     func mount() {
         os_log("Mount attempt started for volume '%{public}@' [id: %{public}@] [bsd: %{public}@]", log: ExternalVolume.log, type: .default, self.name, self.id, self.bsdNameOrUnknown())
+        if encrypted {
+            if unlockEncryptedVolumeIfNeeded() {
+                os_log("Encrypted volume unlock succeeded for '%{public}@' [bsd: %{public}@]", log: ExternalVolume.log, type: .default, name, bsdName)
+            } else {
+                os_log("Encrypted volume unlock failed for '%{public}@' [bsd: %{public}@]. Falling back to direct mount attempt.", log: ExternalVolume.log, type: .error, name, bsdName)
+            }
+        }
+
         DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), { disk, dissenter, context in
             dissenter?.log()
         }, nil)
@@ -127,7 +137,9 @@ class ExternalVolume {
             return nil
         }
 
-        return ExternalVolume(disk: disk, id: id as String, name: name, bsdName: bsdName)
+        let encrypted = diskInfo[kDADiskDescriptionMediaEncryptedKey] as? Bool ?? false
+
+        return ExternalVolume(disk: disk, id: id as String, name: name, bsdName: bsdName, encrypted: encrypted)
     }
 
     static func fromBSDName(_ bsdName: String) -> ExternalVolume? {
@@ -142,6 +154,45 @@ class ExternalVolume {
 
             return ExternalVolume.fromDisk(disk: disk)
         }
+    }
+
+    private func unlockEncryptedVolumeIfNeeded() -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
+        process.arguments = ["apfs", "unlockVolume", bsdName, "-nomount"]
+
+        let stdinPipe = Pipe()
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        process.standardInput = stdinPipe
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
+
+        do {
+            try process.run()
+        } catch {
+            os_log("Failed to start diskutil unlock process for '%{public}@' [bsd: %{public}@]: %{public}@", log: ExternalVolume.log, type: .error, name, bsdName, String(describing: error))
+            return false
+        }
+
+        stdinPipe.fileHandleForWriting.closeFile()
+        process.waitUntilExit()
+
+        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+        let output = (String(data: stdoutData, encoding: .utf8) ?? "") + (String(data: stderrData, encoding: .utf8) ?? "")
+        let normalizedOutput = output.lowercased()
+
+        if process.terminationStatus == 0 {
+            return true
+        }
+
+        if normalizedOutput.contains("already unlocked") || normalizedOutput.contains("is not encrypted") {
+            return true
+        }
+
+        os_log("diskutil unlock failed for '%{public}@' [bsd: %{public}@] [status: %{public}@] [output: %{public}@]", log: ExternalVolume.log, type: .error, name, bsdName, String(process.terminationStatus), output)
+        return false
     }
 
     private func bsdNameOrUnknown() -> String {
