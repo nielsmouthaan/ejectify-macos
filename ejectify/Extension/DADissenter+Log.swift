@@ -11,7 +11,7 @@ import OSLog
 extension DADissenter {
     
     func log() {
-        let status = DADissenterGetStatus(self);
+        let status = DADissenterGetStatus(self)
         var statusString: String?
         if let statusCFString = DADissenterGetStatusString(self) {
             statusString = statusCFString as NSString as String

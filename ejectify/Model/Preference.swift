@@ -9,6 +9,7 @@ import Foundation
 import LaunchAtLogin
 
 class Preference {
+    private static var userDefaults: UserDefaults { UserDefaults.standard }
     
     enum UnmountWhen: String {
         case screensaverStarted = "screensaverStarted"
@@ -29,16 +30,14 @@ class Preference {
     private static let userDefaultsKeyUnmountWhen = "preference.unmountWhen"
     static var unmountWhen: UnmountWhen {
         get {
-            if let rawValue = UserDefaults.standard.string(forKey: userDefaultsKeyUnmountWhen) {
-                if let value = UnmountWhen(rawValue: rawValue) {
-                    return value
-                }
+            guard let rawValue = userDefaults.string(forKey: userDefaultsKeyUnmountWhen),
+                  let value = UnmountWhen(rawValue: rawValue) else {
+                return .systemStartsSleeping // Default
             }
-            return .systemStartsSleeping // Default
+            return value
         }
         set {
-            UserDefaults.standard.set(newValue.rawValue, forKey: userDefaultsKeyUnmountWhen)
-            UserDefaults.standard.synchronize()
+            userDefaults.set(newValue.rawValue, forKey: userDefaultsKeyUnmountWhen)
             Task { @MainActor in
                 AppDelegate.shared.activityController?.startMonitoring()
             }
@@ -48,11 +47,10 @@ class Preference {
     private static let userDefaultsKeyForceUnmount = "preference.forceUnmount"
     static var forceUnmount: Bool {
         get {
-            return UserDefaults.standard.bool(forKey: userDefaultsKeyForceUnmount)
+            return userDefaults.bool(forKey: userDefaultsKeyForceUnmount)
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: userDefaultsKeyForceUnmount)
-            UserDefaults.standard.synchronize()
+            userDefaults.set(newValue, forKey: userDefaultsKeyForceUnmount)
         }
     }
     

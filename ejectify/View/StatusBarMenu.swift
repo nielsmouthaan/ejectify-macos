@@ -104,31 +104,41 @@ class StatusBarMenu: NSMenu {
     }
     
     private var unmountWhenScreensaverStartedItem: NSMenuItem?
-    private var unmountWhenScreenIsLocked: NSMenuItem?
+    private var unmountWhenScreenIsLockedItem: NSMenuItem?
     private var unmountWhenScreensStartedSleepingItem: NSMenuItem?
     private var unmountWhenSystemStartsSleepingItem: NSMenuItem?
+
+    /// Converts menu state toggles to a Bool value.
+    private func toggledValue(for state: NSControl.StateValue) -> Bool {
+        state == .off
+    }
+
     private func buildUnmountWhenMenu() -> NSMenu {
         let unmountWhenMenu = NSMenu(title: "Unmount when".localized)
-        
-        unmountWhenScreensaverStartedItem = NSMenuItem(title: "Screensaver started".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
-        unmountWhenScreensaverStartedItem!.target = self
-        unmountWhenScreensaverStartedItem!.state = Preference.unmountWhen == .screensaverStarted ? .on : .off
-        unmountWhenMenu.addItem(unmountWhenScreensaverStartedItem!)
-        
-        unmountWhenScreenIsLocked = NSMenuItem(title: "Screen is locked".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
-        unmountWhenScreenIsLocked!.target = self
-        unmountWhenScreenIsLocked!.state = Preference.unmountWhen == .screenIsLocked ? .on : .off
-        unmountWhenMenu.addItem(unmountWhenScreenIsLocked!)
-        
-        unmountWhenScreensStartedSleepingItem = NSMenuItem(title: "Display turned off".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
-        unmountWhenScreensStartedSleepingItem!.target = self
-        unmountWhenScreensStartedSleepingItem!.state = Preference.unmountWhen == .screensStartedSleeping ? .on : .off
-        unmountWhenMenu.addItem(unmountWhenScreensStartedSleepingItem!)
-        
-        unmountWhenSystemStartsSleepingItem = NSMenuItem(title: "System starts sleeping".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
-        unmountWhenSystemStartsSleepingItem!.target = self
-        unmountWhenSystemStartsSleepingItem!.state = Preference.unmountWhen == .systemStartsSleeping ? .on : .off
-        unmountWhenMenu.addItem(unmountWhenSystemStartsSleepingItem!)
+
+        let screensaverStartedItem = NSMenuItem(title: "Screensaver started".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
+        screensaverStartedItem.target = self
+        screensaverStartedItem.state = Preference.unmountWhen == .screensaverStarted ? .on : .off
+        unmountWhenScreensaverStartedItem = screensaverStartedItem
+        unmountWhenMenu.addItem(screensaverStartedItem)
+
+        let screenIsLockedItem = NSMenuItem(title: "Screen is locked".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
+        screenIsLockedItem.target = self
+        screenIsLockedItem.state = Preference.unmountWhen == .screenIsLocked ? .on : .off
+        unmountWhenScreenIsLockedItem = screenIsLockedItem
+        unmountWhenMenu.addItem(screenIsLockedItem)
+
+        let screensStartedSleepingItem = NSMenuItem(title: "Display turned off".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
+        screensStartedSleepingItem.target = self
+        screensStartedSleepingItem.state = Preference.unmountWhen == .screensStartedSleeping ? .on : .off
+        unmountWhenScreensStartedSleepingItem = screensStartedSleepingItem
+        unmountWhenMenu.addItem(screensStartedSleepingItem)
+
+        let systemStartsSleepingItem = NSMenuItem(title: "System starts sleeping".localized, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
+        systemStartsSleepingItem.target = self
+        systemStartsSleepingItem.state = Preference.unmountWhen == .systemStartsSleeping ? .on : .off
+        unmountWhenSystemStartsSleepingItem = systemStartsSleepingItem
+        unmountWhenMenu.addItem(systemStartsSleepingItem)
         
         return unmountWhenMenu
     }
@@ -159,19 +169,19 @@ class StatusBarMenu: NSMenu {
         guard let volume = menuItem.representedObject as? ExternalVolume else {
             return
         }
-        volume.enabled = menuItem.state == .off ? true : false
+        volume.enabled = toggledValue(for: menuItem.state)
         updateMenu()
     }
     
     @objc private func launchAtLoginClicked(menuItem: NSMenuItem) {
-        Preference.launchAtLogin = menuItem.state == .off ? true : false
+        Preference.launchAtLogin = toggledValue(for: menuItem.state)
         updateMenu()
     }
     
     @objc private func unmountWhenChanged(menuItem: NSMenuItem) {
         if menuItem == unmountWhenScreensaverStartedItem {
             Preference.unmountWhen = .screensaverStarted
-        } else if menuItem == unmountWhenScreenIsLocked {
+        } else if menuItem == unmountWhenScreenIsLockedItem {
             Preference.unmountWhen = .screenIsLocked
         } else if menuItem == unmountWhenScreensStartedSleepingItem {
             Preference.unmountWhen = .screensStartedSleeping
@@ -182,12 +192,15 @@ class StatusBarMenu: NSMenu {
     }
     
     @objc private func forceUnmountClicked(menuItem: NSMenuItem) {
-        Preference.forceUnmount = menuItem.state == .off ? true : false
+        Preference.forceUnmount = toggledValue(for: menuItem.state)
         updateMenu()
     }
     
     @objc private func aboutClicked() {
-        NSWorkspace.shared.open(URL(string: "https://ejectify.app")!)
+        guard let url = URL(string: "https://ejectify.app") else {
+            return
+        }
+        NSWorkspace.shared.open(url)
     }
     
     @objc private func quitClicked() {

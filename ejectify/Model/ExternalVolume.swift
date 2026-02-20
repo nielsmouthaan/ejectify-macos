@@ -19,6 +19,7 @@ private enum VolumeReservedNames: String {
 
 class ExternalVolume {
     private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ExternalVolume")
+    private static var userDefaults: UserDefaults { UserDefaults.standard }
 
     private static var diskArbitrationSession: DASession? {
         DASessionCreate(kCFAllocatorDefault)
@@ -31,13 +32,17 @@ class ExternalVolume {
     let encrypted: Bool
 
     private static let userDefaultsKeyPrefixVolume = "volume."
+    /// Tracks whether this volume should be managed automatically. Defaults to enabled.
     var enabled: Bool {
         get {
-            return UserDefaults.standard.object(forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id) != nil ? UserDefaults.standard.bool(forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id) : true // By default all volumes automatically unmount
+            let key = ExternalVolume.userDefaultsKeyPrefixVolume + id
+            guard let value = ExternalVolume.userDefaults.object(forKey: key) as? Bool else {
+                return true // By default all volumes automatically unmount.
+            }
+            return value
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id)
-            UserDefaults.standard.synchronize()
+            ExternalVolume.userDefaults.set(newValue, forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id)
         }
     }
 
@@ -52,7 +57,7 @@ class ExternalVolume {
     func unmount(force: Bool = false) {
         let option = force ? kDADiskUnmountOptionForce : kDADiskUnmountOptionDefault
         os_log("Unmount attempt started for volume '%{public}@' [id: %{public}@] [bsd: %{public}@] [force: %{public}@]", log: ExternalVolume.log, type: .default, self.name, self.id, self.bsdNameOrUnknown(), force.description)
-        DADiskUnmount(disk, DADiskUnmountOptions(option), { disk, dissenter, context in
+        DADiskUnmount(disk, DADiskUnmountOptions(option), { _, dissenter, _ in
             dissenter?.log()
         }, nil)
     }
@@ -67,7 +72,7 @@ class ExternalVolume {
             }
         }
 
-        DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), { disk, dissenter, context in
+        DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), { _, dissenter, _ in
             dissenter?.log()
         }, nil)
     }
@@ -77,13 +82,9 @@ class ExternalVolume {
             return []
         }
 
-        let mountedVolumes = mountedVolumeURLs.filter {
-            ExternalVolume.isVolumeURL($0)
-        }.compactMap {
-            ExternalVolume.fromURL(url: $0)
-        }
-
-        return mountedVolumes
+        return mountedVolumeURLs
+            .filter(ExternalVolume.isVolumeURL(_:))
+            .compactMap(ExternalVolume.fromURL(url:))
     }
 
     static func isVolumeURL(_ url: URL) -> Bool {
@@ -112,7 +113,7 @@ class ExternalVolume {
         }
 
         guard let name = diskInfo[kDADiskDescriptionVolumeNameKey] as? String,
-              let uuid = diskInfo[kDADiskDescriptionVolumeUUIDKey],
+              let volumeUUID = diskInfo[kDADiskDescriptionVolumeUUIDKey] as? UUID,
               let bsdName = diskInfo[kDADiskDescriptionMediaBSDNameKey] as? String
         else {
             return nil
@@ -134,14 +135,11 @@ class ExternalVolume {
             return nil
         }
 
-        let volumeUuid = uuid as! CFUUID
-        guard let id = CFUUIDCreateString(kCFAllocatorDefault, volumeUuid) else {
-            return nil
-        }
+        let id = volumeUUID.uuidString
 
         let encrypted = diskInfo[kDADiskDescriptionMediaEncryptedKey] as? Bool ?? false
 
-        return ExternalVolume(disk: disk, id: id as String, name: name, bsdName: bsdName, encrypted: encrypted)
+        return ExternalVolume(disk: disk, id: id, name: name, bsdName: bsdName, encrypted: encrypted)
     }
 
     static func fromBSDName(_ bsdName: String) -> ExternalVolume? {

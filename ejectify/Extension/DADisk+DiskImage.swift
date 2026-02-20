@@ -10,18 +10,14 @@ import Foundation
 extension DADisk {
     
     func isDiskImage() -> Bool {
-        guard let description = DADiskCopyDescription(self) as NSDictionary? else {
+        guard let description = DADiskCopyDescription(self) as? [AnyHashable: Any] else {
             return false
         }
         
         guard let deviceModel = description[kDADiskDescriptionDeviceModelKey] as? String else {
             return false
         }
-        
-        if deviceModel == "Disk Image" {
-            return true
-        } else {
-            return false
-        }
+
+        return deviceModel == "Disk Image"
     }
 }
