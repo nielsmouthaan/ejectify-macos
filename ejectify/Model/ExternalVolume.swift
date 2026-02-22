@@ -151,8 +151,11 @@ class ExternalVolume {
             return nil
         }
 
+        guard let volumeUUID = ExternalVolume.volumeUUID(from: diskInfo) else {
+            return nil
+        }
+
         guard let name = diskInfo[kDADiskDescriptionVolumeNameKey] as? String,
-              let volumeUUID = diskInfo[kDADiskDescriptionVolumeUUIDKey] as? UUID,
               let bsdName = diskInfo[kDADiskDescriptionMediaBSDNameKey] as? String
         else {
             return nil
@@ -221,6 +224,30 @@ class ExternalVolume {
             return "unknown"
         }
         return String(cString: bsdName)
+    }
+
+    /// Normalizes volume UUID values returned by Disk Arbitration across Foundation and CoreFoundation bridge types.
+    private static func volumeUUID(from diskInfo: [NSString: Any]) -> UUID? {
+        guard let rawVolumeUUID = diskInfo[kDADiskDescriptionVolumeUUIDKey] else {
+            return nil
+        }
+
+        if let volumeUUID = rawVolumeUUID as? UUID {
+            return volumeUUID
+        }
+
+        if let volumeUUIDString = rawVolumeUUID as? String {
+            return UUID(uuidString: volumeUUIDString)
+        }
+
+        let rawCoreFoundationValue = rawVolumeUUID as CFTypeRef
+        if CFGetTypeID(rawCoreFoundationValue) == CFUUIDGetTypeID() {
+            let coreFoundationUUID = rawCoreFoundationValue as! CFUUID
+            let volumeUUIDString = CFUUIDCreateString(kCFAllocatorDefault, coreFoundationUUID) as String
+            return UUID(uuidString: volumeUUIDString)
+        }
+
+        return nil
     }
 
 }
