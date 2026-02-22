@@ -13,11 +13,18 @@ class ActivityController {
     /// Tracks volumes that should be remounted after wake.
     private struct PendingRemountVolume {
         let id: String
+        let name: String
         let bsdName: String
+
+        var description: String {
+            "\(name) (\(bsdName))"
+        }
     }
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
-    private let retryDelays: [TimeInterval] = [0, 1, 2, 4, 8, 15]
+    /// Retry attempt schedule in seconds since mount trigger.
+    private let retryDelays: [TimeInterval] = [0, 5, 15, 30, 60]
+    private let reconciliationDelay: TimeInterval = 3
     private var pendingRemountVolumesByID: [String: PendingRemountVolume] = [:]
     private var remountTask: Task<Void, Never>?
 
@@ -58,7 +65,7 @@ class ActivityController {
         let volumesToUnmount = ExternalVolume.mountedVolumes().filter { $0.enabled }
         logger.info("Unmount trigger received: \(volumesToUnmount.count, privacy: .public) enabled volumes queued")
         volumesToUnmount.forEach { volume in
-            pendingRemountVolumesByID[volume.id] = PendingRemountVolume(id: volume.id, bsdName: volume.bsdName)
+            pendingRemountVolumesByID[volume.id] = PendingRemountVolume(id: volume.id, name: volume.name, bsdName: volume.bsdName)
             volume.unmount(force: Preference.forceUnmount)
         }
     }
@@ -71,7 +78,7 @@ class ActivityController {
             return
         }
 
-        logger.info("Mount trigger received: \(self.pendingRemountVolumesByID.count, privacy: .public) volumes queued")
+        logger.info("Mount trigger received: \(self.pendingRemountVolumesByID.count, privacy: .public) volumes queued: \(self.pendingVolumeDescriptions(), privacy: .public)")
         remountTask = Task { [weak self] in
             await self?.runRemountCycle()
         }
@@ -80,40 +87,38 @@ class ActivityController {
     /// Retries remounting until all queued volumes are mounted or retries are exhausted.
     private func runRemountCycle() async {
         do {
-            var attemptIndex = 0
-            while !pendingRemountVolumesByID.isEmpty {
-                logger.info("Mount attempt \(attemptIndex + 1, privacy: .public) started for \(self.pendingRemountVolumesByID.count, privacy: .public) queued volumes")
+            let cycleStart = Date()
+            for (attemptIndex, attemptOffset) in retryDelays.enumerated() {
+                if pendingRemountVolumesByID.isEmpty {
+                    logger.info("Mount queue completed successfully")
+                    return
+                }
+
+                let elapsedBeforeAttempt = Date().timeIntervalSince(cycleStart)
+                let waitBeforeAttempt = attemptOffset - elapsedBeforeAttempt
+                if waitBeforeAttempt > 0 {
+                    try await sleep(seconds: waitBeforeAttempt)
+                }
+
+                logger.info("Mount attempt \(attemptIndex + 1, privacy: .public) started for \(self.pendingRemountVolumesByID.count, privacy: .public) queued volumes: \(self.pendingVolumeDescriptions(), privacy: .public)")
                 pendingRemountVolumesByID.values.forEach { pendingVolume in
                     if let freshVolume = ExternalVolume.fromBSDName(pendingVolume.bsdName) {
                         freshVolume.mount()
                     } else {
-                        logger.warning("Queued volume not found by BSD name during remount: \(pendingVolume.bsdName, privacy: .public)")
+                        self.logger.warning("Queued volume not found by BSD name during remount: \(pendingVolume.name, privacy: .public) (\(pendingVolume.bsdName, privacy: .public))")
                     }
                 }
 
-                try await sleep(seconds: 1)
+                try await sleep(seconds: self.reconciliationDelay)
                 reconcileRemountState()
 
                 if pendingRemountVolumesByID.isEmpty {
                     logger.info("Mount queue completed successfully")
                     return
                 }
-
-                attemptIndex += 1
-                if attemptIndex >= retryDelays.count {
-                    let pendingDescriptions = self.pendingRemountVolumesByID.values
-                        .sorted { $0.bsdName < $1.bsdName }
-                        .map { "\($0.id) (\($0.bsdName))" }
-                        .joined(separator: ", ")
-                    logger.error("Mount retries exhausted; pending volumes: \(pendingDescriptions, privacy: .public)")
-                    return
-                }
-
-                let retryDelay = retryDelays[attemptIndex]
-                if retryDelay > 0 {
-                    try await sleep(seconds: retryDelay)
-                }
             }
+
+            logger.error("Mount retries exhausted; pending volumes: \(self.pendingVolumeDescriptions(), privacy: .public)")
         } catch is CancellationError {
             logger.info("Mount queue cancelled")
         } catch {
@@ -132,12 +137,20 @@ class ActivityController {
 
         let remainingCount = pendingRemountVolumesByID.count
         let resolvedCount = pendingBeforeReconciliation - remainingCount
-        logger.info("Remount reconciliation: \(resolvedCount, privacy: .public) resolved, \(remainingCount, privacy: .public) still pending")
+        logger.info("Remount reconciliation: \(resolvedCount, privacy: .public) resolved, \(remainingCount, privacy: .public) still pending: \(self.pendingVolumeDescriptions(), privacy: .public)")
     }
 
     /// Sleeps for a wall-clock duration while preserving task cancellation.
     private func sleep(seconds: TimeInterval) async throws {
         let nanoseconds = UInt64(max(0, seconds) * 1_000_000_000)
         try await Task.sleep(nanoseconds: nanoseconds)
+    }
+
+    /// Returns a deterministic description of the current remount queue for diagnostics.
+    private func pendingVolumeDescriptions() -> String {
+        pendingRemountVolumesByID.values
+            .sorted { $0.name < $1.name }
+            .map(\.description)
+            .joined(separator: ", ")
     }
 }

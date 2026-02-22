@@ -9,7 +9,6 @@ import AppKit
 import OSLog
 
 class StatusBarMenu: NSMenu {
-    
     private var volumes: [ExternalVolume]
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "StatusBarMenu")
     
@@ -28,19 +27,51 @@ class StatusBarMenu: NSMenu {
     }
     
     private func listenForVolumeNotifications() {
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumesChanged), name: NSWorkspace.didRenameVolumeNotification, object: nil)
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumesChanged), name: NSWorkspace.didMountNotification, object: nil)
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumesChanged), name: NSWorkspace.didUnmountNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumeDidRename(notification:)), name: NSWorkspace.didRenameVolumeNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumeDidMount(notification:)), name: NSWorkspace.didMountNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumeDidUnmount(notification:)), name: NSWorkspace.didUnmountNotification, object: nil)
     }
-    
-    @objc private func volumesChanged() {
-        let updatedVolumes = ExternalVolume.mountedVolumes()
-        let volumeDescriptions = updatedVolumes
-            .map { "\($0.name) (\($0.bsdName))" }
-            .joined(separator: ", ")
-        logger.info("Volumes changed, available volumes: \(volumeDescriptions, privacy: .public)")
-        volumes = updatedVolumes
+
+    /// Handles mount notifications and logs mount metadata provided by NSWorkspace.
+    @objc private func volumeDidMount(notification: Notification) {
+        let localizedName = stringUserInfoValue(NSWorkspace.localizedVolumeNameUserInfoKey, from: notification)
+        let volumeURL = volumePathUserInfoValue(NSWorkspace.volumeURLUserInfoKey, from: notification)
+        logger.info("Volume did mount: \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+        refreshVolumesMenu()
+    }
+
+    /// Handles unmount notifications and logs unmount metadata provided by NSWorkspace.
+    @objc private func volumeDidUnmount(notification: Notification) {
+        let localizedName = stringUserInfoValue(NSWorkspace.localizedVolumeNameUserInfoKey, from: notification)
+        let volumeURL = volumePathUserInfoValue(NSWorkspace.volumeURLUserInfoKey, from: notification)
+        logger.info("Volume did unmount: \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+        refreshVolumesMenu()
+    }
+
+    /// Handles rename notifications and logs old/new metadata provided by NSWorkspace.
+    @objc private func volumeDidRename(notification: Notification) {
+        let localizedName = stringUserInfoValue(NSWorkspace.localizedVolumeNameUserInfoKey, from: notification)
+        let volumeURL = volumePathUserInfoValue(NSWorkspace.volumeURLUserInfoKey, from: notification)
+        let oldLocalizedName = stringUserInfoValue(NSWorkspace.oldLocalizedVolumeNameUserInfoKey, from: notification)
+        let oldVolumeURL = volumePathUserInfoValue(NSWorkspace.oldVolumeURLUserInfoKey, from: notification)
+        logger.info("Volume did rename: \(oldLocalizedName, privacy: .public) (\(oldVolumeURL, privacy: .public)) -> \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+        refreshVolumesMenu()
+    }
+
+    /// Refreshes the in-memory volume list and rebuilds the status menu.
+    private func refreshVolumesMenu() {
+        volumes = ExternalVolume.mountedVolumes()
         updateMenu()
+    }
+
+    /// Returns a string metadata value from notification userInfo or "unknown" when absent.
+    private func stringUserInfoValue(_ key: String, from notification: Notification) -> String {
+        notification.userInfo?[key] as? String ?? "unknown"
+    }
+
+    /// Returns a volume path from notification userInfo URL metadata or "unknown" when absent.
+    private func volumePathUserInfoValue(_ key: String, from notification: Notification) -> String {
+        (notification.userInfo?[key] as? URL)?.path ?? "unknown"
     }
     
     private func updateMenu() {
