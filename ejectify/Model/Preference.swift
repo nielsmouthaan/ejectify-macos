@@ -7,9 +7,11 @@
 
 import Foundation
 import LaunchAtLogin
+import OSLog
 
 class Preference {
     private static var userDefaults: UserDefaults { UserDefaults.standard }
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "Preference")
     
     enum UnmountWhen: String {
         case screensaverStarted = "screensaverStarted"
@@ -24,6 +26,7 @@ class Preference {
         }
         set {
             LaunchAtLogin.isEnabled = newValue
+            logger.info("Preference changed: launchAtLogin=\(newValue, privacy: .public)")
         }
     }
     
@@ -38,6 +41,7 @@ class Preference {
         }
         set {
             userDefaults.set(newValue.rawValue, forKey: userDefaultsKeyUnmountWhen)
+            logger.info("Preference changed: unmountWhen=\(newValue.rawValue, privacy: .public)")
             Task { @MainActor in
                 AppDelegate.shared.activityController?.startMonitoring()
             }
@@ -51,6 +55,7 @@ class Preference {
         }
         set {
             userDefaults.set(newValue, forKey: userDefaultsKeyForceUnmount)
+            logger.info("Preference changed: forceUnmount=\(newValue, privacy: .public)")
         }
     }
     

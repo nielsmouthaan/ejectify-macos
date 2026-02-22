@@ -6,33 +6,40 @@
 //
 
 import AppKit
+import OSLog
 
 class StatusBarMenu: NSMenu {
     
     private var volumes: [ExternalVolume]
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "StatusBarMenu")
     
     required init(coder: NSCoder) {
         volumes = ExternalVolume.mountedVolumes()
         super.init(coder: coder)
         updateMenu()
-        listenForDiskNotifications()
+        listenForVolumeNotifications()
     }
     
     init() {
         volumes = ExternalVolume.mountedVolumes()
         super.init(title: "Ejectify")
         updateMenu()
-        listenForDiskNotifications()
+        listenForVolumeNotifications()
     }
     
-    private func listenForDiskNotifications() {
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(disksChanged), name: NSWorkspace.didRenameVolumeNotification, object: nil)
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(disksChanged), name: NSWorkspace.didMountNotification, object: nil)
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(disksChanged), name: NSWorkspace.didUnmountNotification, object: nil)
+    private func listenForVolumeNotifications() {
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumesChanged), name: NSWorkspace.didRenameVolumeNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumesChanged), name: NSWorkspace.didMountNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumesChanged), name: NSWorkspace.didUnmountNotification, object: nil)
     }
     
-    @objc private func disksChanged() {
-        volumes = ExternalVolume.mountedVolumes()
+    @objc private func volumesChanged() {
+        let updatedVolumes = ExternalVolume.mountedVolumes()
+        let volumeDescriptions = updatedVolumes
+            .map { "\($0.name) (\($0.bsdName))" }
+            .joined(separator: ", ")
+        logger.info("Volumes changed, available volumes: \(volumeDescriptions, privacy: .public)")
+        volumes = updatedVolumes
         updateMenu()
     }
     
@@ -158,10 +165,11 @@ class StatusBarMenu: NSMenu {
     }
 
     @objc private func unmountAllClicked(menuItem: NSMenuItem) {
-        volumes.filter { $0.enabled }
-            .forEach { (volume) in
-                volume.unmount(force: Preference.forceUnmount)
-            }
+        let enabledVolumes = volumes.filter { $0.enabled }
+        logger.info("Manual unmount-all triggered: \(enabledVolumes.count, privacy: .public) enabled volumes")
+        enabledVolumes.forEach { volume in
+            volume.unmount(force: Preference.forceUnmount)
+        }
         updateMenu()
     }
 
@@ -169,7 +177,9 @@ class StatusBarMenu: NSMenu {
         guard let volume = menuItem.representedObject as? ExternalVolume else {
             return
         }
-        volume.enabled = toggledValue(for: menuItem.state)
+        let newEnabledValue = toggledValue(for: menuItem.state)
+        volume.enabled = newEnabledValue
+        logger.info("Volume auto-unmount toggled: \(volume.name, privacy: .public) (\(volume.bsdName, privacy: .public)) enabled=\(newEnabledValue, privacy: .public)")
         updateMenu()
     }
     

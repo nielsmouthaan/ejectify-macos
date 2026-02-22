@@ -49,12 +49,14 @@ class ActivityController {
             NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes), name: NSWorkspace.willSleepNotification, object: nil)
             NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(mountVolumes), name: NSWorkspace.didWakeNotification, object: nil)
         }
+
+        logger.info("Monitoring configured for trigger: \(Preference.unmountWhen.rawValue, privacy: .public)")
     }
 
     @objc func unmountVolumes() {
         remountTask?.cancel()
         let volumesToUnmount = ExternalVolume.mountedVolumes().filter { $0.enabled }
-        logger.info("Unmount trigger received: \(volumesToUnmount.count) enabled volumes queued")
+        logger.info("Unmount trigger received: \(volumesToUnmount.count, privacy: .public) enabled volumes queued")
         volumesToUnmount.forEach { volume in
             pendingRemountVolumesByID[volume.id] = PendingRemountVolume(id: volume.id, bsdName: volume.bsdName)
             volume.unmount(force: Preference.forceUnmount)
@@ -69,7 +71,7 @@ class ActivityController {
             return
         }
 
-        logger.info("Mount trigger received: \(self.pendingRemountVolumesByID.count) volumes queued")
+        logger.info("Mount trigger received: \(self.pendingRemountVolumesByID.count, privacy: .public) volumes queued")
         remountTask = Task { [weak self] in
             await self?.runRemountCycle()
         }
@@ -80,10 +82,12 @@ class ActivityController {
         do {
             var attemptIndex = 0
             while !pendingRemountVolumesByID.isEmpty {
-                logger.info("Mount attempt \(attemptIndex + 1) started for \(self.pendingRemountVolumesByID.count) queued volumes")
+                logger.info("Mount attempt \(attemptIndex + 1, privacy: .public) started for \(self.pendingRemountVolumesByID.count, privacy: .public) queued volumes")
                 pendingRemountVolumesByID.values.forEach { pendingVolume in
                     if let freshVolume = ExternalVolume.fromBSDName(pendingVolume.bsdName) {
                         freshVolume.mount()
+                    } else {
+                        logger.warning("Queued volume not found by BSD name during remount: \(pendingVolume.bsdName, privacy: .public)")
                     }
                 }
 
@@ -97,7 +101,11 @@ class ActivityController {
 
                 attemptIndex += 1
                 if attemptIndex >= retryDelays.count {
-                    logger.error("Mount retries exhausted, \(self.pendingRemountVolumesByID.count) volumes still pending")
+                    let pendingDescriptions = self.pendingRemountVolumesByID.values
+                        .sorted { $0.bsdName < $1.bsdName }
+                        .map { "\($0.id) (\($0.bsdName))" }
+                        .joined(separator: ", ")
+                    logger.error("Mount retries exhausted; pending volumes: \(pendingDescriptions, privacy: .public)")
                     return
                 }
 
@@ -109,17 +117,22 @@ class ActivityController {
         } catch is CancellationError {
             logger.info("Mount queue cancelled")
         } catch {
-            logger.error("Mount queue failed with unexpected error: \(String(describing: error))")
+            logger.error("Mount queue failed with unexpected error: \(String(describing: error), privacy: .public)")
         }
     }
 
     /// Removes volumes from the remount queue once they are mounted again.
     private func reconcileRemountState() {
+        let pendingBeforeReconciliation = pendingRemountVolumesByID.count
         let currentlyMountedVolumeIDs = Set(ExternalVolume.mountedVolumes().map { $0.id })
 
         pendingRemountVolumesByID = pendingRemountVolumesByID.filter { id, _ in
             !currentlyMountedVolumeIDs.contains(id)
         }
+
+        let remainingCount = pendingRemountVolumesByID.count
+        let resolvedCount = pendingBeforeReconciliation - remainingCount
+        logger.info("Remount reconciliation: \(resolvedCount, privacy: .public) resolved, \(remainingCount, privacy: .public) still pending")
     }
 
     /// Sleeps for a wall-clock duration while preserving task cancellation.

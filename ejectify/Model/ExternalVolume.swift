@@ -70,7 +70,7 @@ class ExternalVolume {
         let option = force ? kDADiskUnmountOptionForce : kDADiskUnmountOptionDefault
         let bsdName = Self.bsdNameOrUnknown(self.disk)
         let unmountModePrefix = force ? "Forced unmount" : "Unforced unmount"
-        Self.logger.info("\(unmountModePrefix) attempt started for \(self.name) (\(bsdName))")
+        Self.logger.info("\(unmountModePrefix, privacy: .public) attempt started for \(self.name, privacy: .public) (\(bsdName, privacy: .public))")
         let context = Unmanaged.passRetained(CallbackLogContext(volumeName: self.name, bsdName: bsdName, unmountModePrefix: unmountModePrefix)).toOpaque()
         DADiskUnmount(disk, DADiskUnmountOptions(option), { _, dissenter, context in
             guard let context else {
@@ -79,23 +79,23 @@ class ExternalVolume {
             let callbackContext = Unmanaged<CallbackLogContext>.fromOpaque(context).takeRetainedValue()
 
             guard let dissenter else {
-                ExternalVolume.logger.info("\(callbackContext.unmountModePrefix ?? "Unmount") completed for \(callbackContext.volumeName) (\(callbackContext.bsdName))")
+                ExternalVolume.logger.info("\((callbackContext.unmountModePrefix ?? "Unmount"), privacy: .public) completed for \(callbackContext.volumeName, privacy: .public) (\(callbackContext.bsdName, privacy: .public))")
                 return
             }
 
             let status = DADissenterGetStatus(dissenter)
-            ExternalVolume.logger.error("\(callbackContext.unmountModePrefix ?? "Unmount") failed for \(callbackContext.volumeName) (\(callbackContext.bsdName)): \(status.description)")
+            ExternalVolume.logger.error("\((callbackContext.unmountModePrefix ?? "Unmount"), privacy: .public) failed for \(callbackContext.volumeName, privacy: .public) (\(callbackContext.bsdName, privacy: .public)): \(status.description, privacy: .public)")
         }, context)
     }
 
     func mount() {
         let bsdName = Self.bsdNameOrUnknown(self.disk)
-        Self.logger.info("Mount attempt started for \(self.name) (\(bsdName))")
+        Self.logger.info("Mount attempt started for \(self.name, privacy: .public) (\(bsdName, privacy: .public))")
         if encrypted {
             if unlockEncryptedVolumeIfNeeded() {
-                Self.logger.info("Encrypted volume unlock succeeded for \(self.name) (\(self.bsdName))")
+                Self.logger.info("Encrypted volume unlock succeeded for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public))")
             } else {
-                Self.logger.warning("Encrypted volume unlock failed for \(self.name) (\(self.bsdName))")
+                Self.logger.warning("Encrypted volume unlock failed for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public))")
             }
         }
 
@@ -107,17 +107,18 @@ class ExternalVolume {
             let callbackContext = Unmanaged<CallbackLogContext>.fromOpaque(context).takeRetainedValue()
 
             guard let dissenter else {
-                ExternalVolume.logger.info("Mount completed for \(callbackContext.volumeName) (\(callbackContext.bsdName))")
+                ExternalVolume.logger.info("Mount completed for \(callbackContext.volumeName, privacy: .public) (\(callbackContext.bsdName, privacy: .public))")
                 return
             }
 
             let status = DADissenterGetStatus(dissenter)
-            ExternalVolume.logger.error("Mount failed for \(callbackContext.volumeName) (\(callbackContext.bsdName)): \(status.description)")
+            ExternalVolume.logger.error("Mount failed for \(callbackContext.volumeName, privacy: .public) (\(callbackContext.bsdName, privacy: .public)): \(status.description, privacy: .public)")
         }, context)
     }
 
     static func mountedVolumes() -> [ExternalVolume] {
         guard let mountedVolumeURLs = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys:nil, options: []) else {
+            Self.logger.warning("Failed to enumerate mounted volumes from FileManager")
             return []
         }
 
@@ -207,12 +208,12 @@ class ExternalVolume {
             try process.run()
             process.waitUntilExit()
         } catch {
-            Self.logger.error("Failed to start diskutil unlock process for \(self.name) (\(self.bsdName)): \(String(describing: error))")
+            Self.logger.error("Failed to start diskutil unlock process for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public)): \(String(describing: error), privacy: .public)")
             return false
         }
 
         guard process.terminationStatus == 0 else {
-            Self.logger.error("diskutil unlock failed for \(self.name) (\(self.bsdName)) with status \(process.terminationStatus)")
+            Self.logger.error("diskutil unlock failed for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public)) with status \(process.terminationStatus, privacy: .public)")
             return false
         }
 
