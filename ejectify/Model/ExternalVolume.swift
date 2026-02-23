@@ -7,6 +7,7 @@
 
 import Foundation
 import OSLog
+@preconcurrency import DiskArbitration
 
 private enum VolumeComponent: Int {
     case root = 1
@@ -33,9 +34,16 @@ class ExternalVolume {
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ExternalVolume")
     private static var userDefaults: UserDefaults { UserDefaults.standard }
 
-    private static var diskArbitrationSession: DASession? {
-        DASessionCreate(kCFAllocatorDefault)
-    }
+    /// Shared Disk Arbitration session retained for the lifetime of the app so asynchronous callbacks are delivered reliably.
+    nonisolated(unsafe) private static let diskArbitrationSession: DASession? = {
+        guard let session = DASessionCreate(kCFAllocatorDefault) else {
+            logger.error("Failed to create Disk Arbitration session")
+            return nil
+        }
+
+        DASessionSetDispatchQueue(session, DispatchQueue.main)
+        return session
+    }()
 
     let disk: DADisk
     let id: String
@@ -71,6 +79,12 @@ class ExternalVolume {
         let bsdName = Self.bsdNameOrUnknown(self.disk)
         let unmountModePrefix = force ? "Forced unmount" : "Unforced unmount"
         Self.logger.info("\(unmountModePrefix, privacy: .public) attempt started for \(self.name, privacy: .public) (\(bsdName, privacy: .public))")
+
+        guard Self.isMounted(self.disk) else {
+            Self.logger.info("\(unmountModePrefix, privacy: .public) skipped because \(self.name, privacy: .public) (\(bsdName, privacy: .public)) is already unmounted")
+            return
+        }
+
         let context = Unmanaged.passRetained(CallbackLogContext(volumeName: self.name, bsdName: bsdName, unmountModePrefix: unmountModePrefix)).toOpaque()
         DADiskUnmount(disk, DADiskUnmountOptions(option), { _, dissenter, context in
             guard let context else {
@@ -93,6 +107,11 @@ class ExternalVolume {
         Self.logger.info("Mount attempt started for \(self.name, privacy: .public) (\(bsdName, privacy: .public))")
         if encrypted {
             unlockEncryptedVolumeIfNeeded()
+        }
+
+        guard !Self.isMounted(self.disk) else {
+            Self.logger.info("Mount skipped because \(self.name, privacy: .public) (\(bsdName, privacy: .public)) is already mounted")
+            return
         }
 
         let context = Unmanaged.passRetained(CallbackLogContext(volumeName: self.name, bsdName: bsdName)).toOpaque()
@@ -227,6 +246,15 @@ class ExternalVolume {
             return "unknown"
         }
         return String(cString: bsdName)
+    }
+
+    /// Determines whether Disk Arbitration currently reports a mounted filesystem path for the disk.
+    private static func isMounted(_ disk: DADisk) -> Bool {
+        guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
+            return false
+        }
+
+        return diskInfo[kDADiskDescriptionVolumePathKey] != nil
     }
 
     /// Normalizes volume UUID values returned by Disk Arbitration across Foundation and CoreFoundation bridge types.
