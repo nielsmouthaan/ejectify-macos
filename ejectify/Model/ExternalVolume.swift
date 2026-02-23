@@ -92,11 +92,7 @@ class ExternalVolume {
         let bsdName = Self.bsdNameOrUnknown(self.disk)
         Self.logger.info("Mount attempt started for \(self.name, privacy: .public) (\(bsdName, privacy: .public))")
         if encrypted {
-            if unlockEncryptedVolumeIfNeeded() {
-                Self.logger.info("Encrypted volume unlock succeeded for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public))")
-            } else {
-                Self.logger.warning("Encrypted volume unlock failed for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public))")
-            }
+            unlockEncryptedVolumeIfNeeded()
         }
 
         let context = Unmanaged.passRetained(CallbackLogContext(volumeName: self.name, bsdName: bsdName)).toOpaque()
@@ -199,7 +195,7 @@ class ExternalVolume {
         }
     }
 
-    private func unlockEncryptedVolumeIfNeeded() -> Bool {
+    private func unlockEncryptedVolumeIfNeeded() {
         let process = Process()
         let standardErrorPipe = Pipe()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
@@ -211,7 +207,7 @@ class ExternalVolume {
             process.waitUntilExit()
         } catch {
             Self.logger.error("Failed to start diskutil unlock process for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public)): \(String(describing: error), privacy: .public)")
-            return false
+            return
         }
 
         let standardErrorData = standardErrorPipe.fileHandleForReading.readDataToEndOfFile()
@@ -220,11 +216,10 @@ class ExternalVolume {
 
         guard process.terminationStatus == 0 else {
             Self.logger.warning("diskutil unlock returned non-zero result for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public)); stderr: \(standardError, privacy: .public)")
-            return false
+            return
         }
 
         Self.logger.info("diskutil unlock returned success for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public))")
-        return true
     }
 
     private static func bsdNameOrUnknown(_ disk: DADisk) -> String {
