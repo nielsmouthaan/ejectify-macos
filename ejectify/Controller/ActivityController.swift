@@ -72,6 +72,7 @@ class ActivityController {
 
     @objc func mountVolumes() {
         remountTask?.cancel()
+        removeAlreadyMountedVolumesFromPendingQueue()
 
         guard !pendingRemountVolumesByID.isEmpty else {
             logger.info("Mount trigger received with no queued volumes")
@@ -152,5 +153,24 @@ class ActivityController {
             .sorted { $0.name < $1.name }
             .map(\.description)
             .joined(separator: ", ")
+    }
+
+    /// Removes any queued volumes that are already mounted before scheduling remount attempts.
+    private func removeAlreadyMountedVolumesFromPendingQueue() {
+        guard !pendingRemountVolumesByID.isEmpty else {
+            return
+        }
+
+        let mountedVolumeIDs = Set(ExternalVolume.mountedVolumes().map { $0.id })
+        let prunedVolumes = pendingRemountVolumesByID.values.filter { mountedVolumeIDs.contains($0.id) }
+            .sorted { $0.name < $1.name }
+
+        pendingRemountVolumesByID = pendingRemountVolumesByID.filter { id, _ in
+            !mountedVolumeIDs.contains(id)
+        }
+
+        prunedVolumes.forEach { volume in
+            logger.info("Mount skipped because \(volume.name, privacy: .public) (\(volume.bsdName, privacy: .public)) is already mounted")
+        }
     }
 }
