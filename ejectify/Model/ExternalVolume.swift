@@ -215,7 +215,7 @@ class ExternalVolume {
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
         guard process.terminationStatus == 0 else {
-            Self.logger.warning("diskutil unlock returned non-zero result for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public)); stderr: \(standardError, privacy: .public)")
+            Self.logger.warning("diskutil unlock returned non-zero result for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public)): \(standardError, privacy: .public)")
             return
         }
 
