@@ -201,8 +201,10 @@ class ExternalVolume {
 
     private func unlockEncryptedVolumeIfNeeded() -> Bool {
         let process = Process()
+        let standardErrorPipe = Pipe()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
         process.arguments = ["apfs", "unlockVolume", bsdName, "-nomount"]
+        process.standardError = standardErrorPipe
 
         do {
             try process.run()
@@ -212,11 +214,16 @@ class ExternalVolume {
             return false
         }
 
+        let standardErrorData = standardErrorPipe.fileHandleForReading.readDataToEndOfFile()
+        let standardError = String(data: standardErrorData, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
         guard process.terminationStatus == 0 else {
-            Self.logger.error("diskutil unlock failed for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public)) with status \(process.terminationStatus, privacy: .public)")
+            Self.logger.warning("diskutil unlock returned non-zero result for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public)); stderr: \(standardError, privacy: .public)")
             return false
         }
 
+        Self.logger.info("diskutil unlock returned success for \(self.name, privacy: .public) (\(self.bsdName, privacy: .public))")
         return true
     }
 
