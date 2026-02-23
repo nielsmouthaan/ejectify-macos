@@ -36,7 +36,9 @@ class StatusBarMenu: NSMenu {
     @objc private func volumeDidMount(notification: Notification) {
         let localizedName = stringUserInfoValue(NSWorkspace.localizedVolumeNameUserInfoKey, from: notification)
         let volumeURL = volumePathUserInfoValue(NSWorkspace.volumeURLUserInfoKey, from: notification)
-        logger.info("Volume did mount: \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+        if shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
+            logger.info("Volume did mount: \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+        }
         refreshVolumesMenu()
     }
 
@@ -44,7 +46,9 @@ class StatusBarMenu: NSMenu {
     @objc private func volumeDidUnmount(notification: Notification) {
         let localizedName = stringUserInfoValue(NSWorkspace.localizedVolumeNameUserInfoKey, from: notification)
         let volumeURL = volumePathUserInfoValue(NSWorkspace.volumeURLUserInfoKey, from: notification)
-        logger.info("Volume did unmount: \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+        if shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
+            logger.info("Volume did unmount: \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+        }
         refreshVolumesMenu()
     }
 
@@ -54,7 +58,11 @@ class StatusBarMenu: NSMenu {
         let volumeURL = volumePathUserInfoValue(NSWorkspace.volumeURLUserInfoKey, from: notification)
         let oldLocalizedName = stringUserInfoValue(NSWorkspace.oldLocalizedVolumeNameUserInfoKey, from: notification)
         let oldVolumeURL = volumePathUserInfoValue(NSWorkspace.oldVolumeURLUserInfoKey, from: notification)
-        logger.info("Volume did rename: \(oldLocalizedName, privacy: .public) (\(oldVolumeURL, privacy: .public)) -> \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+        let shouldLogOldVolume = shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey)
+        let shouldLogNewVolume = shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.volumeURLUserInfoKey)
+        if shouldLogOldVolume || shouldLogNewVolume {
+            logger.info("Volume did rename: \(oldLocalizedName, privacy: .public) (\(oldVolumeURL, privacy: .public)) -> \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+        }
         refreshVolumesMenu()
     }
 
@@ -72,6 +80,15 @@ class StatusBarMenu: NSMenu {
     /// Returns a volume path from notification userInfo URL metadata or "unknown" when absent.
     private func volumePathUserInfoValue(_ key: String, from notification: Notification) -> String {
         (notification.userInfo?[key] as? URL)?.path ?? "unknown"
+    }
+
+    /// Determines whether a notification volume URL resolves to an enabled Ejectify volume.
+    private func shouldLogVolumeEvent(notification: Notification, urlKey: String) -> Bool {
+        guard let url = notification.userInfo?[urlKey] as? URL,
+              let volume = ExternalVolume.fromURL(url: url) else {
+            return false
+        }
+        return volume.enabled
     }
     
     private func updateMenu() {
