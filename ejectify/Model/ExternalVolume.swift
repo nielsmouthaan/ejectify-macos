@@ -97,8 +97,10 @@ class ExternalVolume {
                 return
             }
 
-            let status = DADissenterGetStatus(dissenter)
-            ExternalVolume.logger.error("\((callbackContext.unmountModePrefix ?? "Unmount"), privacy: .public) failed for \(callbackContext.volumeName, privacy: .public) (\(callbackContext.bsdName, privacy: .public)): \(status.description, privacy: .public)")
+            let failureStatus = ExternalVolume.formattedFailureStatus(from: dissenter)
+            ExternalVolume.logger.error(
+                "\((callbackContext.unmountModePrefix ?? "Unmount"), privacy: .public) failed for \(callbackContext.volumeName, privacy: .public) (\(callbackContext.bsdName, privacy: .public)): \(failureStatus, privacy: .public)"
+            )
         }, context)
     }
 
@@ -126,8 +128,8 @@ class ExternalVolume {
                 return
             }
 
-            let status = DADissenterGetStatus(dissenter)
-            ExternalVolume.logger.error("Mount failed for \(callbackContext.volumeName, privacy: .public) (\(callbackContext.bsdName, privacy: .public)): \(status.description, privacy: .public)")
+            let failureStatus = ExternalVolume.formattedFailureStatus(from: dissenter)
+            ExternalVolume.logger.error("Mount failed for \(callbackContext.volumeName, privacy: .public) (\(callbackContext.bsdName, privacy: .public)): \(failureStatus, privacy: .public)")
         }, context)
     }
 
@@ -279,6 +281,13 @@ class ExternalVolume {
         }
 
         return nil
+    }
+
+    /// Returns a standardized Disk Arbitration failure status string.
+    private static func formattedFailureStatus(from dissenter: DADissenter) -> String {
+        let status = DADissenterGetStatus(dissenter)
+        let detail = DADissenterGetStatusString(dissenter) as String? ?? status.message
+        return "\(status.description) (\(detail))"
     }
 
 }
