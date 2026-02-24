@@ -29,41 +29,34 @@ class ActivityController {
         // Register the matching unmount/mount trigger pair for the active preference.
         switch Preference.unmountWhen {
         case .screensaverStarted:
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstart"), object: nil)
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(mountVolumes), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstop"), object: nil)
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstart"), object: nil)
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstop"), object: nil)
         case .screenIsLocked:
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes), name: NSNotification.Name(rawValue: "com.apple.screenIsLocked"), object: nil)
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(mountVolumes), name: NSNotification.Name(rawValue: "com.apple.screenIsUnlocked"), object: nil)
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsLocked"), object: nil)
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsUnlocked"), object: nil)
         case .screensStartedSleeping:
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes), name: NSWorkspace.screensDidSleepNotification, object: nil)
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(mountVolumes), name: NSWorkspace.screensDidWakeNotification, object: nil)
+            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.screensDidSleepNotification, object: nil)
+            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSWorkspace.screensDidWakeNotification, object: nil)
         case .systemStartsSleeping:
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes), name: NSWorkspace.willSleepNotification, object: nil)
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(mountVolumes), name: NSWorkspace.didWakeNotification, object: nil)
+            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.willSleepNotification, object: nil)
+            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSWorkspace.didWakeNotification, object: nil)
         }
 
         logger.info("Monitoring configured for trigger: \(Preference.unmountWhen.rawValue, privacy: .public)")
     }
 
     /// Unmounts all currently enabled external volumes and tracks them for remounting.
-    @objc func unmountVolumes() {
+    @objc func unmountVolumes(notification: Notification) {
         unmountedVolumes = ExternalVolume.mountedVolumes().filter { $0.enabled }
-        let volumeCount = unmountedVolumes.count
-        logger.info("Unmount trigger received: \(volumeCount, privacy: .public) enabled volumes queued")
+        logger.info("Unmount trigger received: \(notification.name.rawValue, privacy: .public)")
         for volume in unmountedVolumes {
             volume.unmount(force: Preference.forceUnmount)
         }
     }
 
     /// Remounts previously tracked volumes and clears the remount queue.
-    @objc func mountVolumes() {
-        guard !unmountedVolumes.isEmpty else {
-            logger.info("Mount trigger received with no tracked volumes")
-            return
-        }
-
-        let volumeCount = unmountedVolumes.count
-        logger.info("Mount trigger received: \(volumeCount, privacy: .public) volumes")
+    @objc func mountVolumes(notification: Notification) {
+        logger.info("Mount trigger received: \(notification.name.rawValue, privacy: .public)")
         for volume in unmountedVolumes {
             volume.mount()
         }
