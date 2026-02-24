@@ -43,8 +43,8 @@ class ExternalVolume {
 
     /// Disk Arbitration handle used to identify and mount/unmount this volume.
     let disk: DADisk
-    /// Stable UUID-backed identifier used for persisted per-volume settings.
-    let id: String
+    /// Stable identifier used for persisted per-volume settings.
+    let id: UUID
     /// Human-readable volume name displayed in UI and logs.
     let name: String
 
@@ -52,7 +52,7 @@ class ExternalVolume {
     /// Tracks whether this volume should be managed automatically. Defaults to enabled.
     var enabled: Bool {
         get {
-            let key = ExternalVolume.userDefaultsKeyPrefixVolume + id
+            let key = ExternalVolume.userDefaultsKeyPrefixVolume + id.uuidString
             guard let value = ExternalVolume.userDefaults.object(forKey: key) as? Bool else {
                 // Enable auto-management by default for newly discovered volumes.
                 return true
@@ -60,12 +60,12 @@ class ExternalVolume {
             return value
         }
         set {
-            ExternalVolume.userDefaults.set(newValue, forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id)
+            ExternalVolume.userDefaults.set(newValue, forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id.uuidString)
         }
     }
 
     /// Creates a model instance for a resolved Disk Arbitration disk.
-    init(disk: DADisk, id: String, name: String) {
+    init(disk: DADisk, id: UUID, name: String) {
         self.disk = disk
         self.id = id
         self.name = name
@@ -187,9 +187,7 @@ class ExternalVolume {
             return nil
         }
 
-        let id = volumeUUID.uuidString
-
-        return ExternalVolume(disk: disk, id: id, name: name)
+        return ExternalVolume(disk: disk, id: volumeUUID, name: name)
     }
 
     /// Determines whether Disk Arbitration currently reports a mounted filesystem path for the disk.
