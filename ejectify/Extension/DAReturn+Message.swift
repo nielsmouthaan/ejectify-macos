@@ -1,5 +1,5 @@
 //
-//  DAReturn+StatusMessage.swift
+//  DAReturn+Message.swift
 //  Ejectify
 //
 //  Created by Niels Mouthaan on 12/11/2021.
@@ -8,14 +8,15 @@
 import Foundation
 
 extension DAReturn {
-    
+    /// Returns the system-provided human-readable message for this status.
     var message: String {
         guard let message = mach_error_string(self) else {
             return "Unknown"
         }
         return String (cString: message)
     }
-    
+
+    /// Returns a stable symbolic name for common Disk Arbitration status values.
     var description: String {
         let status = Int(self)
         switch status {
