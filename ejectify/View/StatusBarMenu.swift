@@ -87,13 +87,12 @@ class StatusBarMenu: NSMenu {
         (notification.userInfo?[key] as? URL)?.path ?? "unknown"
     }
 
-    /// Determines whether a notification volume URL resolves to an enabled Ejectify volume.
+    /// Determines whether a notification volume URL resolves to a known Ejectify volume.
     private func shouldLogVolumeEvent(notification: Notification, urlKey: String) -> Bool {
-        guard let url = notification.userInfo?[urlKey] as? URL,
-              let volume = ExternalVolume.fromURL(url: url) else {
+        guard let url = notification.userInfo?[urlKey] as? URL else {
             return false
         }
-        return volume.enabled
+        return ExternalVolume.fromURL(url: url) != nil
     }
 
     /// Rebuilds all top-level menu sections from current app state.
