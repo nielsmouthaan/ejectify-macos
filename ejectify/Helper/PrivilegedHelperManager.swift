@@ -9,6 +9,24 @@ import Foundation
 import OSLog
 import ServiceManagement
 
+/// Converts ServiceManagement daemon status values into readable log labels.
+private extension SMAppService.Status {
+    var statusDescription: String {
+        switch self {
+        case .notRegistered:
+            return "notRegistered"
+        case .enabled:
+            return "enabled"
+        case .requiresApproval:
+            return "requiresApproval"
+        case .notFound:
+            return "notFound"
+        @unknown default:
+            return "unknown(\(self.rawValue))"
+        }
+    }
+}
+
 @MainActor
 final class PrivilegedHelperManager {
     
@@ -39,16 +57,16 @@ final class PrivilegedHelperManager {
             switch daemonService.status {
             case .notRegistered:
                 try daemonService.register()
-                logger.info("Privileged helper daemon not registered, registration attempted with status: \("\(daemonService.status)", privacy: .public)")
+                logger.info("Privileged helper daemon not registered, registration attempted with status: \(daemonService.status.statusDescription, privacy: .public)")
             case .enabled:
                 logger.info("Privileged helper daemon already registered");
             case .requiresApproval:
                 logger.warning("Privileged helper daemon requires approval");
             case .notFound:
                 try daemonService.register()
-                logger.info("Privileged helper daemon was not found, registration attempted with status: \("\(daemonService.status)", privacy: .public)")
+                logger.info("Privileged helper daemon was not found, registration attempted with status: \(daemonService.status.statusDescription, privacy: .public)")
             @unknown default:
-                logger.warning("Privileged helper daemon reported unknown status");
+                logger.warning("Privileged helper daemon reported unknown status: \(daemonService.status.statusDescription, privacy: .public)");
             }
         } catch {
             logger.error("Privileged helper daemon registration failed: \(error, privacy: .public)")

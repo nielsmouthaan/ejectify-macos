@@ -15,8 +15,12 @@ private func diskArbitrationCallbackResult(for dissenter: DADissenter?, operatio
     }
 
     let status = DADissenterGetStatus(dissenter)
-    let detail = DADissenterGetStatusString(dissenter) as String? ?? "Unknown"
-    return (false, "\(operationName) failed with status \(Int(status)): \(detail)")
+    let statusString = DADissenterGetStatusString(dissenter) as String?
+    if let statusString, !statusString.isEmpty {
+        return (false, "\(operationName) failed with status \(status.statusDescription): \(statusString)")
+    }
+
+    return (false, "\(operationName) failed with status \(status.statusDescription)")
 }
 
 /// Creates configured Disk Arbitration sessions for shared app/helper usage.
