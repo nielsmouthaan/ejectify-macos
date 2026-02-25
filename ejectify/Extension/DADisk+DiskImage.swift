@@ -8,6 +8,7 @@
 import Foundation
 
 extension DADisk {
+    
     /// Returns `true` when Disk Arbitration reports this disk as a disk image.
     func isDiskImage() -> Bool {
         guard let description = DADiskCopyDescription(self) as? [AnyHashable: Any] else {

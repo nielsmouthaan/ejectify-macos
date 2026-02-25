@@ -10,11 +10,12 @@ import OSLog
 
 /// Builds and updates the status bar menu for volume actions and preferences.
 class StatusBarMenu: NSMenu {
+    
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "StatusBarMenu")
+    
     /// Cached mounted volumes shown in the menu.
     private var volumes: [ExternalVolume]
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "StatusBarMenu")
 
-    /// Required initializer used when loading from Interface Builder.
     required init(coder: NSCoder) {
         volumes = ExternalVolume.mountedVolumes()
         super.init(coder: coder)
@@ -22,7 +23,6 @@ class StatusBarMenu: NSMenu {
         listenForVolumeNotifications()
     }
 
-    /// Programmatic initializer used by the status item.
     init() {
         volumes = ExternalVolume.mountedVolumes()
         super.init(title: "Ejectify")
@@ -200,7 +200,19 @@ class StatusBarMenu: NSMenu {
         let enabledVolumes = volumes.filter { $0.enabled }
         logger.info("Manual unmount-all triggered: \(enabledVolumes.count, privacy: .public) enabled volumes")
         enabledVolumes.forEach { volume in
-            volume.unmount(force: Preference.forceUnmount)
+            let volumeUUID = volume.id as NSUUID
+            let volumeName = volume.name
+            let forceUnmount = Preference.forceUnmount
+            let logger = self.logger
+            Task { @MainActor in
+                PrivilegedHelperManager.shared.unmount(volumeUUID: volumeUUID, volumeName: volumeName, force: forceUnmount) { success in
+                    guard !success else {
+                        return
+                    }
+
+                    logger.error("Privileged manual unmount failed for \(volumeName, privacy: .public)")
+                }
+            }
         }
         updateMenu()
     }

@@ -9,139 +9,58 @@ import Foundation
 import OSLog
 @preconcurrency import DiskArbitration
 
-private let volumesPathComponent = "Volumes"
-private let efiVolumeName = "EFI"
-
-/// Represents an external/ejectable volume and provides mount/unmount operations.
+/// Represents an external/ejectable volume discovered from Disk Arbitration metadata.
 class ExternalVolume {
-    /// Holds callback metadata until Disk Arbitration completion handlers run.
-    private final class CallbackLogContext {
-        let volumeName: String
-        let operation: String
-
-        /// Creates callback metadata used for structured completion logging.
-        init(volumeName: String, operation: String) {
-            self.volumeName = volumeName
-            self.operation = operation
-        }
-    }
-
+    
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ExternalVolume")
-    /// Shared user defaults store for per-volume preferences.
-    private static var userDefaults: UserDefaults { UserDefaults.standard }
 
     /// Shared Disk Arbitration session retained for the lifetime of the app so asynchronous callbacks are delivered reliably.
     nonisolated(unsafe) private static let diskArbitrationSession: DASession? = {
-        guard let session = DASessionCreate(kCFAllocatorDefault) else {
+        guard let session = DiskArbitrationSessionFactory.makeSession(dispatchQueue: DispatchQueue.main) else {
             logger.error("Failed to create Disk Arbitration session")
             return nil
         }
-
-        DASessionSetDispatchQueue(session, DispatchQueue.main)
         return session
     }()
 
-    /// Disk Arbitration handle used to identify and mount/unmount this volume.
-    let disk: DADisk
     /// Stable identifier used for persisted per-volume settings.
     let id: UUID
+    
     /// Human-readable volume name displayed in UI and logs.
     let name: String
-
-    private static let userDefaultsKeyPrefixVolume = "volume."
+    
     /// Tracks whether this volume should be managed automatically. Defaults to enabled.
     var enabled: Bool {
         get {
-            let key = ExternalVolume.userDefaultsKeyPrefixVolume + id.uuidString
-            guard let value = ExternalVolume.userDefaults.object(forKey: key) as? Bool else {
-                // Enable auto-management by default for newly discovered volumes.
+            let key = "volume." + id.uuidString
+            guard let value = UserDefaults.standard.object(forKey: key) as? Bool else {
                 return true
             }
             return value
         }
         set {
-            ExternalVolume.userDefaults.set(newValue, forKey: ExternalVolume.userDefaultsKeyPrefixVolume + id.uuidString)
+            UserDefaults.standard.set(newValue, forKey: "volume." + id.uuidString)
         }
     }
 
-    /// Creates a model instance for a resolved Disk Arbitration disk.
-    init(disk: DADisk, id: UUID, name: String) {
-        self.disk = disk
+    init(id: UUID, name: String) {
         self.id = id
         self.name = name
-    }
-
-    /// Requests Disk Arbitration to unmount the volume, optionally forcing it.
-    func unmount(force: Bool = false) {
-        let option = force ? kDADiskUnmountOptionForce : kDADiskUnmountOptionDefault
-        let unmountModePrefix = force ? "Forced unmount" : "Unforced unmount"
-        Self.logger.info("\(unmountModePrefix, privacy: .public) attempt started for \(self.name, privacy: .public)")
-
-        guard Self.isMounted(self.disk) else {
-            Self.logger.info("\(unmountModePrefix, privacy: .public) skipped because \(self.name, privacy: .public) is already unmounted")
-            return
-        }
-
-        let context = Unmanaged.passRetained(CallbackLogContext(volumeName: self.name, operation: unmountModePrefix)).toOpaque()
-        DADiskUnmount(disk, DADiskUnmountOptions(option), { _, dissenter, context in
-            guard let context else {
-                return
-            }
-            let callbackContext = Unmanaged<CallbackLogContext>.fromOpaque(context).takeRetainedValue()
-
-            guard let dissenter else {
-                ExternalVolume.logger.info("\(callbackContext.operation, privacy: .public) completed for \(callbackContext.volumeName, privacy: .public)")
-                return
-            }
-
-            let failureStatus = ExternalVolume.formattedFailureStatus(from: dissenter)
-            ExternalVolume.logger.error(
-                "\(callbackContext.operation, privacy: .public) failed for \(callbackContext.volumeName, privacy: .public): \(failureStatus, privacy: .public)"
-            )
-        }, context)
-    }
-
-    /// Requests Disk Arbitration to mount the volume.
-    func mount() {
-        Self.logger.info("Mount attempt started for \(self.name, privacy: .public)")
-
-        guard !Self.isMounted(self.disk) else {
-            Self.logger.info("Mount skipped because \(self.name, privacy: .public) is already mounted")
-            return
-        }
-
-        let context = Unmanaged.passRetained(CallbackLogContext(volumeName: self.name, operation: "Mount")).toOpaque()
-        DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), { _, dissenter, context in
-            guard let context else {
-                return
-            }
-            let callbackContext = Unmanaged<CallbackLogContext>.fromOpaque(context).takeRetainedValue()
-
-            guard let dissenter else {
-                ExternalVolume.logger.info("Mount completed for \(callbackContext.volumeName, privacy: .public)")
-                return
-            }
-
-            let failureStatus = ExternalVolume.formattedFailureStatus(from: dissenter)
-            ExternalVolume.logger.error("Mount failed for \(callbackContext.volumeName, privacy: .public): \(failureStatus, privacy: .public)")
-        }, context)
     }
 
     /// Returns currently mounted external volumes that Ejectify can manage.
     static func mountedVolumes() -> [ExternalVolume] {
         guard let mountedVolumeURLs = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys:nil, options: []) else {
-            Self.logger.warning("Failed to enumerate mounted volumes from FileManager")
+            logger.warning("Failed to enumerate mounted volumes from FileManager")
             return []
         }
 
         return mountedVolumeURLs
-            .filter(ExternalVolume.isVolumeURL(_:))
+            // Limit to user-visible mounted volumes under /Volumes.
+            .filter { url in
+                url.pathComponents.count > 1 && url.pathComponents[1] == "Volumes"
+            }
             .compactMap(ExternalVolume.fromURL(url:))
-    }
-
-    /// Returns `true` when the URL points to a mounted volume under `/Volumes`.
-    static func isVolumeURL(_ url: URL) -> Bool {
-        url.pathComponents.count > 1 && url.pathComponents[1] == volumesPathComponent
     }
 
     /// Resolves a mounted volume URL to an `ExternalVolume` model when eligible.
@@ -150,31 +69,32 @@ class ExternalVolume {
             return nil
         }
 
+        // Only continue when Disk Arbitration can resolve this URL to a disk object.
         guard let disk = DADiskCreateFromVolumePath(kCFAllocatorDefault, session, url as CFURL) else {
             return nil
         }
 
+        // Exclude disk images; Ejectify manages physical/external volumes.
         if disk.isDiskImage() {
             return nil
         }
 
-        return ExternalVolume.fromDisk(disk: disk)
-    }
-
-    /// Converts a Disk Arbitration disk description into an `ExternalVolume`.
-    static func fromDisk(disk: DADisk) -> ExternalVolume? {
+        // Read metadata required for volume eligibility checks.
         guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
             return nil
         }
 
-        guard let volumeUUID = ExternalVolume.volumeUUID(from: diskInfo) else {
+        // Require a stable volume UUID for identification and settings.
+        guard let volumeUUID = VolumeUUIDResolver.volumeUUID(from: diskInfo) else {
             return nil
         }
 
+        // Require a displayable volume name for UI/logging.
         guard let name = diskInfo[kDADiskDescriptionVolumeNameKey] as? String else {
             return nil
         }
 
+        // Require internal/external metadata for the system-disk exclusion.
         guard let internalDisk = diskInfo[kDADiskDescriptionDeviceInternalKey] as? Bool else {
             return nil
         }
@@ -183,51 +103,12 @@ class ExternalVolume {
             return nil
         }
 
-        guard name != efiVolumeName else {
+        // Exclude EFI helper/system partition entries.
+        guard name != "EFI" else {
             return nil
         }
 
-        return ExternalVolume(disk: disk, id: volumeUUID, name: name)
-    }
-
-    /// Determines whether Disk Arbitration currently reports a mounted filesystem path for the disk.
-    private static func isMounted(_ disk: DADisk) -> Bool {
-        guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
-            return false
-        }
-
-        return diskInfo[kDADiskDescriptionVolumePathKey] != nil
-    }
-
-    /// Normalizes volume UUID values returned by Disk Arbitration across Foundation and CoreFoundation bridge types.
-    private static func volumeUUID(from diskInfo: [NSString: Any]) -> UUID? {
-        guard let rawVolumeUUID = diskInfo[kDADiskDescriptionVolumeUUIDKey] else {
-            return nil
-        }
-
-        if let volumeUUID = rawVolumeUUID as? UUID {
-            return volumeUUID
-        }
-
-        if let volumeUUIDString = rawVolumeUUID as? String {
-            return UUID(uuidString: volumeUUIDString)
-        }
-
-        let rawCoreFoundationValue = rawVolumeUUID as CFTypeRef
-        if CFGetTypeID(rawCoreFoundationValue) == CFUUIDGetTypeID() {
-            let coreFoundationUUID = rawCoreFoundationValue as! CFUUID
-            let volumeUUIDString = CFUUIDCreateString(kCFAllocatorDefault, coreFoundationUUID) as String
-            return UUID(uuidString: volumeUUIDString)
-        }
-
-        return nil
-    }
-
-    /// Returns a standardized Disk Arbitration failure status string.
-    private static func formattedFailureStatus(from dissenter: DADissenter) -> String {
-        let status = DADissenterGetStatus(dissenter)
-        let detail = DADissenterGetStatusString(dissenter) as String? ?? status.message
-        return "\(status.description) (\(detail))"
+        return ExternalVolume(id: volumeUUID, name: name)
     }
 
 }
