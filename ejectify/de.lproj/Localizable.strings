@@ -12,6 +12,7 @@
 "Launch at login" = "Beim Login starten";
 "Use elevated permissions" = "Erhöhte Berechtigungen verwenden";
 "Could not enable elevated permissions." = "Erhöhte Berechtigungen konnten nicht aktiviert werden.";
+"Check System Settings if Ejectify is enabled." = "Prüfen Sie in den Systemeinstellungen, ob Ejectify aktiviert ist.";
 "Could not disable elevated permissions." = "Erhöhte Berechtigungen konnten nicht deaktiviert werden.";
 "Unmount when" = "Auswerfen, sobald";
 "Screensaver started" = "Bildschirmschoner startet";

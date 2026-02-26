@@ -12,6 +12,7 @@
 "Launch at login" = "ログイン時に起動";
 "Use elevated permissions" = "管理者権限を使用する";
 "Could not enable elevated permissions." = "管理者権限を有効にできませんでした。";
+"Check System Settings if Ejectify is enabled." = "Ejectify が有効になっているかシステム設定で確認してください。";
 "Could not disable elevated permissions." = "管理者権限を無効にできませんでした。";
 "Unmount when" = "マウント解除";
 "Screensaver started" = "スクリーンセーバーを起動したとき";

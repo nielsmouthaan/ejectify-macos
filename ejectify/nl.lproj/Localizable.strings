@@ -12,6 +12,7 @@
 "Launch at login" = "Start bij inloggen";
 "Use elevated permissions" = "Verhoogde machtigingen gebruiken";
 "Could not enable elevated permissions." = "Kon verhoogde machtigingen niet inschakelen.";
+"Check System Settings if Ejectify is enabled." = "Controleer in Systeeminstellingen of Ejectify is ingeschakeld.";
 "Could not disable elevated permissions." = "Kon verhoogde machtigingen niet uitschakelen.";
 "Unmount when" = "Deactiveer wanneer";
 "Screensaver started" = "Screensaver is gestart";

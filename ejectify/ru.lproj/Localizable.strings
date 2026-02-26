@@ -12,6 +12,7 @@
 "Launch at login" = "Запускать при старте";
 "Use elevated permissions" = "Использовать повышенные права";
 "Could not enable elevated permissions." = "Не удалось включить повышенные права.";
+"Check System Settings if Ejectify is enabled." = "Проверьте в «Системных настройках», включён ли Ejectify.";
 "Could not disable elevated permissions." = "Не удалось отключить повышенные права.";
 "Unmount when" = "Извлечь когда";
 "Screensaver started" = "Запущен скринсейвер";

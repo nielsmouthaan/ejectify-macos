@@ -12,6 +12,7 @@
 "Launch at login" = "लॉगिन पर लॉन्च करें";
 "Use elevated permissions" = "उन्नत अनुमतियों का उपयोग करें";
 "Could not enable elevated permissions." = "उन्नत अनुमतियाँ सक्षम नहीं की जा सकीं।";
+"Check System Settings if Ejectify is enabled." = "जांचें कि सिस्टम सेटिंग्स में Ejectify सक्षम है या नहीं।";
 "Could not disable elevated permissions." = "उन्नत अनुमतियाँ अक्षम नहीं की जा सकीं।";
 "Unmount when" = "अनमाउंट करें जब";
 "Screensaver started" = "स्क्रीनसेवर शुरू होता है";

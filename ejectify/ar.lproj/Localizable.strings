@@ -12,6 +12,7 @@
 "Launch at login" = "تشغيل عند تسجيل الدخول";
 "Use elevated permissions" = "استخدام الأذونات المرتفعة";
 "Could not enable elevated permissions." = "تعذر تمكين الأذونات المرتفعة.";
+"Check System Settings if Ejectify is enabled." = "تحقق من إعدادات النظام مما إذا كان Ejectify ممكّنًا.";
 "Could not disable elevated permissions." = "تعذر تعطيل الأذونات المرتفعة.";
 "Unmount when" = "إخراج عند";
 "Screensaver started" = "بدء شاشة التوقف";

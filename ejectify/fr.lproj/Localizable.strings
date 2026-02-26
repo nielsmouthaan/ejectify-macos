@@ -12,6 +12,7 @@
 "Launch at login" = "Ouvrir à l'ouverture de session";
 "Use elevated permissions" = "Utiliser des autorisations élevées";
 "Could not enable elevated permissions." = "Impossible d'activer les autorisations élevées.";
+"Check System Settings if Ejectify is enabled." = "Vérifiez dans Réglages Système si Ejectify est activé.";
 "Could not disable elevated permissions." = "Impossible de désactiver les autorisations élevées.";
 "Unmount when" = "Démonter dès que";
 "Screensaver started" = "L'économiseur d'écran démarre";

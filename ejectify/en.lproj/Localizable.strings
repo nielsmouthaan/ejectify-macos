@@ -12,6 +12,7 @@
 "Launch at login" = "Launch at login";
 "Use elevated permissions" = "Use elevated permissions";
 "Could not enable elevated permissions." = "Could not enable elevated permissions.";
+"Check System Settings if Ejectify is enabled." = "Check System Settings if Ejectify is enabled.";
 "Could not disable elevated permissions." = "Could not disable elevated permissions.";
 "Unmount when" = "Unmount when";
 "Screensaver started" = "Screensaver started";

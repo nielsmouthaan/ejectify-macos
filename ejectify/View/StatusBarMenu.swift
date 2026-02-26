@@ -259,7 +259,8 @@ class StatusBarMenu: NSMenu {
         guard didSucceed else {
             if shouldEnable {
                 showPermissionAlert(
-                    messageText: "Could not enable elevated permissions.".localized
+                    messageText: "Could not enable elevated permissions.".localized,
+                    informativeText: "Check System Settings if Ejectify is enabled.".localized
                 )
             } else {
                 showPermissionAlert(
@@ -318,10 +319,11 @@ class StatusBarMenu: NSMenu {
 
     /// Shows a user-friendly alert for elevated permission registration failures.
     @MainActor
-    private func showPermissionAlert(messageText: String) {
+    private func showPermissionAlert(messageText: String, informativeText: String? = nil) {
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = messageText
+        alert.informativeText = informativeText ?? ""
         alert.runModal()
     }
 }

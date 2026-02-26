@@ -12,6 +12,7 @@
 "Launch at login" = "Lançar ao login";
 "Use elevated permissions" = "Usar permissões elevadas";
 "Could not enable elevated permissions." = "Não foi possível ativar permissões elevadas.";
+"Check System Settings if Ejectify is enabled." = "Verifique em Definições do Sistema se o Ejectify está ativado.";
 "Could not disable elevated permissions." = "Não foi possível desativar permissões elevadas.";
 "Unmount when" = "Desmontar quando";
 "Screensaver started" = "O descanso de tela começar";

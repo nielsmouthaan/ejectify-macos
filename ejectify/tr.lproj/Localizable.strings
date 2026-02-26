@@ -12,6 +12,7 @@
 "Launch at login" = "Başlangıçta çalıştır";
 "Use elevated permissions" = "Yükseltilmiş izinleri kullan";
 "Could not enable elevated permissions." = "Yükseltilmiş izinler etkinleştirilemedi.";
+"Check System Settings if Ejectify is enabled." = "Ejectify’nin etkin olup olmadığını Sistem Ayarları’ndan kontrol edin.";
 "Could not disable elevated permissions." = "Yükseltilmiş izinler devre dışı bırakılamadı.";
 "Unmount when" = "Ne zaman bağlantı kesilsin";
 "Screensaver started" = "Ekran koruyucu başladığında";
