@@ -106,6 +106,10 @@ enum DiskArbitrationVolumeOperator {
             return (false, "Disk for requested volume not found")
         }
 
+        if case .mount = operation, isMounted(disk: disk) {
+            return (true, "mount already satisfied")
+        }
+
         let callbackState = CallbackState(operationName: operation.operationName)
         let callbackContext = Unmanaged.passRetained(callbackState).toOpaque()
 
@@ -139,6 +143,14 @@ enum DiskArbitrationVolumeOperator {
         }
 
         return callbackState.result
+    }
+
+    /// Returns whether Disk Arbitration currently reports a mounted volume path for this disk.
+    private static func isMounted(disk: DADisk) -> Bool {
+        guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
+            return false
+        }
+        return diskInfo[kDADiskDescriptionVolumePathKey] != nil
     }
 
     /// Resolves a Disk Arbitration disk by matching the requested volume UUID against currently visible disks.

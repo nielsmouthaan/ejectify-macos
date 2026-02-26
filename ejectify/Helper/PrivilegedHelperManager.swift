@@ -45,6 +45,31 @@ final class PrivilegedHelperManager {
     private var helperIsEnabled = false
     private let localOperationQueue = DispatchQueue(label: "nl.nielsmouthaan.Ejectify.LocalDiskOperation", qos: .userInitiated)
 
+    /// Appends a message suffix in the format `": <message>"` when a non-empty message is available.
+    private nonisolated static func messageSuffix(for message: String?) -> String {
+        guard let message, !message.isEmpty else {
+            return ""
+        }
+        return ": \(message)"
+    }
+
+    /// Logs a mount/unmount outcome with a consistent format used by privileged and local execution paths.
+    private nonisolated static func logOperationResult(
+        logger: Logger,
+        source: String,
+        operation: DiskArbitrationVolumeOperator.Operation,
+        volumeName: String,
+        success: Bool,
+        message: String?
+    ) {
+        let suffix = messageSuffix(for: message)
+        if success {
+            logger.info("\(source, privacy: .public) \(operation.operationName, privacy: .public) succeeded for \(volumeName, privacy: .public)\(suffix, privacy: .public)")
+        } else {
+            logger.error("\(source, privacy: .public) \(operation.operationName, privacy: .public) failed for \(volumeName, privacy: .public)\(suffix, privacy: .public)")
+        }
+    }
+
     /// Registers the launch daemon so privileged XPC requests can be accepted.
     func registerDaemonIfNeeded() {
         guard !didAttemptRegistration else {
@@ -165,11 +190,16 @@ final class PrivilegedHelperManager {
             return
         }
 
-        request(proxy) { [weak self] success, errorMessage in
-            if let errorMessage, !success {
-                self?.logger.error("Privileged helper \(operation.operationName, privacy: .public) failed for \(volumeName, privacy: .public): \(errorMessage, privacy: .public)")
-            } else if success {
-                self?.logger.info("Privileged helper \(operation.operationName, privacy: .public) succeeded for \(volumeName, privacy: .public)")
+        request(proxy) { [weak self] success, message in
+            if let logger = self?.logger {
+                Self.logOperationResult(
+                    logger: logger,
+                    source: "Privileged helper",
+                    operation: operation,
+                    volumeName: volumeName,
+                    success: success,
+                    message: message
+                )
             }
             complete(success)
         }
@@ -189,13 +219,16 @@ final class PrivilegedHelperManager {
         localOperationQueue.async {
             let result = DiskArbitrationVolumeOperator.perform(volumeUUID: uuid, operation: operation)
             let success = result.0
-            let errorMessage = result.1
+            let message = result.1
             DispatchQueue.main.async {
-                if !success {
-                    logger.error("Local \(operation.operationName, privacy: .public) failed for \(volumeName, privacy: .public): \((errorMessage ?? "Unknown error"), privacy: .public)")
-                } else {
-                    logger.info("Local \(operation.operationName, privacy: .public) succeeded for \(volumeName, privacy: .public)")
-                }
+                Self.logOperationResult(
+                    logger: logger,
+                    source: "Local",
+                    operation: operation,
+                    volumeName: volumeName,
+                    success: success,
+                    message: message
+                )
                 completionBox.completion(success)
             }
         }
