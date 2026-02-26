@@ -6,9 +6,7 @@
   
 */
 
-"Actions" = "実行";
 "Unmount all" = "すべてアンマウント";
-"No volumes" = "ボリュームがありません";
 "Volumes" = "ボリューム";
 "Preferences" = "環境設定";
 "Launch at login" = "ログイン時に起動";

@@ -124,12 +124,9 @@ class StatusBarMenu: NSMenu {
 
     /// Builds the top "Actions" section.
     private func buildActionsMenu() {
-        let titleItem = NSMenuItem(title: "Actions".localized, action: nil, keyEquivalent: "")
-        titleItem.isEnabled = false
-        addItem(titleItem)
-
         let unmountAllItem = NSMenuItem(title: "Unmount all".localized, action: #selector(unmountAllClicked(menuItem:)), keyEquivalent: "")
         unmountAllItem.target = self
+        unmountAllItem.isEnabled = !volumes.isEmpty
         addItem(unmountAllItem)
     }
 
@@ -137,10 +134,7 @@ class StatusBarMenu: NSMenu {
     private func buildVolumesMenu() {
         addItem(NSMenuItem.separator())
 
-        let title = volumes.count == 0 ? "No volumes".localized : "Volumes".localized
-        let titleItem = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-        titleItem.isEnabled = false
-        addItem(titleItem)
+        addItem(makeSectionHeaderItem(title: "Volumes".localized))
 
         volumes.forEach { (volume) in
             let volumeItem = NSMenuItem(title: volume.name, action: #selector(volumeClicked(menuItem:)), keyEquivalent: "")
@@ -155,9 +149,7 @@ class StatusBarMenu: NSMenu {
     private func buildPreferencesMenu() {
         addItem(NSMenuItem.separator())
 
-        let titleItem = NSMenuItem(title: "Preferences".localized, action: nil, keyEquivalent: "")
-        titleItem.isEnabled = false
-        addItem(titleItem)
+        addItem(makeSectionHeaderItem(title: "Preferences".localized))
 
         let launchAtLoginItem = NSMenuItem(title: "Launch at login".localized, action: #selector(launchAtLoginClicked(menuItem:)), keyEquivalent: "")
         launchAtLoginItem.target = self
@@ -182,6 +174,11 @@ class StatusBarMenu: NSMenu {
     /// Converts menu state toggles to a Bool value.
     private func toggledValue(for state: NSControl.StateValue) -> Bool {
         state == .off
+    }
+
+    /// Creates a native AppKit section header item for menu grouping.
+    private func makeSectionHeaderItem(title: String) -> NSMenuItem {
+        NSMenuItem.sectionHeader(title: title)
     }
 
     /// Builds the submenu for selecting unmount trigger conditions.

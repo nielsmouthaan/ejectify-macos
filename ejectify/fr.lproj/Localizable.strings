@@ -6,9 +6,7 @@
   
 */
 
-"Actions" = "Actions";
 "Unmount all" = "Tout démonter";
-"No volumes" = "Pas de volumes";
 "Volumes" = "Volumes";
 "Preferences" = "Préférences";
 "Launch at login" = "Ouvrir à l'ouverture de session";

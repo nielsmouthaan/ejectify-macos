@@ -6,9 +6,7 @@
   
 */
 
-"Actions" = "Eylemler";
 "Unmount all" = "Tümünü çıkar";
-"No volumes" = "Birim yok";
 "Volumes" = "Birimler";
 "Preferences" = "Tercihler";
 "Launch at login" = "Başlangıçta çalıştır";
