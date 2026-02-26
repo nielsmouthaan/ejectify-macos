@@ -18,5 +18,6 @@
 "Display turned off" = "Дисплей выключен";
 "System starts sleeping" = "Система перешла в сон";
 "Force unmount" = "Размонтировать принудительно";
+"Mount after delay" = "Смонтировать после задержки";
 "About Ejectify" = "Об Ejectify";
 "Quit Ejectify" = "Выйти из Ejectify";

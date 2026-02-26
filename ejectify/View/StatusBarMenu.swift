@@ -172,6 +172,11 @@ class StatusBarMenu: NSMenu {
         forceUnmountItem.target = self
         forceUnmountItem.state = Preference.forceUnmount ? .on : .off
         addItem(forceUnmountItem)
+
+        let mountAfterDelayItem = NSMenuItem(title: "Mount after delay".localized, action: #selector(mountAfterDelayClicked(menuItem:)), keyEquivalent: "")
+        mountAfterDelayItem.target = self
+        mountAfterDelayItem.state = Preference.mountAfterDelay ? .on : .off
+        addItem(mountAfterDelayItem)
     }
 
     /// Converts menu state toggles to a Bool value.
@@ -265,6 +270,12 @@ class StatusBarMenu: NSMenu {
     /// Toggles force-unmount preference from the menu.
     @objc private func forceUnmountClicked(menuItem: NSMenuItem) {
         Preference.forceUnmount = toggledValue(for: menuItem.state)
+        updateMenu()
+    }
+
+    /// Toggles delayed remount behavior from the menu.
+    @objc private func mountAfterDelayClicked(menuItem: NSMenuItem) {
+        Preference.mountAfterDelay = toggledValue(for: menuItem.state)
         updateMenu()
     }
 

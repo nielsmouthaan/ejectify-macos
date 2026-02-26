@@ -10,6 +10,7 @@ import AppKit
 /// Creates and configures the app's menu bar status item.
 @MainActor
 class StatusBar {
+    
     /// Backing status item shown in the macOS menu bar.
     private let statusItem: NSStatusItem
 

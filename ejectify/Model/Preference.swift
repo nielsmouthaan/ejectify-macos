@@ -61,4 +61,15 @@ class Preference {
             logger.info("Preference changed: forceUnmount=\(newValue, privacy: .public)")
         }
     }
+
+    /// Controls whether remount attempts should be delayed by five seconds after wake.
+    static var mountAfterDelay: Bool {
+        get {
+            return UserDefaults.standard.bool(forKey: "preference.mountAfterDelay")
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "preference.mountAfterDelay")
+            logger.info("Preference changed: mountAfterDelay=\(newValue, privacy: .public)")
+        }
+    }
 }

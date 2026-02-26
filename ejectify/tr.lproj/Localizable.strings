@@ -18,5 +18,6 @@
 "Display turned off" = "Ekran kapatıldığında";
 "System starts sleeping" = "Sistem uyku moduna girince";
 "Force unmount" = "Çıkarmaya zorla";
+"Mount after delay" = "Gecikmeden sonra ekle";
 "About Ejectify" = "Ejectify Hakkında";
 "Quit Ejectify" = "Ejectify'dan Çık";

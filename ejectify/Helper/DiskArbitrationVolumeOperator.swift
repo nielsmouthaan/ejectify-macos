@@ -98,6 +98,9 @@ enum DiskArbitrationVolumeOperator {
         if case .mount = operation, isMounted(disk: disk) {
             return (true, "Volume already mounted")
         }
+        if case .unmount = operation, !isMounted(disk: disk) {
+            return (true, "Volume already unmounted")
+        }
 
         let callbackState = CallbackState()
         let callbackContext = Unmanaged.passRetained(callbackState).toOpaque()

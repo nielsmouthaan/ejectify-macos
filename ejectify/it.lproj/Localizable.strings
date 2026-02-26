@@ -18,5 +18,6 @@
 "Display turned off" = "il display è spento";
 "System starts sleeping" = "il sistema va in stop";
 "Force unmount" = "Forza espulsione";
+"Mount after delay" = "Monta con un ritardo";
 "About Ejectify" = "Su Ejectify";
 "Quit Ejectify" = "Esci da Ejectify";
