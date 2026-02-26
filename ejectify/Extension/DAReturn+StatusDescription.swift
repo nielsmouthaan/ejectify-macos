@@ -8,42 +8,38 @@
 import Foundation
 @preconcurrency import DiskArbitration
 
-/// Converts Disk Arbitration return codes into readable descriptions.
+/// Returns the matching Disk Arbitration constant name for known status codes.
 extension DAReturn {
     var statusDescription: String {
         switch self {
         case Int32(kDAReturnSuccess):
-            return "operation completed successfully"
+            return "kDAReturnSuccess"
         case Int32(kDAReturnError):
-            return "generic Disk Arbitration error"
+            return "kDAReturnError"
         case Int32(kDAReturnBusy):
-            return "resource is busy"
+            return "kDAReturnBusy"
         case Int32(kDAReturnBadArgument):
-            return "invalid argument was supplied"
+            return "kDAReturnBadArgument"
         case Int32(kDAReturnExclusiveAccess):
-            return "exclusive access conflict"
+            return "kDAReturnExclusiveAccess"
         case Int32(kDAReturnNoResources):
-            return "insufficient resources to complete the operation"
+            return "kDAReturnNoResources"
         case Int32(kDAReturnNotFound):
-            return "requested disk or resource was not found"
+            return "kDAReturnNotFound"
         case Int32(kDAReturnNotMounted):
-            return "volume is not currently mounted"
+            return "kDAReturnNotMounted"
         case Int32(kDAReturnNotPermitted):
-            return "operation is not permitted"
+            return "kDAReturnNotPermitted"
         case Int32(kDAReturnNotPrivileged):
-            return "operation requires elevated privileges"
+            return "kDAReturnNotPrivileged"
         case Int32(kDAReturnNotReady):
-            return "disk is not ready"
+            return "kDAReturnNotReady"
         case Int32(kDAReturnNotWritable):
-            return "volume is not writable"
+            return "kDAReturnNotWritable"
         case Int32(kDAReturnUnsupported):
-            return "operation is not supported for this disk"
+            return "kDAReturnUnsupported"
         default:
-            return String(
-                format: "unknown Disk Arbitration status, code: %d / 0x%08X",
-                self,
-                UInt32(bitPattern: self)
-            )
+            return "unknown"
         }
     }
 }

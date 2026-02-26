@@ -7,20 +7,20 @@
 
 import ServiceManagement
 
-/// Converts Service Management daemon status values into readable descriptions.
+/// Returns the enum case name for each Service Management daemon status.
 extension SMAppService.Status {
     var statusDescription: String {
         switch self {
         case .notRegistered:
-            return "service is not registered or was unregistered"
+            return "notRegistered"
         case .enabled:
-            return "service is registered and eligible to run"
+            return "enabled"
         case .requiresApproval:
-            return "service is registered but requires user approval in System Settings"
+            return "requiresApproval"
         case .notFound:
-            return "service could not be found due to an error"
+            return "notFound"
         @unknown default:
-            return "unknown Service Management status \(self.rawValue)"
+            return "unknown"
         }
     }
 }
