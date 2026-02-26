@@ -140,14 +140,14 @@ class StatusBarMenu: NSMenu {
         launchAtLoginItem.state = Preference.launchAtLogin ? .on : .off
         addItem(launchAtLoginItem)
 
+        let unmountWhenItem = NSMenuItem(title: "Unmount when".localized, action: nil, keyEquivalent: "")
+        unmountWhenItem.submenu = buildUnmountWhenMenu()
+        addItem(unmountWhenItem)
+
         let elevatedPermissionsItem = NSMenuItem(title: "Use elevated permissions".localized, action: #selector(elevatedPermissionsClicked(menuItem:)), keyEquivalent: "")
         elevatedPermissionsItem.target = self
         elevatedPermissionsItem.state = PrivilegedHelperManager.shared.isDaemonEnabled ? .on : .off
         addItem(elevatedPermissionsItem)
-
-        let unmountWhenItem = NSMenuItem(title: "Unmount when".localized, action: nil, keyEquivalent: "")
-        unmountWhenItem.submenu = buildUnmountWhenMenu()
-        addItem(unmountWhenItem)
 
         let forceUnmountItem = NSMenuItem(title: "Force unmount".localized, action: #selector(forceUnmountClicked(menuItem:)), keyEquivalent: "")
         forceUnmountItem.target = self
