@@ -82,27 +82,29 @@ final class PrivilegedHelperManager {
         helperIsEnabled = daemonService.status == .enabled
     }
 
-    /// Requests a mount operation, preferring the privileged helper and falling back to local Disk Arbitration when unavailable.
-    func mount(volumeUUID: NSUUID, volumeName: String, completion: @escaping (Bool) -> Void) {
+    /// Requests a mount operation with a BSD-name hint, preferring the privileged helper and falling back to local Disk Arbitration when unavailable.
+    func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, completion: @escaping (Bool) -> Void) {
         performRequest(
             operation: .mount,
             volumeUUID: volumeUUID,
             volumeName: volumeName,
+            bsdName: bsdName,
             completion: completion
         ) { proxy, reply in
-            proxy.mount(volumeUUID: volumeUUID, volumeName: volumeName, withReply: reply)
+            proxy.mount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, withReply: reply)
         }
     }
 
-    /// Requests an unmount operation, preferring the privileged helper and falling back to local Disk Arbitration when unavailable.
-    func unmount(volumeUUID: NSUUID, volumeName: String, force: Bool, completion: @escaping (Bool) -> Void) {
+    /// Requests an unmount operation with a BSD-name hint, preferring the privileged helper and falling back to local Disk Arbitration when unavailable.
+    func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, completion: @escaping (Bool) -> Void) {
         performRequest(
             operation: .unmount(force: force),
             volumeUUID: volumeUUID,
             volumeName: volumeName,
+            bsdName: bsdName,
             completion: completion
         ) { proxy, reply in
-            proxy.unmount(volumeUUID: volumeUUID, volumeName: volumeName, force: force, withReply: reply)
+            proxy.unmount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, force: force, withReply: reply)
         }
     }
 
@@ -111,6 +113,7 @@ final class PrivilegedHelperManager {
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeUUID: NSUUID,
         volumeName: String,
+        bsdName: String,
         completion: @escaping (Bool) -> Void,
         request: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?) -> Void) -> Void
     ) {
@@ -124,7 +127,7 @@ final class PrivilegedHelperManager {
         }
 
         guard helperIsEnabled else {
-            performLocalOperation(operation: operation, volumeUUID: volumeUUID, volumeName: volumeName, completion: completion)
+            performLocalOperation(operation: operation, volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, completion: completion)
             return
         }
 
@@ -158,7 +161,7 @@ final class PrivilegedHelperManager {
                     return
                 }
 
-                self.performLocalOperation(operation: operation, volumeUUID: volumeUUID, volumeName: volumeName, completion: completion)
+                self.performLocalOperation(operation: operation, volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, completion: completion)
                 connection.invalidate()
             }
         }
@@ -192,6 +195,7 @@ final class PrivilegedHelperManager {
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeUUID: NSUUID,
         volumeName: String,
+        bsdName: String,
         completion: @escaping (Bool) -> Void
     ) {
         let uuid = volumeUUID as UUID
@@ -199,7 +203,7 @@ final class PrivilegedHelperManager {
         let completionBox = CompletionBox(completion: completion)
 
         localOperationQueue.async {
-            let result = DiskArbitrationVolumeOperator.perform(volumeUUID: uuid, operation: operation)
+            let result = DiskArbitrationVolumeOperator.perform(volumeUUID: uuid, bsdName: bsdName, operation: operation)
             let success = result.0
             let message = result.1
             DispatchQueue.main.async {

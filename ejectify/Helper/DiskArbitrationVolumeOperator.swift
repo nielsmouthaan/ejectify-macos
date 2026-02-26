@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 @preconcurrency import DiskArbitration
 
 /// Converts a Disk Arbitration dissenter into a success/failure tuple.
@@ -87,6 +88,8 @@ enum DiskArbitrationVolumeOperator {
         }
     }
 
+    private static let logger = Logger(subsystem: "nl.nielsmouthaan.Ejectify", category: "DiskArbitrationVolumeOperator")
+
     /// Shared callback queue used by the shared Disk Arbitration session.
     private static let callbackQueue = DispatchQueue(
         label: "nl.nielsmouthaan.Ejectify.DiskArbitrationVolumeOperator",
@@ -97,12 +100,18 @@ enum DiskArbitrationVolumeOperator {
     nonisolated(unsafe) private static let diskArbitrationSession: DASession? = DiskArbitrationSessionFactory.makeSession(dispatchQueue: callbackQueue)
 
     /// Executes a Disk Arbitration mount/unmount operation and waits for callback completion.
-    static func perform(volumeUUID: UUID, operation: Operation, timeout: TimeInterval = 15) -> (Bool, String?) {
+    /// The BSD name is used as a fast-path resolve hint before UUID scanning.
+    static func perform(
+        volumeUUID: UUID,
+        bsdName: String,
+        operation: Operation,
+        timeout: TimeInterval = 15
+    ) -> (Bool, String?) {
         guard let session = diskArbitrationSession else {
             return (false, "Disk Arbitration session unavailable")
         }
 
-        guard let disk = resolveDisk(volumeUUID: volumeUUID, session: session) else {
+        guard let disk = resolveDisk(volumeUUID: volumeUUID, bsdName: bsdName, session: session) else {
             return (false, "Disk for requested volume not found")
         }
 
@@ -153,8 +162,42 @@ enum DiskArbitrationVolumeOperator {
         return diskInfo[kDADiskDescriptionVolumePathKey] != nil
     }
 
-    /// Resolves a Disk Arbitration disk by matching the requested volume UUID against currently visible disks.
-    private static func resolveDisk(volumeUUID targetVolumeUUID: UUID, session: DASession) -> DADisk? {
+    /// Resolves a Disk Arbitration disk, trying the provided BSD name first and falling back to UUID scan.
+    private static func resolveDisk(volumeUUID targetVolumeUUID: UUID, bsdName: String, session: DASession) -> DADisk? {
+        if !bsdName.isEmpty {
+            if let disk = resolveDiskByBSDName(bsdName, volumeUUID: targetVolumeUUID, session: session) {
+                logger.info("Disk resolved for \(targetVolumeUUID.uuidString, privacy: .public) based on BSD name")
+                return disk
+            }
+        }
+
+        if let disk = resolveDiskByVolumeUUIDScan(volumeUUID: targetVolumeUUID, session: session) {
+            logger.info("Disk resolved for \(targetVolumeUUID.uuidString, privacy: .public) by scanning devices")
+            return disk
+        }
+
+        logger.error("Disk resolve failed for \(targetVolumeUUID.uuidString, privacy: .public)")
+        return nil
+    }
+
+    /// Resolves a disk using a BSD name when it matches the requested volume UUID.
+    private static func resolveDiskByBSDName(_ bsdName: String, volumeUUID targetVolumeUUID: UUID, session: DASession) -> DADisk? {
+        let matchedDisk = bsdName.withCString { rawBSDName in
+            DADiskCreateFromBSDName(kCFAllocatorDefault, session, rawBSDName)
+        }
+
+        guard let disk = matchedDisk,
+              let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any],
+              let resolvedUUID = VolumeUUIDResolver.volumeUUID(from: diskInfo),
+              resolvedUUID == targetVolumeUUID else {
+            return nil
+        }
+
+        return disk
+    }
+
+    /// Resolves a disk by scanning `/dev` and matching each disk description's volume UUID.
+    private static func resolveDiskByVolumeUUIDScan(volumeUUID targetVolumeUUID: UUID, session: DASession) -> DADisk? {
         let devURL = URL(fileURLWithPath: "/dev", isDirectory: true)
         let deviceNames = (try? FileManager.default.contentsOfDirectory(atPath: devURL.path)) ?? []
 

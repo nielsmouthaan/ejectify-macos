@@ -201,10 +201,11 @@ class StatusBarMenu: NSMenu {
         enabledVolumes.forEach { volume in
             let volumeUUID = volume.id as NSUUID
             let volumeName = volume.name
+            let bsdName = volume.bsdName
             let forceUnmount = Preference.forceUnmount
             let logger = self.logger
             Task { @MainActor in
-                PrivilegedHelperManager.shared.unmount(volumeUUID: volumeUUID, volumeName: volumeName, force: forceUnmount) { success in
+                PrivilegedHelperManager.shared.unmount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, force: forceUnmount) { success in
                     guard !success else {
                         return
                     }

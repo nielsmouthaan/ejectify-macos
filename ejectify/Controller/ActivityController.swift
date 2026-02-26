@@ -52,7 +52,7 @@ class ActivityController {
         queuedRemountVolumes = ExternalVolume.mountedVolumes().filter { $0.enabled }
         logger.info("Unmount trigger received: \(notification.name.rawValue, privacy: .public)")
         for volume in queuedRemountVolumes {
-            privilegedHelperManager.unmount(volumeUUID: volume.id as NSUUID, volumeName: volume.name, force: Preference.forceUnmount) { [weak self] success in
+            privilegedHelperManager.unmount(volumeUUID: volume.id as NSUUID, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success in
                 guard !success else {
                     return
                 }
@@ -66,7 +66,7 @@ class ActivityController {
     @objc func mountVolumes(notification: Notification) {
         logger.info("Mount trigger received: \(notification.name.rawValue, privacy: .public)")
         for volume in queuedRemountVolumes {
-            privilegedHelperManager.mount(volumeUUID: volume.id as NSUUID, volumeName: volume.name) { [weak self] success in
+            privilegedHelperManager.mount(volumeUUID: volume.id as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { [weak self] success in
                 guard !success else {
                     return
                 }

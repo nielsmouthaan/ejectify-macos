@@ -16,9 +16,9 @@ enum PrivilegedHelperConfiguration {
 /// XPC interface exposed by the privileged helper daemon.
 @objc protocol PrivilegedDiskServiceProtocol {
     
-    /// Mounts a volume identified by UUID.
-    func mount(volumeUUID: NSUUID, volumeName: String, withReply reply: @escaping (Bool, String?) -> Void)
+    /// Mounts a volume identified by UUID with a BSD-name resolve hint.
+    func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?) -> Void)
 
-    /// Unmounts a volume identified by UUID.
-    func unmount(volumeUUID: NSUUID, volumeName: String, force: Bool, withReply reply: @escaping (Bool, String?) -> Void)
+    /// Unmounts a volume identified by UUID with a BSD-name resolve hint.
+    func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?) -> Void)
 }

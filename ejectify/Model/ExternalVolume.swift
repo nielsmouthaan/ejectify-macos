@@ -28,6 +28,9 @@ class ExternalVolume {
     
     /// Human-readable volume name displayed in UI and logs.
     let name: String
+
+    /// BSD device identifier (for example `disk6s2`).
+    let bsdName: String
     
     /// Tracks whether this volume should be managed automatically. Defaults to enabled.
     var enabled: Bool {
@@ -43,9 +46,10 @@ class ExternalVolume {
         }
     }
 
-    init(id: UUID, name: String) {
+    init(id: UUID, name: String, bsdName: String) {
         self.id = id
         self.name = name
+        self.bsdName = bsdName
     }
 
     /// Returns currently mounted external volumes that Ejectify can manage.
@@ -94,6 +98,11 @@ class ExternalVolume {
             return nil
         }
 
+        // Require a BSD disk identifier for fast resolve attempts during mount/unmount operations.
+        guard let bsdName = diskInfo[kDADiskDescriptionMediaBSDNameKey] as? String else {
+            return nil
+        }
+
         // Require internal/external metadata for the system-disk exclusion.
         guard let internalDisk = diskInfo[kDADiskDescriptionDeviceInternalKey] as? Bool else {
             return nil
@@ -108,7 +117,7 @@ class ExternalVolume {
             return nil
         }
 
-        return ExternalVolume(id: volumeUUID, name: name)
+        return ExternalVolume(id: volumeUUID, name: name, bsdName: bsdName)
     }
 
 }
