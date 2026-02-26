@@ -10,6 +10,9 @@
 "Volumes" = "वॉल्यूम";
 "Preferences" = "प्राथमिकताएँ";
 "Launch at login" = "लॉगिन पर लॉन्च करें";
+"Use elevated permissions" = "उन्नत अनुमतियों का उपयोग करें";
+"Could not enable elevated permissions." = "उन्नत अनुमतियाँ सक्षम नहीं की जा सकीं।";
+"Could not disable elevated permissions." = "उन्नत अनुमतियाँ अक्षम नहीं की जा सकीं।";
 "Unmount when" = "अनमाउंट करें जब";
 "Screensaver started" = "स्क्रीनसेवर शुरू होता है";
 "Screen is locked" = "स्क्रीन लॉक होता है";

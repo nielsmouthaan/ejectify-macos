@@ -10,6 +10,9 @@
 "Volumes" = "Volumi";
 "Preferences" = "Preferenze";
 "Launch at login" = "Avvia al login";
+"Use elevated permissions" = "Usa permessi elevati";
+"Could not enable elevated permissions." = "Non è stato possibile abilitare i permessi elevati.";
+"Could not disable elevated permissions." = "Non è stato possibile disabilitare i permessi elevati.";
 "Unmount when" = "Smonta quando";
 "Screensaver started" = "si avvia salvaschermo";
 "Screen is locked" = "si blocca lo schermo";

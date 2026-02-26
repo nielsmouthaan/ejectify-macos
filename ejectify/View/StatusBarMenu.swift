@@ -156,6 +156,11 @@ class StatusBarMenu: NSMenu {
         launchAtLoginItem.state = Preference.launchAtLogin ? .on : .off
         addItem(launchAtLoginItem)
 
+        let elevatedPermissionsItem = NSMenuItem(title: "Use elevated permissions".localized, action: #selector(elevatedPermissionsClicked(menuItem:)), keyEquivalent: "")
+        elevatedPermissionsItem.target = self
+        elevatedPermissionsItem.state = PrivilegedHelperManager.shared.isDaemonEnabled ? .on : .off
+        addItem(elevatedPermissionsItem)
+
         let unmountWhenItem = NSMenuItem(title: "Unmount when".localized, action: nil, keyEquivalent: "")
         unmountWhenItem.submenu = buildUnmountWhenMenu()
         addItem(unmountWhenItem)
@@ -255,6 +260,30 @@ class StatusBarMenu: NSMenu {
         updateMenu()
     }
 
+    /// Toggles privileged helper registration for elevated mount and unmount attempts.
+    @MainActor
+    @objc private func elevatedPermissionsClicked(menuItem: NSMenuItem) {
+        let shouldEnable = toggledValue(for: menuItem.state)
+        let helperManager = PrivilegedHelperManager.shared
+        let didSucceed = shouldEnable ? helperManager.registerDaemon() : helperManager.unregisterDaemon()
+
+        guard didSucceed else {
+            if shouldEnable {
+                showPermissionAlert(
+                    messageText: "Could not enable elevated permissions.".localized
+                )
+            } else {
+                showPermissionAlert(
+                    messageText: "Could not disable elevated permissions.".localized
+                )
+            }
+            updateMenu()
+            return
+        }
+
+        updateMenu()
+    }
+
     /// Toggles one unmount trigger preference from the submenu.
     @objc private func unmountWhenChanged(menuItem: NSMenuItem) {
         guard let trigger = menuItem.representedObject as? Preference.UnmountWhen else {
@@ -295,5 +324,14 @@ class StatusBarMenu: NSMenu {
         Task { @MainActor in
             NSApplication.shared.terminate(nil)
         }
+    }
+
+    /// Shows a user-friendly alert for elevated permission registration failures.
+    @MainActor
+    private func showPermissionAlert(messageText: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = messageText
+        alert.runModal()
     }
 }

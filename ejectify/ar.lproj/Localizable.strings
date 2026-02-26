@@ -10,6 +10,9 @@
 "Volumes" = "وحدات التخزين";
 "Preferences" = "التفضيلات";
 "Launch at login" = "تشغيل عند تسجيل الدخول";
+"Use elevated permissions" = "استخدام الأذونات المرتفعة";
+"Could not enable elevated permissions." = "تعذر تمكين الأذونات المرتفعة.";
+"Could not disable elevated permissions." = "تعذر تعطيل الأذونات المرتفعة.";
 "Unmount when" = "إخراج عند";
 "Screensaver started" = "بدء شاشة التوقف";
 "Screen is locked" = "قفل الشاشة";

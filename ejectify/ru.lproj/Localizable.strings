@@ -10,6 +10,9 @@
 "Volumes" = "Тома";
 "Preferences" = "Настройки";
 "Launch at login" = "Запускать при старте";
+"Use elevated permissions" = "Использовать повышенные права";
+"Could not enable elevated permissions." = "Не удалось включить повышенные права.";
+"Could not disable elevated permissions." = "Не удалось отключить повышенные права.";
 "Unmount when" = "Извлечь когда";
 "Screensaver started" = "Запущен скринсейвер";
 "Screen is locked" = "Экран заблокирован";

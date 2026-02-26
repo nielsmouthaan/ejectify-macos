@@ -10,6 +10,9 @@
 "Volumes" = "Volumes";
 "Preferences" = "Préférences";
 "Launch at login" = "Ouvrir à l'ouverture de session";
+"Use elevated permissions" = "Utiliser des autorisations élevées";
+"Could not enable elevated permissions." = "Impossible d'activer les autorisations élevées.";
+"Could not disable elevated permissions." = "Impossible de désactiver les autorisations élevées.";
 "Unmount when" = "Démonter dès que";
 "Screensaver started" = "L'économiseur d'écran démarre";
 "Screen is locked" = "L'écran est verrouillé";

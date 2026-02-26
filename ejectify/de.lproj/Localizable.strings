@@ -10,6 +10,9 @@
 "Volumes" = "Volumes";
 "Preferences" = "Einstellungen";
 "Launch at login" = "Beim Login starten";
+"Use elevated permissions" = "Erhöhte Berechtigungen verwenden";
+"Could not enable elevated permissions." = "Erhöhte Berechtigungen konnten nicht aktiviert werden.";
+"Could not disable elevated permissions." = "Erhöhte Berechtigungen konnten nicht deaktiviert werden.";
 "Unmount when" = "Auswerfen, sobald";
 "Screensaver started" = "Bildschirmschoner startet";
 "Screen is locked" = "Bildschirm gesperrt wird";

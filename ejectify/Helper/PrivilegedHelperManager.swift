@@ -9,8 +9,7 @@ import Foundation
 import OSLog
 import ServiceManagement
 
-@MainActor
-final class PrivilegedHelperManager {
+final class PrivilegedHelperManager: @unchecked Sendable {
     
     /// Wraps completion closures so they can cross Dispatch sendable boundaries safely.
     private final class CompletionBox: @unchecked Sendable {
@@ -21,11 +20,42 @@ final class PrivilegedHelperManager {
         }
     }
 
+    /// Stores completion actions so they can cross Dispatch sendable boundaries safely.
+    private final class ActionBox: @unchecked Sendable {
+        let action: () -> Void
+
+        init(action: @escaping () -> Void) {
+            self.action = action
+        }
+    }
+
+    /// Ensures a completion path is only executed once across concurrent callbacks.
+    private final class CompletionGate: @unchecked Sendable {
+        private let lock = NSLock()
+        private var didComplete = false
+
+        func runOnce(_ action: () -> Void) {
+            lock.lock()
+            defer { lock.unlock() }
+            guard !didComplete else {
+                return
+            }
+            didComplete = true
+            action()
+        }
+    }
+
     static let shared = PrivilegedHelperManager()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "PrivilegedHelperManager")
-    private var didAttemptRegistration = false
-    private var helperIsEnabled = false
     private let localOperationQueue = DispatchQueue(label: "nl.nielsmouthaan.Ejectify.LocalDiskOperation", qos: .userInitiated)
+    private var daemonService: SMAppService {
+        SMAppService.daemon(plistName: PrivilegedHelperConfiguration.launchDaemonPlistName)
+    }
+
+    /// Returns whether the privileged helper daemon is currently registered and approved to run.
+    var isDaemonEnabled: Bool {
+        daemonService.status == .enabled
+    }
 
     /// Appends a message suffix in the format `": <message>"` when a non-empty message is available.
     private nonisolated static func messageSuffix(for message: String?) -> String {
@@ -57,12 +87,7 @@ final class PrivilegedHelperManager {
 
     /// Registers the launch daemon so privileged XPC requests can be accepted.
     func registerDaemonIfNeeded() {
-        guard !didAttemptRegistration else {
-            return
-        }
-        didAttemptRegistration = true
-
-        let daemonService = SMAppService.daemon(plistName: PrivilegedHelperConfiguration.launchDaemonPlistName)
+        let daemonService = self.daemonService
         do {
             switch daemonService.status {
             case .notRegistered:
@@ -81,8 +106,36 @@ final class PrivilegedHelperManager {
         } catch {
             logger.error("Privileged helper daemon registration failed: \(error, privacy: .public)")
         }
+    }
 
-        helperIsEnabled = daemonService.status == .enabled
+    /// Registers the launch daemon and returns whether it is ready for privileged routing.
+    @discardableResult
+    func registerDaemon() -> Bool {
+        registerDaemonIfNeeded()
+        return isDaemonEnabled
+    }
+
+    /// Unregisters the launch daemon and returns whether privileged routing is disabled.
+    @discardableResult
+    func unregisterDaemon() -> Bool {
+        let daemonService = self.daemonService
+        do {
+            switch daemonService.status {
+            case .enabled, .requiresApproval:
+                try daemonService.unregister()
+                logger.info("Privileged helper daemon unregistration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
+            case .notRegistered:
+                logger.info("Privileged helper daemon already unregistered")
+            case .notFound:
+                logger.warning("Privileged helper daemon was not found while attempting unregistration")
+            @unknown default:
+                logger.warning("Privileged helper daemon reported an unexpected status while unregistering: \(daemonService.status.statusDescription, privacy: .public)")
+            }
+        } catch {
+            logger.error("Privileged helper daemon unregistration failed: \(error, privacy: .public)")
+        }
+
+        return !isDaemonEnabled
     }
 
     /// Requests a mount operation with a BSD-name hint, preferring the privileged helper and falling back to local Disk Arbitration when unavailable.
@@ -120,16 +173,7 @@ final class PrivilegedHelperManager {
         completion: @escaping (Bool) -> Void,
         request: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?) -> Void) -> Void
     ) {
-        if !didAttemptRegistration {
-            registerDaemonIfNeeded()
-        }
-
-        if !helperIsEnabled {
-            let daemonService = SMAppService.daemon(plistName: PrivilegedHelperConfiguration.launchDaemonPlistName)
-            helperIsEnabled = daemonService.status == .enabled
-        }
-
-        guard helperIsEnabled else {
+        guard isDaemonEnabled else {
             performLocalOperation(operation: operation, volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, completion: completion)
             return
         }
@@ -138,14 +182,11 @@ final class PrivilegedHelperManager {
         connection.remoteObjectInterface = NSXPCInterface(with: PrivilegedDiskServiceProtocol.self)
         connection.resume()
 
-        var didComplete = false
+        let completionGate = CompletionGate()
         let completeOnce: (@escaping () -> Void) -> Void = { action in
+            let actionBox = ActionBox(action: action)
             DispatchQueue.main.async {
-                guard !didComplete else {
-                    return
-                }
-                didComplete = true
-                action()
+                completionGate.runOnce(actionBox.action)
             }
         }
 
@@ -191,7 +232,11 @@ final class PrivilegedHelperManager {
                     message: message
                 )
             }
-            complete(success)
+            if success {
+                complete(true)
+            } else {
+                completeWithLocalFallback()
+            }
         }
     }
 

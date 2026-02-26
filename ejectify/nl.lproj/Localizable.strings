@@ -10,6 +10,9 @@
 "Volumes" = "Volumes";
 "Preferences" = "Voorkeuren";
 "Launch at login" = "Start bij inloggen";
+"Use elevated permissions" = "Verhoogde machtigingen gebruiken";
+"Could not enable elevated permissions." = "Kon verhoogde machtigingen niet inschakelen.";
+"Could not disable elevated permissions." = "Kon verhoogde machtigingen niet uitschakelen.";
 "Unmount when" = "Deactiveer wanneer";
 "Screensaver started" = "Screensaver is gestart";
 "Screen is locked" = "Scherm is vergrendeld";
