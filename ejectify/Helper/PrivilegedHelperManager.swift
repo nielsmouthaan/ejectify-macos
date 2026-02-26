@@ -67,16 +67,16 @@ final class PrivilegedHelperManager {
             switch daemonService.status {
             case .notRegistered:
                 try daemonService.register()
-                logger.info("Privileged helper daemon not registered, registration attempted with status: \(daemonService.status.statusDescription, privacy: .public)")
+                logger.info("Privileged helper daemon was not registered. Registration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
             case .enabled:
-                logger.info("Privileged helper daemon already registered");
+                logger.info("Privileged helper daemon already registered and enabled")
             case .requiresApproval:
-                logger.warning("Privileged helper daemon requires approval");
+                logger.warning("Privileged helper daemon is not runnable yet: \(daemonService.status.statusDescription, privacy: .public)")
             case .notFound:
                 try daemonService.register()
-                logger.info("Privileged helper daemon was not found, registration attempted with status: \(daemonService.status.statusDescription, privacy: .public)")
+                logger.info("Privileged helper daemon service was not found. Registration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
             @unknown default:
-                logger.warning("Privileged helper daemon reported unknown status: \(daemonService.status.statusDescription, privacy: .public)");
+                logger.warning("Privileged helper daemon reported an unexpected status: \(daemonService.status.statusDescription, privacy: .public)")
             }
         } catch {
             logger.error("Privileged helper daemon registration failed: \(error, privacy: .public)")

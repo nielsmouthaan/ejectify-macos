@@ -64,13 +64,8 @@ enum DiskArbitrationVolumeOperator {
     }
 
     private final class CallbackState {
-        let operationName: String
         let semaphore = DispatchSemaphore(value: 0)
         var result: (Bool, String?) = (false, "No response from Disk Arbitration callback")
-
-        init(operationName: String) {
-            self.operationName = operationName
-        }
     }
 
     private static let logger = Logger(subsystem: "nl.nielsmouthaan.Ejectify", category: "DiskArbitrationVolumeOperator")
@@ -104,7 +99,7 @@ enum DiskArbitrationVolumeOperator {
             return (true, "Volume already mounted")
         }
 
-        let callbackState = CallbackState(operationName: operation.operationName)
+        let callbackState = CallbackState()
         let callbackContext = Unmanaged.passRetained(callbackState).toOpaque()
 
         switch operation {
@@ -115,7 +110,7 @@ enum DiskArbitrationVolumeOperator {
                 }
 
                 let callbackState = Unmanaged<CallbackState>.fromOpaque(context).takeRetainedValue()
-                callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter, operationName: callbackState.operationName)
+                callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter)
                 callbackState.semaphore.signal()
             }, callbackContext)
         case .unmount(let force):
@@ -126,7 +121,7 @@ enum DiskArbitrationVolumeOperator {
                 }
 
                 let callbackState = Unmanaged<CallbackState>.fromOpaque(context).takeRetainedValue()
-                callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter, operationName: callbackState.operationName)
+                callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter)
                 callbackState.semaphore.signal()
             }, callbackContext)
         }
@@ -211,17 +206,12 @@ enum DiskArbitrationVolumeOperator {
     }
 
     /// Converts a Disk Arbitration dissenter into a success/failure tuple.
-    private static func callbackResult(for dissenter: DADissenter?, operationName: String) -> (Bool, String?) {
+    private static func callbackResult(for dissenter: DADissenter?) -> (Bool, String?) {
         guard let dissenter else {
             return (true, nil)
         }
 
         let status = DADissenterGetStatus(dissenter)
-        let statusString = DADissenterGetStatusString(dissenter) as String?
-        if let statusString, !statusString.isEmpty {
-            return (false, "\(operationName) failed with status \(status.statusDescription): \(statusString)")
-        }
-
-        return (false, "\(operationName) failed with status \(status.statusDescription)")
+        return (false, "Disk Arbitration status: \(status.statusDescription)")
     }
 }

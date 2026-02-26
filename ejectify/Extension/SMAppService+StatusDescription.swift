@@ -7,20 +7,20 @@
 
 import ServiceManagement
 
-/// Converts ServiceManagement daemon status values into readable log labels.
+/// Converts Service Management daemon status values into readable descriptions.
 extension SMAppService.Status {
     var statusDescription: String {
         switch self {
         case .notRegistered:
-            return "notRegistered"
+            return "service is not registered or was unregistered"
         case .enabled:
-            return "enabled"
+            return "service is registered and eligible to run"
         case .requiresApproval:
-            return "requiresApproval"
+            return "service is registered but requires user approval in System Settings"
         case .notFound:
-            return "notFound"
+            return "service could not be found due to an error"
         @unknown default:
-            return "unknown(\(self.rawValue))"
+            return "unknown Service Management status \(self.rawValue)"
         }
     }
 }
