@@ -14,7 +14,7 @@ class Preference {
     
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "Preference")
 
-    /// Defines which system event triggers automatic unmounting.
+    /// Defines which system events can trigger automatic unmounting.
     enum UnmountWhen: String {
         case screensaverStarted = "screensaverStarted"
         case screenIsLocked = "screenIsLocked"
@@ -33,18 +33,23 @@ class Preference {
         }
     }
 
-    /// Controls which event should trigger automatic unmounting.
-    static var unmountWhen: UnmountWhen {
+    /// Controls which events should trigger automatic unmounting.
+    static var unmountWhenTriggers: Set<UnmountWhen> {
         get {
-            guard let rawValue = UserDefaults.standard.string(forKey: "preference.unmountWhen"),
-                  let value = UnmountWhen(rawValue: rawValue) else {
-                return .systemStartsSleeping
+            if let rawValues = UserDefaults.standard.array(forKey: "preference.unmountWhen") as? [String] {
+                return Set(rawValues.compactMap(UnmountWhen.init(rawValue:)))
             }
-            return value
+
+            guard let rawValue = UserDefaults.standard.string(forKey: "preference.unmountWhen"),
+                  let legacyValue = UnmountWhen(rawValue: rawValue) else {
+                return [.systemStartsSleeping]
+            }
+            return [legacyValue]
         }
         set {
-            UserDefaults.standard.set(newValue.rawValue, forKey: "preference.unmountWhen")
-            logger.info("Preference changed: unmountWhen=\(newValue.rawValue, privacy: .public)")
+            let serializedValues = newValue.map(\.rawValue).sorted()
+            UserDefaults.standard.set(serializedValues, forKey: "preference.unmountWhen")
+            logger.info("Preference changed: unmountWhen=\(serializedValues.joined(separator: ","), privacy: .public)")
             Task { @MainActor in
                 AppDelegate.shared.activityController?.startMonitoring()
             }

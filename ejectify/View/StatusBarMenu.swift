@@ -184,23 +184,23 @@ class StatusBarMenu: NSMenu {
         state == .off
     }
 
-    /// Builds the submenu for selecting the unmount trigger condition.
+    /// Builds the submenu for selecting unmount trigger conditions.
     private func buildUnmountWhenMenu() -> NSMenu {
         let unmountWhenMenu = NSMenu(title: "Unmount when".localized)
-        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "Screensaver started".localized, unmountWhen: .screensaverStarted))
-        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "Screen is locked".localized, unmountWhen: .screenIsLocked))
-        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "Display turned off".localized, unmountWhen: .screensStartedSleeping))
-        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "System starts sleeping".localized, unmountWhen: .systemStartsSleeping))
+        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "Screensaver started".localized, trigger: .screensaverStarted))
+        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "Screen is locked".localized, trigger: .screenIsLocked))
+        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "Display turned off".localized, trigger: .screensStartedSleeping))
+        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "System starts sleeping".localized, trigger: .systemStartsSleeping))
         
         return unmountWhenMenu
     }
 
-    /// Creates an "Unmount when" menu entry bound to a specific preference value.
-    private func makeUnmountWhenMenuItem(title: String, unmountWhen: Preference.UnmountWhen) -> NSMenuItem {
+    /// Creates an "Unmount when" menu entry bound to a specific trigger toggle.
+    private func makeUnmountWhenMenuItem(title: String, trigger: Preference.UnmountWhen) -> NSMenuItem {
         let item = NSMenuItem(title: title, action: #selector(unmountWhenChanged(menuItem:)), keyEquivalent: "")
         item.target = self
-        item.state = Preference.unmountWhen == unmountWhen ? .on : .off
-        item.representedObject = unmountWhen
+        item.state = Preference.unmountWhenTriggers.contains(trigger) ? .on : .off
+        item.representedObject = trigger
         return item
     }
 
@@ -258,12 +258,18 @@ class StatusBarMenu: NSMenu {
         updateMenu()
     }
 
-    /// Updates the selected unmount trigger preference.
+    /// Toggles one unmount trigger preference from the submenu.
     @objc private func unmountWhenChanged(menuItem: NSMenuItem) {
-        guard let unmountWhen = menuItem.representedObject as? Preference.UnmountWhen else {
+        guard let trigger = menuItem.representedObject as? Preference.UnmountWhen else {
             return
         }
-        Preference.unmountWhen = unmountWhen
+        var selectedTriggers = Preference.unmountWhenTriggers
+        if selectedTriggers.contains(trigger) {
+            selectedTriggers.remove(trigger)
+        } else {
+            selectedTriggers.insert(trigger)
+        }
+        Preference.unmountWhenTriggers = selectedTriggers
         updateMenu()
     }
 

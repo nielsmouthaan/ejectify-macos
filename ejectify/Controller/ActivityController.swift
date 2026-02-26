@@ -28,29 +28,19 @@ class ActivityController {
         startMonitoring()
     }
 
-    /// Re-registers event observers to match the current `Preference.unmountWhen` setting.
+    /// Re-registers event observers to match the current `Preference.unmountWhenTriggers` setting.
     func startMonitoring() {
         // Clear existing observers to avoid duplicate callbacks after preference changes.
         NSWorkspace.shared.notificationCenter.removeObserver(self)
         DistributedNotificationCenter.default.removeObserver(self)
 
-        // Register the matching unmount/mount trigger pair for the active preference.
-        switch Preference.unmountWhen {
-        case .screensaverStarted:
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstart"), object: nil)
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstop"), object: nil)
-        case .screenIsLocked:
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsLocked"), object: nil)
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsUnlocked"), object: nil)
-        case .screensStartedSleeping:
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.screensDidSleepNotification, object: nil)
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSWorkspace.screensDidWakeNotification, object: nil)
-        case .systemStartsSleeping:
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.willSleepNotification, object: nil)
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSWorkspace.didWakeNotification, object: nil)
+        let selectedTriggers = Preference.unmountWhenTriggers
+        for trigger in selectedTriggers {
+            registerObserverPair(for: trigger)
         }
 
-        logger.info("Monitoring configured for trigger: \(Preference.unmountWhen.rawValue, privacy: .public)")
+        let triggerSummary = selectedTriggers.isEmpty ? "none" : selectedTriggers.map(\.rawValue).sorted().joined(separator: ",")
+        logger.info("Monitoring configured for triggers: \(triggerSummary, privacy: .public)")
     }
 
     /// Unmounts all currently enabled external volumes and tracks attempted unmounts for remount attempts.
@@ -133,6 +123,24 @@ class ActivityController {
                     }
                 }
             }
+        }
+    }
+
+    /// Registers the unmount and remount observer pair for a specific trigger.
+    private func registerObserverPair(for trigger: Preference.UnmountWhen) {
+        switch trigger {
+        case .screensaverStarted:
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstart"), object: nil)
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstop"), object: nil)
+        case .screenIsLocked:
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsLocked"), object: nil)
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsUnlocked"), object: nil)
+        case .screensStartedSleeping:
+            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.screensDidSleepNotification, object: nil)
+            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSWorkspace.screensDidWakeNotification, object: nil)
+        case .systemStartsSleeping:
+            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.willSleepNotification, object: nil)
+            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSWorkspace.didWakeNotification, object: nil)
         }
     }
 }
