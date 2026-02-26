@@ -77,4 +77,20 @@ class Preference {
             logger.info("Preference changed: mountAfterDelay=\(newValue, privacy: .public)")
         }
     }
+
+    /// Controls whether the app should keep the privileged helper daemon registered.
+    static var useElevatedPermissions: Bool {
+        get {
+            let key = "preference.useElevatedPermissions"
+            if let value = UserDefaults.standard.object(forKey: key) as? Bool {
+                return value
+            }
+
+            return true
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "preference.useElevatedPermissions")
+            logger.info("Preference changed: useElevatedPermissions=\(newValue, privacy: .public)")
+        }
+    }
 }

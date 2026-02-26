@@ -146,7 +146,7 @@ class StatusBarMenu: NSMenu {
 
         let elevatedPermissionsItem = NSMenuItem(title: "Use elevated permissions".localized, action: #selector(elevatedPermissionsClicked(menuItem:)), keyEquivalent: "")
         elevatedPermissionsItem.target = self
-        elevatedPermissionsItem.state = PrivilegedHelperManager.shared.isDaemonEnabled ? .on : .off
+        elevatedPermissionsItem.state = elevatedPermissionsMenuState
         addItem(elevatedPermissionsItem)
 
         let forceUnmountItem = NSMenuItem(title: "Force unmount".localized, action: #selector(forceUnmountClicked(menuItem:)), keyEquivalent: "")
@@ -163,6 +163,11 @@ class StatusBarMenu: NSMenu {
     /// Converts menu state toggles to a Bool value.
     private func toggledValue(for state: NSControl.StateValue) -> Bool {
         state == .off
+    }
+
+    /// Represents enabled elevated permissions only when user preference and daemon state are both active.
+    private var elevatedPermissionsMenuState: NSControl.StateValue {
+        (Preference.useElevatedPermissions && PrivilegedHelperManager.shared.isDaemonEnabled) ? .on : .off
     }
 
     /// Creates a native AppKit section header item for menu grouping.
@@ -265,6 +270,7 @@ class StatusBarMenu: NSMenu {
             return
         }
 
+        Preference.useElevatedPermissions = shouldEnable
         updateMenu()
     }
 
