@@ -1,3 +1,10 @@
+//
+//  VolumeLogLabelFormatter.swift
+//  Ejectify
+//
+//  Created by Niels Mouthaan on 26/02/2026.
+//
+
 import Foundation
 
 /// Builds canonical volume labels used by logs across app and helper targets.

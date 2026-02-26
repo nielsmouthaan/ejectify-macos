@@ -7,12 +7,6 @@
 
 import Foundation
 
-/// Shared constants used by both the app and the privileged helper daemon.
-enum PrivilegedHelperConfiguration {
-    static let machServiceName = "nl.nielsmouthaan.Ejectify.PrivilegedHelper"
-    static let launchDaemonPlistName = "nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist"
-}
-
 /// XPC interface exposed by the privileged helper daemon.
 @objc protocol PrivilegedDiskServiceProtocol {
     

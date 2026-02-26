@@ -9,61 +9,46 @@ import Foundation
 import OSLog
 @preconcurrency import DiskArbitration
 
-/// Converts a Disk Arbitration dissenter into a success/failure tuple.
-private func diskArbitrationCallbackResult(for dissenter: DADissenter?, operationName: String) -> (Bool, String?) {
-    guard let dissenter else {
-        return (true, nil)
-    }
-
-    let status = DADissenterGetStatus(dissenter)
-    let statusString = DADissenterGetStatusString(dissenter) as String?
-    if let statusString, !statusString.isEmpty {
-        return (false, "\(operationName) failed with status \(status.statusDescription): \(statusString)")
-    }
-
-    return (false, "\(operationName) failed with status \(status.statusDescription)")
-}
-
-/// Creates configured Disk Arbitration sessions for shared app/helper usage.
-enum DiskArbitrationSessionFactory {
-    static func makeSession(dispatchQueue: DispatchQueue) -> DASession? {
-        guard let session = DASessionCreate(kCFAllocatorDefault) else {
-            return nil
-        }
-
-        DASessionSetDispatchQueue(session, dispatchQueue)
-        return session
-    }
-}
-
-/// Converts volume UUID values from Disk Arbitration descriptions into Foundation UUID values.
-enum VolumeUUIDResolver {
-    static func volumeUUID(from diskInfo: [NSString: Any]) -> UUID? {
-        guard let rawVolumeUUID = diskInfo[kDADiskDescriptionVolumeUUIDKey] else {
-            return nil
-        }
-
-        if let volumeUUID = rawVolumeUUID as? UUID {
-            return volumeUUID
-        }
-
-        if let volumeUUIDString = rawVolumeUUID as? String {
-            return UUID(uuidString: volumeUUIDString)
-        }
-
-        let rawCoreFoundationValue = rawVolumeUUID as CFTypeRef
-        if CFGetTypeID(rawCoreFoundationValue) == CFUUIDGetTypeID() {
-            let coreFoundationUUID = rawCoreFoundationValue as! CFUUID
-            let volumeUUIDString = CFUUIDCreateString(kCFAllocatorDefault, coreFoundationUUID) as String
-            return UUID(uuidString: volumeUUIDString)
-        }
-
-        return nil
-    }
-}
-
 /// Performs mount and unmount requests via Disk Arbitration for a volume UUID.
 enum DiskArbitrationVolumeOperator {
+    /// Creates configured Disk Arbitration sessions for shared app/helper usage.
+    enum DiskArbitrationSessionFactory {
+        static func makeSession(dispatchQueue: DispatchQueue) -> DASession? {
+            guard let session = DASessionCreate(kCFAllocatorDefault) else {
+                return nil
+            }
+
+            DASessionSetDispatchQueue(session, dispatchQueue)
+            return session
+        }
+    }
+
+    /// Converts volume UUID values from Disk Arbitration descriptions into Foundation UUID values.
+    enum VolumeUUIDResolver {
+        static func volumeUUID(from diskInfo: [NSString: Any]) -> UUID? {
+            guard let rawVolumeUUID = diskInfo[kDADiskDescriptionVolumeUUIDKey] else {
+                return nil
+            }
+
+            if let volumeUUID = rawVolumeUUID as? UUID {
+                return volumeUUID
+            }
+
+            if let volumeUUIDString = rawVolumeUUID as? String {
+                return UUID(uuidString: volumeUUIDString)
+            }
+
+            let rawCoreFoundationValue = rawVolumeUUID as CFTypeRef
+            if CFGetTypeID(rawCoreFoundationValue) == CFUUIDGetTypeID() {
+                let coreFoundationUUID = rawCoreFoundationValue as! CFUUID
+                let volumeUUIDString = CFUUIDCreateString(kCFAllocatorDefault, coreFoundationUUID) as String
+                return UUID(uuidString: volumeUUIDString)
+            }
+
+            return nil
+        }
+    }
+
     enum Operation {
         case mount
         case unmount(force: Bool)
@@ -130,7 +115,7 @@ enum DiskArbitrationVolumeOperator {
                 }
 
                 let callbackState = Unmanaged<CallbackState>.fromOpaque(context).takeRetainedValue()
-                callbackState.result = diskArbitrationCallbackResult(for: dissenter, operationName: callbackState.operationName)
+                callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter, operationName: callbackState.operationName)
                 callbackState.semaphore.signal()
             }, callbackContext)
         case .unmount(let force):
@@ -141,7 +126,7 @@ enum DiskArbitrationVolumeOperator {
                 }
 
                 let callbackState = Unmanaged<CallbackState>.fromOpaque(context).takeRetainedValue()
-                callbackState.result = diskArbitrationCallbackResult(for: dissenter, operationName: callbackState.operationName)
+                callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter, operationName: callbackState.operationName)
                 callbackState.semaphore.signal()
             }, callbackContext)
         }
@@ -223,5 +208,20 @@ enum DiskArbitrationVolumeOperator {
         }
 
         return nil
+    }
+
+    /// Converts a Disk Arbitration dissenter into a success/failure tuple.
+    private static func callbackResult(for dissenter: DADissenter?, operationName: String) -> (Bool, String?) {
+        guard let dissenter else {
+            return (true, nil)
+        }
+
+        let status = DADissenterGetStatus(dissenter)
+        let statusString = DADissenterGetStatusString(dissenter) as String?
+        if let statusString, !statusString.isEmpty {
+            return (false, "\(operationName) failed with status \(status.statusDescription): \(statusString)")
+        }
+
+        return (false, "\(operationName) failed with status \(status.statusDescription)")
     }
 }

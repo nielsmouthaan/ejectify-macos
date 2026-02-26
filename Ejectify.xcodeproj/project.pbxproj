@@ -29,6 +29,8 @@
 		C0A100000000000000000005 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000015 /* main.swift */; };
 		C0A100000000000000000006 /* EjectifyPrivilegedHelper in CopyFiles */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000017 /* EjectifyPrivilegedHelper */; };
 		C0A100000000000000000007 /* nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000013 /* nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist */; };
+		C0A100000000000000000064 /* PrivilegedHelperConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */; };
+		C0A100000000000000000065 /* PrivilegedHelperConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */; };
 			C0A100000000000000000051 /* DiskArbitrationVolumeOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */; };
 			C0A100000000000000000052 /* DiskArbitrationVolumeOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */; };
 			C0A100000000000000000061 /* VolumeLogLabelFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */; };
@@ -100,6 +102,7 @@
 		C0A100000000000000000012 /* PrivilegedHelperManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperManager.swift; sourceTree = "<group>"; };
 		C0A100000000000000000013 /* nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist; sourceTree = "<group>"; };
 		C0A100000000000000000015 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperConfiguration.swift; sourceTree = "<group>"; };
 			C0A100000000000000000016 /* PrivilegedDiskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedDiskService.swift; sourceTree = "<group>"; };
 			C0A100000000000000000017 /* EjectifyPrivilegedHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = EjectifyPrivilegedHelper; sourceTree = BUILT_PRODUCTS_DIR; };
 			C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskArbitrationVolumeOperator.swift; sourceTree = "<group>"; };
@@ -202,6 +205,7 @@
 			C0A100000000000000000021 /* Helper */ = {
 				isa = PBXGroup;
 				children = (
+					C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */,
 					C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */,
 					C0A100000000000000000012 /* PrivilegedHelperManager.swift */,
 					C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */,
@@ -356,6 +360,7 @@
 					C0A100000000000000000061 /* VolumeLogLabelFormatter.swift in Sources */,
 					C0A100000000000000000051 /* DiskArbitrationVolumeOperator.swift in Sources */,
 					A1B2C3D425C0AA1100ABC001 /* DAReturn+StatusDescription.swift in Sources */,
+				C0A100000000000000000064 /* PrivilegedHelperConfiguration.swift in Sources */,
 				C0A100000000000000000055 /* SMAppService+StatusDescription.swift in Sources */,
 				C0A100000000000000000001 /* PrivilegedDiskServiceProtocol.swift in Sources */,
 				C0A100000000000000000002 /* PrivilegedHelperManager.swift in Sources */,
@@ -377,6 +382,7 @@
 					C0A100000000000000000062 /* VolumeLogLabelFormatter.swift in Sources */,
 					C0A100000000000000000052 /* DiskArbitrationVolumeOperator.swift in Sources */,
 					A1B2C3D525C0AA1100ABC001 /* DAReturn+StatusDescription.swift in Sources */,
+				C0A100000000000000000065 /* PrivilegedHelperConfiguration.swift in Sources */,
 				C0A100000000000000000003 /* PrivilegedDiskServiceProtocol.swift in Sources */,
 				C0A100000000000000000004 /* PrivilegedDiskService.swift in Sources */,
 				C0A100000000000000000005 /* main.swift in Sources */,

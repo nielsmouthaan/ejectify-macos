@@ -16,7 +16,7 @@ class ExternalVolume {
 
     /// Shared Disk Arbitration session retained for the lifetime of the app so asynchronous callbacks are delivered reliably.
     nonisolated(unsafe) private static let diskArbitrationSession: DASession? = {
-        guard let session = DiskArbitrationSessionFactory.makeSession(dispatchQueue: DispatchQueue.main) else {
+        guard let session = DiskArbitrationVolumeOperator.DiskArbitrationSessionFactory.makeSession(dispatchQueue: DispatchQueue.main) else {
             logger.error("Failed to create Disk Arbitration session")
             return nil
         }
@@ -94,7 +94,7 @@ class ExternalVolume {
         }
 
         // Require a stable volume UUID for identification and settings.
-        guard let volumeUUID = VolumeUUIDResolver.volumeUUID(from: diskInfo) else {
+        guard let volumeUUID = DiskArbitrationVolumeOperator.VolumeUUIDResolver.volumeUUID(from: diskInfo) else {
             return nil
         }
 
