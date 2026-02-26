@@ -57,7 +57,7 @@ class ActivityController {
                     return
                 }
 
-                self?.logger.error("Privileged unmount failed for \(volume.name, privacy: .public)")
+                self?.logger.error("Privileged unmount failed for \(volume.logLabel, privacy: .public)")
             }
         }
     }
@@ -71,7 +71,7 @@ class ActivityController {
                     return
                 }
 
-                self?.logger.error("Privileged mount failed for \(volume.name, privacy: .public)")
+                self?.logger.error("Privileged mount failed for \(volume.logLabel, privacy: .public)")
             }
         }
         queuedRemountVolumes = []

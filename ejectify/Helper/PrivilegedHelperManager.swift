@@ -41,14 +41,17 @@ final class PrivilegedHelperManager {
         source: String,
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeName: String,
+        volumeUUID: UUID,
+        bsdName: String,
         success: Bool,
         message: String?
     ) {
         let suffix = messageSuffix(for: message)
+        let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID, bsdName: bsdName)
         if success {
-            logger.info("\(source, privacy: .public) \(operation.operationName, privacy: .public) succeeded for \(volumeName, privacy: .public)\(suffix, privacy: .public)")
+            logger.info("\(source, privacy: .public) \(operation.operationName, privacy: .public) succeeded for \(volumeLabel, privacy: .public)\(suffix, privacy: .public)")
         } else {
-            logger.error("\(source, privacy: .public) \(operation.operationName, privacy: .public) failed for \(volumeName, privacy: .public)\(suffix, privacy: .public)")
+            logger.error("\(source, privacy: .public) \(operation.operationName, privacy: .public) failed for \(volumeLabel, privacy: .public)\(suffix, privacy: .public)")
         }
     }
 
@@ -182,6 +185,8 @@ final class PrivilegedHelperManager {
                     source: "Privileged helper",
                     operation: operation,
                     volumeName: volumeName,
+                    volumeUUID: volumeUUID as UUID,
+                    bsdName: bsdName,
                     success: success,
                     message: message
                 )
@@ -212,6 +217,8 @@ final class PrivilegedHelperManager {
                     source: "Local",
                     operation: operation,
                     volumeName: volumeName,
+                    volumeUUID: uuid,
+                    bsdName: bsdName,
                     success: success,
                     message: message
                 )

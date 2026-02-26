@@ -31,6 +31,11 @@ class ExternalVolume {
 
     /// BSD device identifier (for example `disk6s2`).
     let bsdName: String
+
+    /// Canonical volume label for logs.
+    var logLabel: String {
+        VolumeLogLabelFormatter.label(name: name, uuid: id, bsdName: bsdName)
+    }
     
     /// Tracks whether this volume should be managed automatically. Defaults to enabled.
     var enabled: Bool {

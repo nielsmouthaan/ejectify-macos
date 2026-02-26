@@ -164,19 +164,25 @@ enum DiskArbitrationVolumeOperator {
 
     /// Resolves a Disk Arbitration disk, trying the provided BSD name first and falling back to UUID scan.
     private static func resolveDisk(volumeUUID targetVolumeUUID: UUID, bsdName: String, session: DASession) -> DADisk? {
+        let targetVolumeLabel = VolumeLogLabelFormatter.label(
+            name: "unknown",
+            uuid: targetVolumeUUID,
+            bsdName: bsdName.isEmpty ? "unknown" : bsdName
+        )
+
         if !bsdName.isEmpty {
             if let disk = resolveDiskByBSDName(bsdName, volumeUUID: targetVolumeUUID, session: session) {
-                logger.info("Disk resolved for \(targetVolumeUUID.uuidString, privacy: .public) based on BSD name")
+                logger.info("Disk resolved for \(targetVolumeLabel, privacy: .public) based on BSD name")
                 return disk
             }
         }
 
         if let disk = resolveDiskByVolumeUUIDScan(volumeUUID: targetVolumeUUID, session: session) {
-            logger.info("Disk resolved for \(targetVolumeUUID.uuidString, privacy: .public) by scanning devices")
+            logger.info("Disk resolved for \(targetVolumeLabel, privacy: .public) by scanning devices")
             return disk
         }
 
-        logger.error("Disk resolve failed for \(targetVolumeUUID.uuidString, privacy: .public)")
+        logger.error("Disk resolve failed for \(targetVolumeLabel, privacy: .public)")
         return nil
     }
 

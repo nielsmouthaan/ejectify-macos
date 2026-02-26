@@ -31,7 +31,8 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         let result = DiskArbitrationVolumeOperator.perform(volumeUUID: volumeUUID, bsdName: bsdName, operation: operation)
 
         if let errorMessage = result.1, !result.0 {
-            logger.error("Privileged \(operation.operationName, privacy: .public) failed for \(volumeName, privacy: .public): \(errorMessage, privacy: .public)")
+            let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID, bsdName: bsdName)
+            logger.error("Privileged \(operation.operationName, privacy: .public) failed for \(volumeLabel, privacy: .public): \(errorMessage, privacy: .public)")
         }
 
         reply(result.0, result.1)

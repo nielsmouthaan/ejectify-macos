@@ -39,20 +39,26 @@ class StatusBarMenu: NSMenu {
 
     /// Handles mount notifications and logs mount metadata provided by NSWorkspace.
     @objc private func volumeDidMount(notification: Notification) {
-        let localizedName = stringUserInfoValue(NSWorkspace.localizedVolumeNameUserInfoKey, from: notification)
-        let volumeURL = volumePathUserInfoValue(NSWorkspace.volumeURLUserInfoKey, from: notification)
+        let volumeLabel = volumeLogLabel(
+            from: notification,
+            urlKey: NSWorkspace.volumeURLUserInfoKey,
+            nameKey: NSWorkspace.localizedVolumeNameUserInfoKey
+        )
         if shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
-            logger.info("Volume did mount: \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+            logger.info("Volume did mount: \(volumeLabel, privacy: .public)")
         }
         refreshVolumesMenu()
     }
 
     /// Handles unmount notifications and logs unmount metadata provided by NSWorkspace.
     @objc private func volumeDidUnmount(notification: Notification) {
-        let localizedName = stringUserInfoValue(NSWorkspace.localizedVolumeNameUserInfoKey, from: notification)
-        let volumeURL = volumePathUserInfoValue(NSWorkspace.volumeURLUserInfoKey, from: notification)
+        let volumeLabel = volumeLogLabel(
+            from: notification,
+            urlKey: NSWorkspace.volumeURLUserInfoKey,
+            nameKey: NSWorkspace.localizedVolumeNameUserInfoKey
+        )
         if shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
-            logger.info("Volume did unmount: \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+            logger.info("Volume did unmount: \(volumeLabel, privacy: .public)")
         }
         refreshVolumesMenu()
     }
@@ -62,11 +68,17 @@ class StatusBarMenu: NSMenu {
         let shouldLogOldVolume = shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey)
         let shouldLogNewVolume = shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.volumeURLUserInfoKey)
         if shouldLogOldVolume || shouldLogNewVolume {
-            let localizedName = stringUserInfoValue(NSWorkspace.localizedVolumeNameUserInfoKey, from: notification)
-            let volumeURL = volumePathUserInfoValue(NSWorkspace.volumeURLUserInfoKey, from: notification)
-            let oldLocalizedName = stringUserInfoValue(NSWorkspace.oldLocalizedVolumeNameUserInfoKey, from: notification)
-            let oldVolumeURL = volumePathUserInfoValue(NSWorkspace.oldVolumeURLUserInfoKey, from: notification)
-            logger.info("Volume did rename: \(oldLocalizedName, privacy: .public) (\(oldVolumeURL, privacy: .public)) -> \(localizedName, privacy: .public) (\(volumeURL, privacy: .public)).")
+            let newVolumeLabel = volumeLogLabel(
+                from: notification,
+                urlKey: NSWorkspace.volumeURLUserInfoKey,
+                nameKey: NSWorkspace.localizedVolumeNameUserInfoKey
+            )
+            let oldVolumeLabel = volumeLogLabel(
+                from: notification,
+                urlKey: NSWorkspace.oldVolumeURLUserInfoKey,
+                nameKey: NSWorkspace.oldLocalizedVolumeNameUserInfoKey
+            )
+            logger.info("Volume did rename: \(oldVolumeLabel, privacy: .public) -> \(newVolumeLabel, privacy: .public)")
         }
         refreshVolumesMenu()
     }
@@ -82,9 +94,15 @@ class StatusBarMenu: NSMenu {
         notification.userInfo?[key] as? String ?? "unknown"
     }
 
-    /// Returns a volume path from notification userInfo URL metadata or "unknown" when absent.
-    private func volumePathUserInfoValue(_ key: String, from notification: Notification) -> String {
-        (notification.userInfo?[key] as? URL)?.path ?? "unknown"
+    /// Returns a canonical log label and falls back to unknown IDs when metadata is unavailable.
+    private func volumeLogLabel(from notification: Notification, urlKey: String, nameKey: String) -> String {
+        if let url = notification.userInfo?[urlKey] as? URL,
+           let volume = ExternalVolume.fromURL(url: url) {
+            return volume.logLabel
+        }
+
+        let localizedName = stringUserInfoValue(nameKey, from: notification)
+        return VolumeLogLabelFormatter.label(name: localizedName, uuidString: "unknown", bsdName: "unknown")
     }
 
     /// Determines whether a notification volume URL resolves to a known Ejectify volume.
@@ -204,13 +222,14 @@ class StatusBarMenu: NSMenu {
             let bsdName = volume.bsdName
             let forceUnmount = Preference.forceUnmount
             let logger = self.logger
+            let volumeLogLabel = volume.logLabel
             Task { @MainActor in
                 PrivilegedHelperManager.shared.unmount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, force: forceUnmount) { success in
                     guard !success else {
                         return
                     }
 
-                    logger.error("Privileged manual unmount failed for \(volumeName, privacy: .public)")
+                    logger.error("Privileged manual unmount failed for \(volumeLogLabel, privacy: .public)")
                 }
             }
         }
@@ -224,7 +243,7 @@ class StatusBarMenu: NSMenu {
         }
         let newEnabledValue = toggledValue(for: menuItem.state)
         volume.enabled = newEnabledValue
-        logger.info("Volume auto-unmount toggled: \(volume.name, privacy: .public) enabled=\(newEnabledValue, privacy: .public)")
+        logger.info("Volume auto-unmount toggled: \(volume.logLabel, privacy: .public) enabled=\(newEnabledValue, privacy: .public)")
         updateMenu()
     }
 
