@@ -15,8 +15,8 @@ class ActivityController {
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
     private let privilegedHelperManager = PrivilegedHelperManager.shared
     
-    /// Tracks volumes that Ejectify unmounted and should mount again on wake.
-    private var unmountedVolumes: [ExternalVolume] = []
+    /// Volumes queued for remount attempts after the paired unmount trigger has been handled.
+    private var queuedRemountVolumes: [ExternalVolume] = []
 
     init() {
         startMonitoring()
@@ -47,11 +47,11 @@ class ActivityController {
         logger.info("Monitoring configured for trigger: \(Preference.unmountWhen.rawValue, privacy: .public)")
     }
 
-    /// Unmounts all currently enabled external volumes and tracks them for remounting.
+    /// Unmounts all currently enabled external volumes and tracks attempted unmounts for remount attempts.
     @objc func unmountVolumes(notification: Notification) {
-        unmountedVolumes = ExternalVolume.mountedVolumes().filter { $0.enabled }
+        queuedRemountVolumes = ExternalVolume.mountedVolumes().filter { $0.enabled }
         logger.info("Unmount trigger received: \(notification.name.rawValue, privacy: .public)")
-        for volume in unmountedVolumes {
+        for volume in queuedRemountVolumes {
             privilegedHelperManager.unmount(volumeUUID: volume.id as NSUUID, volumeName: volume.name, force: Preference.forceUnmount) { [weak self] success in
                 guard !success else {
                     return
@@ -62,10 +62,10 @@ class ActivityController {
         }
     }
 
-    /// Remounts previously tracked volumes and clears the remount queue.
+    /// Attempts to remount volumes queued during the prior unmount attempt when the paired remount trigger fires, then clears the queue.
     @objc func mountVolumes(notification: Notification) {
         logger.info("Mount trigger received: \(notification.name.rawValue, privacy: .public)")
-        for volume in unmountedVolumes {
+        for volume in queuedRemountVolumes {
             privilegedHelperManager.mount(volumeUUID: volume.id as NSUUID, volumeName: volume.name) { [weak self] success in
                 guard !success else {
                     return
@@ -74,6 +74,6 @@ class ActivityController {
                 self?.logger.error("Privileged mount failed for \(volume.name, privacy: .public)")
             }
         }
-        unmountedVolumes = []
+        queuedRemountVolumes = []
     }
 }
