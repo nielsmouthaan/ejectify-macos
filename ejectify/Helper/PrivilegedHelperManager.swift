@@ -9,24 +9,6 @@ import Foundation
 import OSLog
 import ServiceManagement
 
-/// Converts ServiceManagement daemon status values into readable log labels.
-private extension SMAppService.Status {
-    var statusDescription: String {
-        switch self {
-        case .notRegistered:
-            return "notRegistered"
-        case .enabled:
-            return "enabled"
-        case .requiresApproval:
-            return "requiresApproval"
-        case .notFound:
-            return "notFound"
-        @unknown default:
-            return "unknown(\(self.rawValue))"
-        }
-    }
-}
-
 @MainActor
 final class PrivilegedHelperManager {
     
