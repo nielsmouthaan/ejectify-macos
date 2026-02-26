@@ -211,7 +211,7 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         }
 
         guard let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] error in
-            self?.logger.error("Privileged helper connection failed: \(String(describing: error), privacy: .public)")
+            self?.logger.error("Privileged helper connection failed: \(error), privacy: .public)")
             completeWithLocalFallback()
         }) as? PrivilegedDiskServiceProtocol else {
             logger.error("Privileged helper proxy could not be created")
