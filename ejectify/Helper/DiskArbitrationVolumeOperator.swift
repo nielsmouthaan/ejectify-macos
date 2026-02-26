@@ -116,7 +116,7 @@ enum DiskArbitrationVolumeOperator {
         }
 
         if case .mount = operation, isMounted(disk: disk) {
-            return (true, "mount already satisfied")
+            return (true, "Volume already mounted")
         }
 
         let callbackState = CallbackState(operationName: operation.operationName)
