@@ -44,9 +44,7 @@ class StatusBarMenu: NSMenu {
             urlKey: NSWorkspace.volumeURLUserInfoKey,
             nameKey: NSWorkspace.localizedVolumeNameUserInfoKey
         )
-        if shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
-            logger.info("Volume did mount: \(volumeLabel, privacy: .public)")
-        }
+        logger.info("Volume did mount: \(volumeLabel, privacy: .public)")
         refreshVolumesMenu()
     }
 
@@ -57,29 +55,23 @@ class StatusBarMenu: NSMenu {
             urlKey: NSWorkspace.volumeURLUserInfoKey,
             nameKey: NSWorkspace.localizedVolumeNameUserInfoKey
         )
-        if shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
-            logger.info("Volume did unmount: \(volumeLabel, privacy: .public)")
-        }
+        logger.info("Volume did unmount: \(volumeLabel, privacy: .public)")
         refreshVolumesMenu()
     }
 
     /// Handles rename notifications and logs old/new metadata provided by NSWorkspace.
     @objc private func volumeDidRename(notification: Notification) {
-        let shouldLogOldVolume = shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey)
-        let shouldLogNewVolume = shouldLogVolumeEvent(notification: notification, urlKey: NSWorkspace.volumeURLUserInfoKey)
-        if shouldLogOldVolume || shouldLogNewVolume {
-            let newVolumeLabel = volumeLogLabel(
-                from: notification,
-                urlKey: NSWorkspace.volumeURLUserInfoKey,
-                nameKey: NSWorkspace.localizedVolumeNameUserInfoKey
-            )
-            let oldVolumeLabel = volumeLogLabel(
-                from: notification,
-                urlKey: NSWorkspace.oldVolumeURLUserInfoKey,
-                nameKey: NSWorkspace.oldLocalizedVolumeNameUserInfoKey
-            )
-            logger.info("Volume did rename: \(oldVolumeLabel, privacy: .public) -> \(newVolumeLabel, privacy: .public)")
-        }
+        let newVolumeLabel = volumeLogLabel(
+            from: notification,
+            urlKey: NSWorkspace.volumeURLUserInfoKey,
+            nameKey: NSWorkspace.localizedVolumeNameUserInfoKey
+        )
+        let oldVolumeLabel = volumeLogLabel(
+            from: notification,
+            urlKey: NSWorkspace.oldVolumeURLUserInfoKey,
+            nameKey: NSWorkspace.oldLocalizedVolumeNameUserInfoKey
+        )
+        logger.info("Volume did rename: \(oldVolumeLabel, privacy: .public) -> \(newVolumeLabel, privacy: .public)")
         refreshVolumesMenu()
     }
 
@@ -103,14 +95,6 @@ class StatusBarMenu: NSMenu {
 
         let localizedName = stringUserInfoValue(nameKey, from: notification)
         return VolumeLogLabelFormatter.label(name: localizedName, uuidString: "unknown", bsdName: "unknown")
-    }
-
-    /// Determines whether a notification volume URL resolves to a known Ejectify volume.
-    private func shouldLogVolumeEvent(notification: Notification, urlKey: String) -> Bool {
-        guard let url = notification.userInfo?[urlKey] as? URL else {
-            return false
-        }
-        return ExternalVolume.fromURL(url: url) != nil
     }
 
     /// Rebuilds all top-level menu sections from current app state.
