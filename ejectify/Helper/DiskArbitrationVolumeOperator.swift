@@ -83,6 +83,7 @@ enum DiskArbitrationVolumeOperator {
     /// The BSD name is used as a fast-path resolve hint before UUID scanning.
     static func perform(
         volumeUUID: UUID,
+        volumeName: String,
         bsdName: String,
         operation: Operation,
         timeout: TimeInterval = 15
@@ -91,7 +92,7 @@ enum DiskArbitrationVolumeOperator {
             return (false, "Disk Arbitration session unavailable")
         }
 
-        guard let disk = resolveDisk(volumeUUID: volumeUUID, bsdName: bsdName, session: session) else {
+        guard let disk = resolveDisk(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, session: session) else {
             return (false, "Disk for requested volume not found")
         }
 
@@ -146,21 +147,21 @@ enum DiskArbitrationVolumeOperator {
     }
 
     /// Resolves a Disk Arbitration disk, trying the provided BSD name first and falling back to UUID scan.
-    private static func resolveDisk(volumeUUID targetVolumeUUID: UUID, bsdName: String, session: DASession) -> DADisk? {
+    private static func resolveDisk(volumeUUID: UUID, volumeName: String, bsdName: String, session: DASession) -> DADisk? {
         let targetVolumeLabel = VolumeLogLabelFormatter.label(
-            name: "unknown",
-            uuid: targetVolumeUUID,
-            bsdName: bsdName.isEmpty ? "unknown" : bsdName
+            name: volumeName,
+            uuid: volumeUUID,
+            bsdName: bsdName
         )
 
         if !bsdName.isEmpty {
-            if let disk = resolveDiskByBSDName(bsdName, volumeUUID: targetVolumeUUID, session: session) {
+            if let disk = resolveDiskByBSDName(bsdName, volumeUUID: volumeUUID, session: session) {
                 logger.info("Disk resolved for \(targetVolumeLabel, privacy: .public) based on BSD name")
                 return disk
             }
         }
 
-        if let disk = resolveDiskByVolumeUUIDScan(volumeUUID: targetVolumeUUID, session: session) {
+        if let disk = resolveDiskByVolumeUUIDScan(volumeUUID: volumeUUID, session: session) {
             logger.info("Disk resolved for \(targetVolumeLabel, privacy: .public) by scanning devices")
             return disk
         }

@@ -81,12 +81,12 @@ class StatusBarMenu: NSMenu {
         updateMenu()
     }
 
-    /// Returns a string metadata value from notification userInfo or "unknown" when absent.
+    /// Returns a string metadata value from notification userInfo or an empty string when absent.
     private func stringUserInfoValue(_ key: String, from notification: Notification) -> String {
-        notification.userInfo?[key] as? String ?? "unknown"
+        notification.userInfo?[key] as? String ?? ""
     }
 
-    /// Returns a canonical log label and falls back to unknown IDs when metadata is unavailable.
+    /// Returns a canonical log label and omits unavailable metadata when notification details are missing.
     private func volumeLogLabel(from notification: Notification, urlKey: String, nameKey: String) -> String {
         if let url = notification.userInfo?[urlKey] as? URL,
            let volume = ExternalVolume.fromURL(url: url) {
@@ -94,7 +94,7 @@ class StatusBarMenu: NSMenu {
         }
 
         let localizedName = stringUserInfoValue(nameKey, from: notification)
-        return VolumeLogLabelFormatter.label(name: localizedName, uuidString: "unknown", bsdName: "unknown")
+        return VolumeLogLabelFormatter.label(name: localizedName, uuidString: "", bsdName: "")
     }
 
     /// Rebuilds all top-level menu sections from current app state.

@@ -253,7 +253,7 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         let completionBox = CompletionBox(completion: completion)
 
         localOperationQueue.async {
-            let result = DiskArbitrationVolumeOperator.perform(volumeUUID: uuid, bsdName: bsdName, operation: operation)
+            let result = DiskArbitrationVolumeOperator.perform(volumeUUID: uuid, volumeName: volumeName, bsdName: bsdName, operation: operation)
             let success = result.0
             let message = result.1
             DispatchQueue.main.async {

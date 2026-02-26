@@ -28,7 +28,7 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         bsdName: String,
         reply: @escaping (Bool, String?) -> Void
     ) {
-        let result = DiskArbitrationVolumeOperator.perform(volumeUUID: volumeUUID, bsdName: bsdName, operation: operation)
+        let result = DiskArbitrationVolumeOperator.perform(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, operation: operation)
 
         if let errorMessage = result.1, !result.0 {
             let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID, bsdName: bsdName)
