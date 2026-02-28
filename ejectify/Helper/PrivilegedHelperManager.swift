@@ -173,10 +173,7 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         completion: @escaping (Bool) -> Void,
         request: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?) -> Void) -> Void
     ) {
-        let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID as UUID, bsdName: bsdName)
-
         guard isDaemonEnabled else {
-            logger.info("Privileged helper unavailable (\(operation.operationName, privacy: .public)) for \(volumeLabel, privacy: .public); falling back to local Disk Arbitration")
             performLocalOperation(operation: operation, volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, completion: completion)
             return
         }
@@ -215,11 +212,9 @@ final class PrivilegedHelperManager: @unchecked Sendable {
 
         guard let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] error in
             self?.logger.error("Privileged helper connection failed: \(error, privacy: .public)")
-            self?.logger.info("Privileged helper routing failed (\(operation.operationName, privacy: .public)) for \(volumeLabel, privacy: .public); falling back to local Disk Arbitration")
             completeWithHelperRoutingFallback()
         }) as? PrivilegedDiskServiceProtocol else {
             logger.error("Privileged helper proxy could not be created")
-            logger.info("Privileged helper routing failed (\(operation.operationName, privacy: .public)) for \(volumeLabel, privacy: .public); falling back to local Disk Arbitration")
             completeWithHelperRoutingFallback()
             return
         }
