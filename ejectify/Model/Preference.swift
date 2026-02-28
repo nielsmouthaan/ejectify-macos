@@ -14,7 +14,7 @@ class Preference {
     
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "Preference")
 
-    /// Defines which system events can trigger automatic unmounting.
+    /// Defines which system event triggers automatic unmounting.
     enum UnmountWhen: String {
         case screensaverStarted = "screensaverStarted"
         case screenIsLocked = "screenIsLocked"
@@ -33,23 +33,18 @@ class Preference {
         }
     }
 
-    /// Controls which events should trigger automatic unmounting.
-    static var unmountWhenTriggers: Set<UnmountWhen> {
+    /// Controls which event should trigger automatic unmounting.
+    static var unmountWhen: UnmountWhen {
         get {
-            if let rawValues = UserDefaults.standard.array(forKey: "preference.unmountWhen") as? [String] {
-                return Set(rawValues.compactMap(UnmountWhen.init(rawValue:)))
-            }
-
             guard let rawValue = UserDefaults.standard.string(forKey: "preference.unmountWhen"),
-                  let legacyValue = UnmountWhen(rawValue: rawValue) else {
-                return [.systemStartsSleeping]
+                  let value = UnmountWhen(rawValue: rawValue) else {
+                return .systemStartsSleeping
             }
-            return [legacyValue]
+            return value
         }
         set {
-            let serializedValues = newValue.map(\.rawValue).sorted()
-            UserDefaults.standard.set(serializedValues, forKey: "preference.unmountWhen")
-            logger.info("Preference changed: unmountWhen=\(serializedValues.joined(separator: ","), privacy: .public)")
+            UserDefaults.standard.set(newValue.rawValue, forKey: "preference.unmountWhen")
+            logger.info("Preference changed: unmountWhen=\(newValue.rawValue, privacy: .public)")
             Task { @MainActor in
                 AppDelegate.shared.activityController?.startMonitoring()
             }
