@@ -164,7 +164,7 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         }
     }
 
-    /// Sends a request to the daemon and falls back to local Disk Arbitration when helper availability requirements are not met.
+    /// Sends a request to the daemon and falls back to local Disk Arbitration only when helper routing is unavailable.
     private func performRequest(
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeUUID: NSUUID,
@@ -173,7 +173,10 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         completion: @escaping (Bool) -> Void,
         request: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?) -> Void) -> Void
     ) {
+        let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID as UUID, bsdName: bsdName)
+
         guard isDaemonEnabled else {
+            logger.info("Privileged helper unavailable (\(operation.operationName, privacy: .public)) for \(volumeLabel, privacy: .public); falling back to local Disk Arbitration")
             performLocalOperation(operation: operation, volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, completion: completion)
             return
         }
@@ -197,7 +200,7 @@ final class PrivilegedHelperManager: @unchecked Sendable {
             }
         }
 
-        let completeWithLocalFallback = {
+        let completeWithHelperRoutingFallback = {
             completeOnce { [weak self] in
                 guard let self else {
                     completion(false)
@@ -211,11 +214,13 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         }
 
         guard let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] error in
-            self?.logger.error("Privileged helper connection failed: \(error), privacy: .public)")
-            completeWithLocalFallback()
+            self?.logger.error("Privileged helper connection failed: \(error, privacy: .public)")
+            self?.logger.info("Privileged helper routing failed (\(operation.operationName, privacy: .public)) for \(volumeLabel, privacy: .public); falling back to local Disk Arbitration")
+            completeWithHelperRoutingFallback()
         }) as? PrivilegedDiskServiceProtocol else {
             logger.error("Privileged helper proxy could not be created")
-            completeWithLocalFallback()
+            logger.info("Privileged helper routing failed (\(operation.operationName, privacy: .public)) for \(volumeLabel, privacy: .public); falling back to local Disk Arbitration")
+            completeWithHelperRoutingFallback()
             return
         }
 
@@ -235,7 +240,7 @@ final class PrivilegedHelperManager: @unchecked Sendable {
             if success {
                 complete(true)
             } else {
-                completeWithLocalFallback()
+                complete(false)
             }
         }
     }
