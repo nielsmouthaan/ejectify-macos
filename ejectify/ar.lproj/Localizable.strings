@@ -19,7 +19,7 @@
 "Screen is locked" = "قفل الشاشة";
 "Display turned off" = "إيقاف العرض";
 "System starts sleeping" = "الدخول في وضع السكون";
-"Force unmount" = "قوة فك";
-"Mount after delay" = "جبل بعد التأخير";
-"About Ejectify" = "Ejectify حول";
-"Quit Ejectify" = "Ejectify يقلع";
+"Force unmount" = "فرض إلغاء التحميل";
+"Mount after delay" = "إعادة التحميل بعد تأخير";
+"About Ejectify" = "حول Ejectify";
+"Quit Ejectify" = "إنهاء Ejectify";
