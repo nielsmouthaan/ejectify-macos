@@ -39,28 +39,29 @@ class StatusBarMenu: NSMenu {
 
     /// Handles mount notifications and logs mount metadata provided by NSWorkspace.
     @objc private func volumeDidMount(notification: Notification) {
-        let volumeLabel = volumeLogLabel(
-            from: notification,
-            urlKey: NSWorkspace.volumeURLUserInfoKey,
-            nameKey: NSWorkspace.localizedVolumeNameUserInfoKey
-        )
-        logger.info("Volume did mount: \(volumeLabel, privacy: .public)")
+        if let volume = managedExternalVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
+            logger.info("Volume did mount: \(volume.logLabel, privacy: .public)")
+        }
         refreshVolumesMenu()
     }
 
     /// Handles unmount notifications and logs unmount metadata provided by NSWorkspace.
     @objc private func volumeDidUnmount(notification: Notification) {
-        let volumeLabel = volumeLogLabel(
-            from: notification,
-            urlKey: NSWorkspace.volumeURLUserInfoKey,
-            nameKey: NSWorkspace.localizedVolumeNameUserInfoKey
-        )
-        logger.info("Volume did unmount: \(volumeLabel, privacy: .public)")
+        if let volume = managedExternalVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
+            logger.info("Volume did unmount: \(volume.logLabel, privacy: .public)")
+        }
         refreshVolumesMenu()
     }
 
     /// Handles rename notifications and logs old/new metadata provided by NSWorkspace.
     @objc private func volumeDidRename(notification: Notification) {
+        let newVolume = managedExternalVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey)
+        let oldVolume = managedExternalVolume(from: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey)
+        guard newVolume != nil || oldVolume != nil else {
+            refreshVolumesMenu()
+            return
+        }
+
         let newVolumeLabel = volumeLogLabel(
             from: notification,
             urlKey: NSWorkspace.volumeURLUserInfoKey,
@@ -86,10 +87,22 @@ class StatusBarMenu: NSMenu {
         notification.userInfo?[key] as? String ?? ""
     }
 
+    /// Resolves a notification URL to a managed external volume using the same filter as `mountedVolumes`.
+    private func managedExternalVolume(from notification: Notification, urlKey: String) -> ExternalVolume? {
+        guard let url = notification.userInfo?[urlKey] as? URL else {
+            return nil
+        }
+
+        guard ExternalVolume.isManagedMountedVolumeURL(url) else {
+            return nil
+        }
+
+        return ExternalVolume.fromURL(url: url)
+    }
+
     /// Returns a canonical log label and omits unavailable metadata when notification details are missing.
     private func volumeLogLabel(from notification: Notification, urlKey: String, nameKey: String) -> String {
-        if let url = notification.userInfo?[urlKey] as? URL,
-           let volume = ExternalVolume.fromURL(url: url) {
+        if let volume = managedExternalVolume(from: notification, urlKey: urlKey) {
             return volume.logLabel
         }
 

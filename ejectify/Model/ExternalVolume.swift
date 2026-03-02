@@ -65,11 +65,13 @@ class ExternalVolume {
         }
 
         return mountedVolumeURLs
-            // Limit to user-visible mounted volumes under /Volumes.
-            .filter { url in
-                url.pathComponents.count > 1 && url.pathComponents[1] == "Volumes"
-            }
+            .filter(ExternalVolume.isManagedMountedVolumeURL(_:))
             .compactMap(ExternalVolume.fromURL(url:))
+    }
+
+    /// Returns whether a URL points to a user-visible mounted volume under `/Volumes`.
+    static func isManagedMountedVolumeURL(_ url: URL) -> Bool {
+        url.pathComponents.count > 1 && url.pathComponents[1] == "Volumes"
     }
 
     /// Resolves a mounted volume URL to an `ExternalVolume` model when eligible.
