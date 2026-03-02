@@ -1,0 +1,24 @@
+/*
+  Localizable.strings
+  Ejectify
+
+  Created by Tomáš Švec on 05/07/2024.
+*/
+
+"Unmount all" = "Vysunúť všetko";
+"Volumes" = "Oddiely";
+"Preferences" = "Predvoľby";
+"Launch at login" = "Spustiť pri prihlásení";
+"Use elevated permissions" = "Použiť zvýšené oprávnenia";
+"Could not enable elevated permissions." = "Nepodarilo sa povoliť zvýšené oprávnenia.";
+"Check System Settings if Ejectify is enabled." = "Skontrolujte v Systémových nastaveniach, či je Ejectify povolený.";
+"Could not disable elevated permissions." = "Nepodarilo sa zakázať zvýšené oprávnenia.";
+"Unmount when" = "Vysunúť pri";
+"Screensaver started" = "Šetrič obrazovky sa spustil";
+"Screen is locked" = "Obrazovka je zamknutá";
+"Display turned off" = "Displej je vypnutý";
+"System starts sleeping" = "Systém sa uspáva";
+"Force unmount" = "Vynútiť vysunutie";
+"Mount after delay" = "Pripojiť s oneskorením";
+"About Ejectify" = "O aplikácii Ejectify";
+"Quit Ejectify" = "Ukončiť Ejectify";
