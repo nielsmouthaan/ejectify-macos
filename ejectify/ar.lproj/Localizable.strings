@@ -11,9 +11,17 @@
 "Preferences" = "التفضيلات";
 "Launch at login" = "تشغيل عند تسجيل الدخول";
 "Use elevated permissions" = "استخدام الأذونات المرتفعة";
+"Force mute notifications" = "فرض كتم الإشعارات";
 "Could not enable elevated permissions." = "تعذر تمكين الأذونات المرتفعة.";
+"Could not mute notifications" = "تعذر كتم الإشعارات";
 "Check System Settings if Ejectify is enabled." = "تحقق من إعدادات النظام مما إذا كان Ejectify ممكّنًا.";
 "Could not disable elevated permissions." = "تعذر تعطيل الأذونات المرتفعة.";
+"Could not unmute notifications" = "تعذر إلغاء كتم الإشعارات";
+"Restart required" = "إعادة التشغيل مطلوبة";
+"Please restart your Mac to apply the change and mute notifications." = "يرجى إعادة تشغيل جهاز Mac لتطبيق التغيير وكتم الإشعارات.";
+"Please restart your Mac to apply the change and unmute notifications." = "يرجى إعادة تشغيل جهاز Mac لتطبيق التغيير وإلغاء كتم الإشعارات.";
+"Later" = "لاحقًا";
+"Restart" = "إعادة التشغيل";
 "Unmount when" = "إخراج عند";
 "Screensaver started" = "بدء شاشة التوقف";
 "Screen is locked" = "قفل الشاشة";

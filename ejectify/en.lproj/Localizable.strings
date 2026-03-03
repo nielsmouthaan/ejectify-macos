@@ -11,9 +11,17 @@
 "Preferences" = "Preferences";
 "Launch at login" = "Launch at login";
 "Use elevated permissions" = "Use elevated permissions";
+"Force mute notifications" = "Force mute notifications";
 "Could not enable elevated permissions." = "Could not enable elevated permissions.";
+"Could not mute notifications" = "Could not mute notifications";
 "Check System Settings if Ejectify is enabled." = "Check System Settings if Ejectify is enabled.";
 "Could not disable elevated permissions." = "Could not disable elevated permissions.";
+"Could not unmute notifications" = "Could not unmute notifications";
+"Restart required" = "Restart required";
+"Please restart your Mac to apply the change and mute notifications." = "Please restart your Mac to apply the change and mute notifications.";
+"Please restart your Mac to apply the change and unmute notifications." = "Please restart your Mac to apply the change and unmute notifications.";
+"Later" = "Later";
+"Restart" = "Restart";
 "Unmount when" = "Unmount when";
 "Screensaver started" = "Screensaver started";
 "Screen is locked" = "Screen is locked";

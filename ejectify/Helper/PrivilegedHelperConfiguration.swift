@@ -11,4 +11,6 @@ import Foundation
 enum PrivilegedHelperConfiguration {
     static let machServiceName = "nl.nielsmouthaan.Ejectify.PrivilegedHelper"
     static let launchDaemonPlistName = "nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist"
+    static let diskArbitrationPreferencesPath = "/Library/Preferences/SystemConfiguration/com.apple.DiskArbitration.diskarbitrationd.plist"
+    static let disableEjectNotificationKey = "DADisableEjectNotification"
 }

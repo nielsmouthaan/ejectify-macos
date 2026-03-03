@@ -20,6 +20,15 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         }
     }
 
+    /// Wraps completion closures with error details so they can cross Dispatch sendable boundaries safely.
+    private final class ToggleSettingCompletionBox: @unchecked Sendable {
+        let completion: (Bool, String?) -> Void
+
+        init(completion: @escaping (Bool, String?) -> Void) {
+            self.completion = completion
+        }
+    }
+
     /// Stores completion actions so they can cross Dispatch sendable boundaries safely.
     private final class ActionBox: @unchecked Sendable {
         let action: () -> Void
@@ -161,6 +170,56 @@ final class PrivilegedHelperManager: @unchecked Sendable {
             completion: completion
         ) { proxy, reply in
             proxy.unmount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, force: force, withReply: reply)
+        }
+    }
+
+    /// Updates the system setting that controls "Disk Not Ejected Properly" notifications.
+    func setEjectNotificationsMuted(_ muted: Bool, completion: @escaping (Bool, String?) -> Void) {
+        let completionBox = ToggleSettingCompletionBox(completion: completion)
+
+        guard isDaemonEnabled else {
+            DispatchQueue.main.async {
+                completionBox.completion(false, nil)
+            }
+            return
+        }
+
+        let connection = NSXPCConnection(machServiceName: PrivilegedHelperConfiguration.machServiceName, options: .privileged)
+        connection.remoteObjectInterface = NSXPCInterface(with: PrivilegedDiskServiceProtocol.self)
+        connection.resume()
+
+        let completionGate = CompletionGate()
+        let completeOnce: (@escaping () -> Void) -> Void = { action in
+            let actionBox = ActionBox(action: action)
+            DispatchQueue.main.async {
+                completionGate.runOnce(actionBox.action)
+            }
+        }
+
+        let complete: (Bool, String?) -> Void = { success, message in
+            completeOnce {
+                completionBox.completion(success, message)
+                connection.invalidate()
+            }
+        }
+
+        guard let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] error in
+            self?.logger.error("Privileged helper connection failed while toggling eject notifications: \(error, privacy: .public)")
+            complete(false, error.localizedDescription)
+        }) as? PrivilegedDiskServiceProtocol else {
+            logger.error("Privileged helper proxy could not be created while toggling eject notifications")
+            complete(false, nil)
+            return
+        }
+
+        proxy.setEjectNotificationsMuted(muted: muted) { [weak self] success, message in
+            if success {
+                self?.logger.info("Privileged helper updated eject notification muting to \(muted, privacy: .public)")
+            } else {
+                let details = message ?? "No additional details"
+                self?.logger.error("Privileged helper failed to update eject notification muting to \(muted, privacy: .public): \(details, privacy: .public)")
+            }
+            complete(success, message)
         }
     }
 

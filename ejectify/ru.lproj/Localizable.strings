@@ -11,9 +11,17 @@
 "Preferences" = "Настройки";
 "Launch at login" = "Запускать при старте";
 "Use elevated permissions" = "Использовать повышенные права";
+"Force mute notifications" = "Принудительно отключить уведомления";
 "Could not enable elevated permissions." = "Не удалось включить повышенные права.";
+"Could not mute notifications" = "Не удалось отключить уведомления";
 "Check System Settings if Ejectify is enabled." = "Проверьте в «Системных настройках», включён ли Ejectify.";
 "Could not disable elevated permissions." = "Не удалось отключить повышенные права.";
+"Could not unmute notifications" = "Не удалось снова включить уведомления";
+"Restart required" = "Требуется перезагрузка";
+"Please restart your Mac to apply the change and mute notifications." = "Перезагрузите Mac, чтобы применить изменение и отключить уведомления.";
+"Please restart your Mac to apply the change and unmute notifications." = "Перезагрузите Mac, чтобы применить изменение и снова включить уведомления.";
+"Later" = "Позже";
+"Restart" = "Перезагрузить";
 "Unmount when" = "Извлечь когда";
 "Screensaver started" = "Запущен скринсейвер";
 "Screen is locked" = "Экран заблокирован";

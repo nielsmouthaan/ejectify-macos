@@ -11,9 +11,17 @@
 "Preferences" = "Preferências";
 "Launch at login" = "Abrir ao iniciar sessão";
 "Use elevated permissions" = "Usar permissões elevadas";
+"Force mute notifications" = "Forçar silenciar notificações";
 "Could not enable elevated permissions." = "Não foi possível ativar permissões elevadas.";
+"Could not mute notifications" = "Não foi possível silenciar notificações";
 "Check System Settings if Ejectify is enabled." = "Verifique nos Ajustes do Sistema se o Ejectify está ativado.";
 "Could not disable elevated permissions." = "Não foi possível desativar permissões elevadas.";
+"Could not unmute notifications" = "Não foi possível reativar notificações";
+"Restart required" = "Reinicialização necessária";
+"Please restart your Mac to apply the change and mute notifications." = "Reinicie seu Mac para aplicar a alteração e silenciar as notificações.";
+"Please restart your Mac to apply the change and unmute notifications." = "Reinicie seu Mac para aplicar a alteração e reativar as notificações.";
+"Later" = "Depois";
+"Restart" = "Reiniciar";
 "Unmount when" = "Ejetar quando";
 "Screensaver started" = "Protetor de tela começar";
 "Screen is locked" = "Tela bloquear";

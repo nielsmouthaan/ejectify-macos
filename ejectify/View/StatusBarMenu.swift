@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import Carbon
 import OSLog
 
 /// Builds and updates the status bar menu for volume actions and preferences.
@@ -157,11 +158,6 @@ class StatusBarMenu: NSMenu {
         unmountWhenItem.submenu = buildUnmountWhenMenu()
         addItem(unmountWhenItem)
 
-        let elevatedPermissionsItem = NSMenuItem(title: "Use elevated permissions".localized, action: #selector(elevatedPermissionsClicked(menuItem:)), keyEquivalent: "")
-        elevatedPermissionsItem.target = self
-        elevatedPermissionsItem.state = elevatedPermissionsMenuState
-        addItem(elevatedPermissionsItem)
-
         let forceUnmountItem = NSMenuItem(title: "Force unmount".localized, action: #selector(forceUnmountClicked(menuItem:)), keyEquivalent: "")
         forceUnmountItem.target = self
         forceUnmountItem.state = Preference.forceUnmount ? .on : .off
@@ -171,6 +167,16 @@ class StatusBarMenu: NSMenu {
         mountAfterDelayItem.target = self
         mountAfterDelayItem.state = Preference.mountAfterDelay ? .on : .off
         addItem(mountAfterDelayItem)
+
+        let elevatedPermissionsItem = NSMenuItem(title: "Use elevated permissions".localized, action: #selector(elevatedPermissionsClicked(menuItem:)), keyEquivalent: "")
+        elevatedPermissionsItem.target = self
+        elevatedPermissionsItem.state = elevatedPermissionsMenuState
+        addItem(elevatedPermissionsItem)
+
+        let muteNotificationsItem = NSMenuItem(title: "Force mute notifications".localized, action: #selector(muteNotificationsClicked(menuItem:)), keyEquivalent: "")
+        muteNotificationsItem.target = self
+        muteNotificationsItem.state = isForceMuteNotificationsEnabled() ? .on : .off
+        addItem(muteNotificationsItem)
     }
 
     /// Converts menu state toggles to a Bool value.
@@ -181,6 +187,31 @@ class StatusBarMenu: NSMenu {
     /// Represents enabled elevated permissions only when user preference and daemon state are both active.
     private var elevatedPermissionsMenuState: NSControl.StateValue {
         (Preference.useElevatedPermissions && PrivilegedHelperManager.shared.isDaemonEnabled) ? .on : .off
+    }
+
+    /// Returns whether force-muting notifications is enabled in the system Disk Arbitration plist.
+    /// Any read failure or missing value is treated as unmuted (`false`).
+    private func isForceMuteNotificationsEnabled() -> Bool {
+        guard
+            let preferences = NSDictionary(contentsOfFile: PrivilegedHelperConfiguration.diskArbitrationPreferencesPath),
+            let rawValue = preferences[PrivilegedHelperConfiguration.disableEjectNotificationKey]
+        else {
+            return false
+        }
+
+        if let boolValue = rawValue as? Bool {
+            return boolValue
+        }
+
+        if let numberValue = rawValue as? NSNumber {
+            return numberValue.boolValue
+        }
+
+        if let stringValue = rawValue as? String {
+            return NSString(string: stringValue).boolValue
+        }
+
+        return false
     }
 
     /// Creates a native AppKit section header item for menu grouping.
@@ -303,6 +334,29 @@ class StatusBarMenu: NSMenu {
         updateMenu()
     }
 
+    /// Toggles muting of system "Disk Not Ejected Properly" notifications.
+    @MainActor
+    @objc private func muteNotificationsClicked(menuItem: NSMenuItem) {
+        let shouldMute = toggledValue(for: menuItem.state)
+        PrivilegedHelperManager.shared.setEjectNotificationsMuted(shouldMute) { [weak self] success, details in
+            guard let self else {
+                return
+            }
+
+            guard success else {
+                showPermissionAlert(
+                    messageText: shouldMute ? "Could not mute notifications".localized : "Could not unmute notifications".localized,
+                    informativeText: details
+                )
+                updateMenu()
+                return
+            }
+
+            showRestartRequiredAlert(shouldMute: shouldMute)
+            updateMenu()
+        }
+    }
+
     /// Toggles delayed remount behavior from the menu.
     @objc private func mountAfterDelayClicked(menuItem: NSMenuItem) {
         Preference.mountAfterDelay = toggledValue(for: menuItem.state)
@@ -332,5 +386,77 @@ class StatusBarMenu: NSMenu {
         alert.messageText = messageText
         alert.informativeText = informativeText ?? ""
         alert.runModal()
+    }
+
+    /// Shows a restart-required alert and optionally triggers immediate restart.
+    @MainActor
+    private func showRestartRequiredAlert(shouldMute: Bool) {
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = "Restart required".localized
+        alert.informativeText = shouldMute
+            ? "Please restart your Mac to apply the change and mute notifications.".localized
+            : "Please restart your Mac to apply the change and unmute notifications.".localized
+        alert.addButton(withTitle: "Restart".localized)
+        alert.addButton(withTitle: "Later".localized)
+
+        let result = alert.runModal()
+        guard result == .alertFirstButtonReturn else {
+            return
+        }
+
+        requestSystemRestart()
+    }
+
+    /// Requests a soft restart by sending `kAERestart` to the system loginwindow process.
+    @MainActor
+    private func requestSystemRestart() {
+        var targetDescriptor = AEAddressDesc()
+        let targetProcessSerialNumber = ProcessSerialNumber(highLongOfPSN: 0, lowLongOfPSN: UInt32(kSystemProcess))
+        let targetCreateStatus = withUnsafePointer(to: targetProcessSerialNumber) { pointer in
+            AECreateDesc(
+                DescType(typeProcessSerialNumber),
+                pointer,
+                MemoryLayout<ProcessSerialNumber>.size,
+                &targetDescriptor
+            )
+        }
+        guard targetCreateStatus == noErr else {
+            return
+        }
+        defer {
+            AEDisposeDesc(&targetDescriptor)
+        }
+
+        var restartEvent = AppleEvent()
+        let eventCreateStatus = AECreateAppleEvent(
+            AEEventClass(kCoreEventClass),
+            AEEventID(kAERestart),
+            &targetDescriptor,
+            AEReturnID(kAutoGenerateReturnID),
+            AETransactionID(kAnyTransactionID),
+            &restartEvent
+        )
+        guard eventCreateStatus == noErr else {
+            return
+        }
+        defer {
+            AEDisposeDesc(&restartEvent)
+        }
+
+        var eventReply = AppleEvent()
+        defer {
+            AEDisposeDesc(&eventReply)
+        }
+
+        let sendStatus = AESendMessage(
+            &restartEvent,
+            &eventReply,
+            AESendMode(kAENoReply),
+            kAEDefaultTimeout
+        )
+        guard sendStatus == noErr else {
+            return
+        }
     }
 }

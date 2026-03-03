@@ -11,9 +11,17 @@
 "Preferences" = "प्राथमिकताएँ";
 "Launch at login" = "लॉगिन पर लॉन्च करें";
 "Use elevated permissions" = "उन्नत अनुमतियों का उपयोग करें";
+"Force mute notifications" = "सूचनाएँ जबरन म्यूट करें";
 "Could not enable elevated permissions." = "उन्नत अनुमतियाँ सक्षम नहीं की जा सकीं।";
+"Could not mute notifications" = "सूचनाएँ म्यूट नहीं की जा सकीं";
 "Check System Settings if Ejectify is enabled." = "जांचें कि सिस्टम सेटिंग्स में Ejectify सक्षम है या नहीं।";
 "Could not disable elevated permissions." = "उन्नत अनुमतियाँ अक्षम नहीं की जा सकीं।";
+"Could not unmute notifications" = "सूचनाओं का म्यूट हटाया नहीं जा सका";
+"Restart required" = "पुनरारंभ आवश्यक";
+"Please restart your Mac to apply the change and mute notifications." = "परिवर्तन लागू करने और सूचनाएँ म्यूट करने के लिए कृपया अपने Mac को पुनरारंभ करें।";
+"Please restart your Mac to apply the change and unmute notifications." = "परिवर्तन लागू करने और सूचनाओं का म्यूट हटाने के लिए कृपया अपने Mac को पुनरारंभ करें।";
+"Later" = "बाद में";
+"Restart" = "पुनरारंभ";
 "Unmount when" = "अनमाउंट करें जब";
 "Screensaver started" = "स्क्रीनसेवर शुरू होता है";
 "Screen is locked" = "स्क्रीन लॉक होता है";

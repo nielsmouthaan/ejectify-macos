@@ -11,9 +11,17 @@
 "Preferences" = "Voorkeuren";
 "Launch at login" = "Start bij inloggen";
 "Use elevated permissions" = "Verhoogde machtigingen gebruiken";
+"Force mute notifications" = "Meldingen geforceerd dempen";
 "Could not enable elevated permissions." = "Kon verhoogde machtigingen niet inschakelen.";
+"Could not mute notifications" = "Kon meldingen niet dempen";
 "Check System Settings if Ejectify is enabled." = "Controleer in Systeeminstellingen of Ejectify is ingeschakeld.";
 "Could not disable elevated permissions." = "Kon verhoogde machtigingen niet uitschakelen.";
+"Could not unmute notifications" = "Kon meldingen niet opnieuw inschakelen";
+"Restart required" = "Herstart vereist";
+"Please restart your Mac to apply the change and mute notifications." = "Herstart je Mac om de wijziging toe te passen en meldingen te dempen.";
+"Please restart your Mac to apply the change and unmute notifications." = "Herstart je Mac om de wijziging toe te passen en meldingen opnieuw in te schakelen.";
+"Later" = "Later";
+"Restart" = "Herstart";
 "Unmount when" = "Deactiveer wanneer";
 "Screensaver started" = "Screensaver is gestart";
 "Screen is locked" = "Scherm is vergrendeld";

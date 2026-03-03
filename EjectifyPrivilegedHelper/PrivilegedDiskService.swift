@@ -20,6 +20,22 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         perform(operation: .unmount(force: force), volumeUUID: volumeUUID as UUID, volumeName: volumeName, bsdName: bsdName, reply: reply)
     }
 
+    func setEjectNotificationsMuted(muted: Bool, withReply reply: @escaping (Bool, String?) -> Void) {
+        let plistPath = PrivilegedHelperConfiguration.diskArbitrationPreferencesPath
+        let key = PrivilegedHelperConfiguration.disableEjectNotificationKey
+        let defaultsArguments = muted
+            ? ["write", plistPath, key, "-bool", "YES"]
+            : ["write", plistPath, key, "-bool", "NO"]
+        let defaultsResult = runProcess(executableURL: URL(fileURLWithPath: "/usr/bin/defaults"), arguments: defaultsArguments)
+        if defaultsResult.exitCode != 0 {
+            reply(false, defaultsResult.output)
+            return
+        }
+
+        logger.info("Disk Arbitration eject notifications muted=\(muted, privacy: .public)")
+        reply(true, nil)
+    }
+
     /// Executes a shared Disk Arbitration operation and returns the result through XPC.
     private func perform(
         operation: DiskArbitrationVolumeOperator.Operation,
@@ -36,5 +52,26 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         }
 
         reply(result.0, result.1)
+    }
+
+    /// Executes a system process and returns its exit status with any output.
+    private func runProcess(executableURL: URL, arguments: [String]) -> (exitCode: Int32, output: String) {
+        let process = Process()
+        process.executableURL = executableURL
+        process.arguments = arguments
+
+        let outputPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = outputPipe
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return (process.terminationStatus, output)
+        } catch {
+            return (1, error.localizedDescription)
+        }
     }
 }

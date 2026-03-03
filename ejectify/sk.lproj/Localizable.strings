@@ -10,9 +10,17 @@
 "Preferences" = "Predvoľby";
 "Launch at login" = "Spustiť pri prihlásení";
 "Use elevated permissions" = "Použiť zvýšené oprávnenia";
+"Force mute notifications" = "Vynútiť stlmenie upozornení";
 "Could not enable elevated permissions." = "Nepodarilo sa povoliť zvýšené oprávnenia.";
+"Could not mute notifications" = "Nepodarilo sa stlmiť upozornenia";
 "Check System Settings if Ejectify is enabled." = "Skontrolujte v Systémových nastaveniach, či je Ejectify povolený.";
 "Could not disable elevated permissions." = "Nepodarilo sa zakázať zvýšené oprávnenia.";
+"Could not unmute notifications" = "Nepodarilo sa obnoviť upozornenia";
+"Restart required" = "Vyžaduje sa reštart";
+"Please restart your Mac to apply the change and mute notifications." = "Ak chcete použiť zmenu a stlmiť upozornenia, reštartujte Mac.";
+"Please restart your Mac to apply the change and unmute notifications." = "Ak chcete použiť zmenu a zrušiť stlmenie upozornení, reštartujte Mac.";
+"Later" = "Neskôr";
+"Restart" = "Reštartovať";
 "Unmount when" = "Vysunúť pri";
 "Screensaver started" = "Šetrič obrazovky sa spustil";
 "Screen is locked" = "Obrazovka je zamknutá";

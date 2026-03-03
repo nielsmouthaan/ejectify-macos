@@ -11,9 +11,17 @@
 "Preferences" = "Tercihler";
 "Launch at login" = "Başlangıçta çalıştır";
 "Use elevated permissions" = "Yükseltilmiş izinleri kullan";
+"Force mute notifications" = "Bildirimleri zorla sessize al";
 "Could not enable elevated permissions." = "Yükseltilmiş izinler etkinleştirilemedi.";
+"Could not mute notifications" = "Bildirimler sessize alınamadı";
 "Check System Settings if Ejectify is enabled." = "Ejectify’nin etkin olup olmadığını Sistem Ayarları’ndan kontrol edin.";
 "Could not disable elevated permissions." = "Yükseltilmiş izinler devre dışı bırakılamadı.";
+"Could not unmute notifications" = "Bildirimlerin sesi açılamadı";
+"Restart required" = "Yeniden başlatma gerekli";
+"Please restart your Mac to apply the change and mute notifications." = "Değişikliği uygulamak ve bildirimleri sessize almak için lütfen Mac’inizi yeniden başlatın.";
+"Please restart your Mac to apply the change and unmute notifications." = "Değişikliği uygulamak ve bildirimlerin sesini açmak için lütfen Mac’inizi yeniden başlatın.";
+"Later" = "Daha sonra";
+"Restart" = "Yeniden başlat";
 "Unmount when" = "Ne zaman bağlantı kesilsin";
 "Screensaver started" = "Ekran koruyucu başladığında";
 "Screen is locked" = "Ekran kilitlendiğinde";
