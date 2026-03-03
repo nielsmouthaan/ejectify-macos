@@ -21,6 +21,7 @@
 		B8DFADB6256CF511009E9296 /* ExternalVolume.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB2256CF511009E9296 /* ExternalVolume.swift */; };
 		B8DFADB7256CF511009E9296 /* StatusBarMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */; };
 		B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB9256D0565009E9296 /* ActivityController.swift */; };
+		D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */; };
 		C0A100000000000000000001 /* PrivilegedDiskServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */; };
 		C0A100000000000000000002 /* PrivilegedHelperManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000012 /* PrivilegedHelperManager.swift */; };
 		C0A100000000000000000003 /* PrivilegedDiskServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */; };
@@ -98,6 +99,7 @@
 		B8DFADB2256CF511009E9296 /* ExternalVolume.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExternalVolume.swift; sourceTree = "<group>"; };
 		B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusBarMenu.swift; sourceTree = "<group>"; };
 		B8DFADB9256D0565009E9296 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
+		D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSleepPowerObserver.swift; sourceTree = "<group>"; };
 		C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedDiskServiceProtocol.swift; sourceTree = "<group>"; };
 		C0A100000000000000000012 /* PrivilegedHelperManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperManager.swift; sourceTree = "<group>"; };
 		C0A100000000000000000013 /* nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist; sourceTree = "<group>"; };
@@ -181,6 +183,7 @@
 			isa = PBXGroup;
 			children = (
 				B8DFADB9256D0565009E9296 /* ActivityController.swift */,
+				D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -371,6 +374,7 @@
 				B89F413025ACA09700E0B8C1 /* String+Localized.swift in Sources */,
 				B8AF59E92569569A003481A8 /* AppDelegate.swift in Sources */,
 				B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */,
+				D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */,
 				B82E12D32570FF0F004547C7 /* Preference.swift in Sources */,
 				B89F412525AC9D7200E0B8C1 /* DADisk+DiskImage.swift in Sources */,
 				B8DFADB5256CF511009E9296 /* StatusBar.swift in Sources */,
@@ -578,6 +582,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = nl.nielsmouthaan.Ejectify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = Ejectify/Ejectify-Bridging-Header.h;
 			};
 			name = Debug;
 		};
@@ -604,6 +609,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = nl.nielsmouthaan.Ejectify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = Ejectify/Ejectify-Bridging-Header.h;
 			};
 			name = Release;
 		};
