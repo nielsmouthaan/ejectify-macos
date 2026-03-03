@@ -261,16 +261,8 @@ class StatusBarMenu: NSMenu {
             let volumeName = volume.name
             let bsdName = volume.bsdName
             let forceUnmount = Preference.forceUnmount
-            let logger = self.logger
-            let volumeLogLabel = volume.logLabel
             Task { @MainActor in
-                PrivilegedHelperManager.shared.unmount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, force: forceUnmount) { success in
-                    guard !success else {
-                        return
-                    }
-
-                    logger.error("Privileged manual unmount failed for \(volumeLogLabel, privacy: .public)")
-                }
+                PrivilegedHelperManager.shared.unmount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, force: forceUnmount) { _ in }
             }
         }
         updateMenu()

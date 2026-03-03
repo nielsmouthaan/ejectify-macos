@@ -130,8 +130,6 @@ class ActivityController {
 
                     if success {
                         self.remountCandidates.removeValue(forKey: volumeID)
-                    } else {
-                        self.logger.error("Privileged mount failed for \(volume.logLabel, privacy: .public)")
                     }
                 }
             }
@@ -308,10 +306,6 @@ class ActivityController {
                 }
 
                 self.inFlightUnmounts.remove(volumeID)
-                if !success {
-                    self.logger.error("Privileged unmount failed for \(volume.logLabel, privacy: .public)")
-                }
-
                 let completions = self.pendingUnmountCompletions.removeValue(forKey: volumeID) ?? []
                 completions.forEach { $0(success) }
             }

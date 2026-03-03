@@ -291,11 +291,7 @@ final class PrivilegedHelperManager: @unchecked Sendable {
                     message: message
                 )
             }
-            if success {
-                complete(true)
-            } else {
-                complete(false)
-            }
+            complete(success)
         }
     }
 
