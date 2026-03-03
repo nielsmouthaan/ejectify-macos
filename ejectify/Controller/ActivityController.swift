@@ -39,6 +39,26 @@ class ActivityController {
     /// Unmount task started for the pending system sleep token.
     private var pendingSystemSleepUnmountTask: Task<Void, Never>?
 
+    /// Tracks whether the machine is currently awake enough to permit remounting.
+    private var systemAwake = true
+
+    /// Tracks whether at least one display is awake and available.
+    private var displayAwake = true
+
+    /// Tracks whether the user session is active on the console.
+    private var sessionActive = true
+
+    /// Tracks whether the lock screen is currently active.
+    private var screenLocked = false
+
+    /// Tracks whether the system screensaver is currently running.
+    private var screensaverRunning = false
+
+    /// Returns whether the system is considered ready for one mount pass.
+    private var isReadyToMount: Bool {
+        systemAwake && displayAwake && sessionActive && !screenLocked && !screensaverRunning
+    }
+
     /// Maximum number of seconds sleep may be deferred while unmounting.
     private static let maximumSystemSleepDelaySeconds = 5
 
@@ -55,25 +75,8 @@ class ActivityController {
         NSWorkspace.shared.notificationCenter.removeObserver(self)
         DistributedNotificationCenter.default.removeObserver(self)
         stopSystemSleepPowerMonitoring(reason: "Monitoring reconfigured")
-
-        // Register the matching unmount/mount trigger pair for the active preference.
-        switch Preference.unmountWhen {
-        case .screensaverStarted:
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstart"), object: nil)
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstop"), object: nil)
-        case .screenIsLocked:
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsLocked"), object: nil)
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsUnlocked"), object: nil)
-        case .screensStartedSleeping:
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.screensDidSleepNotification, object: nil)
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSWorkspace.screensDidWakeNotification, object: nil)
-        case .systemStartsSleeping:
-            if !startSystemSleepPowerMonitoring() {
-                logger.warning("IOKit power monitoring unavailable; falling back to NSWorkspace.willSleepNotification")
-                NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.willSleepNotification, object: nil)
-            }
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(mountVolumes(notification:)), name: NSWorkspace.didWakeNotification, object: nil)
-        }
+        registerUnmountTriggerObserver()
+        registerMountReadinessObservers()
 
         logger.info("Monitoring configured for trigger: \(Preference.unmountWhen.rawValue, privacy: .public)")
     }
@@ -86,12 +89,138 @@ class ActivityController {
         }
     }
 
-    /// Attempts to remount tracked volumes when the paired remount trigger fires.
-    @objc func mountVolumes(notification: Notification) {
-        logger.info("Mount trigger received: \(notification.name.rawValue, privacy: .public)")
-        for volume in remountCandidates.values {
+    /// Registers only the selected unmount trigger while remounting remains readiness-based.
+    private func registerUnmountTriggerObserver() {
+        switch Preference.unmountWhen {
+        case .screensaverStarted:
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstart"), object: nil)
+        case .screenIsLocked:
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsLocked"), object: nil)
+        case .screensStartedSleeping:
+            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.screensDidSleepNotification, object: nil)
+        case .systemStartsSleeping:
+            if !startSystemSleepPowerMonitoring() {
+                logger.warning("IOKit power monitoring unavailable; falling back to NSWorkspace.willSleepNotification")
+                NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.willSleepNotification, object: nil)
+            }
+        }
+    }
+
+    /// Registers notifications that update the "ready-to-mount" state.
+    private func registerMountReadinessObservers() {
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessSystemWillSleep(notification:)), name: NSWorkspace.willSleepNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessSystemDidWake(notification:)), name: NSWorkspace.didWakeNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessScreensDidSleep(notification:)), name: NSWorkspace.screensDidSleepNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessScreensDidWake(notification:)), name: NSWorkspace.screensDidWakeNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessSessionDidResignActive(notification:)), name: NSWorkspace.sessionDidResignActiveNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessSessionDidBecomeActive(notification:)), name: NSWorkspace.sessionDidBecomeActiveNotification, object: nil)
+
+        DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessScreenLocked(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsLocked"), object: nil)
+        DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessScreenUnlocked(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsUnlocked"), object: nil)
+        DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessScreensaverDidStart(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstart"), object: nil)
+        DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessScreensaverDidStop(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstop"), object: nil)
+    }
+
+    /// Applies state updates and triggers one mount pass when readiness transitions to true.
+    private func updateMountReadinessState(
+        systemAwake: Bool? = nil,
+        displayAwake: Bool? = nil,
+        sessionActive: Bool? = nil,
+        screenLocked: Bool? = nil,
+        screensaverRunning: Bool? = nil
+    ) {
+        let wasReadyToMount = isReadyToMount
+
+        if let systemAwake {
+            self.systemAwake = systemAwake
+        }
+        if let displayAwake {
+            self.displayAwake = displayAwake
+        }
+        if let sessionActive {
+            self.sessionActive = sessionActive
+        }
+        if let screenLocked {
+            self.screenLocked = screenLocked
+        }
+        if let screensaverRunning {
+            self.screensaverRunning = screensaverRunning
+        }
+
+        let isNowReadyToMount = self.isReadyToMount
+        guard wasReadyToMount != isNowReadyToMount else {
+            return
+        }
+
+        if isNowReadyToMount {
+            logger.info("Mount readiness reached ready state")
+            triggerMountPass()
+        } else {
+            logger.info("Mount readiness left ready state")
+        }
+    }
+
+    /// Triggers one fire-and-forget mount pass for all remount candidates.
+    private func triggerMountPass() {
+        guard !self.remountCandidates.isEmpty else {
+            logger.info("Mount pass skipped: no remount candidates")
+            return
+        }
+
+        logger.info("Mount pass triggered: \(self.remountCandidates.count, privacy: .public) candidate(s)")
+        for volume in self.remountCandidates.values {
             scheduleMountTask(for: volume)
         }
+    }
+
+    /// Marks system as sleeping in readiness state.
+    @objc private func handleMountReadinessSystemWillSleep(notification _: Notification) {
+        updateMountReadinessState(systemAwake: false)
+    }
+
+    /// Marks system as awake in readiness state.
+    @objc private func handleMountReadinessSystemDidWake(notification _: Notification) {
+        updateMountReadinessState(systemAwake: true)
+    }
+
+    /// Marks displays as sleeping in readiness state.
+    @objc private func handleMountReadinessScreensDidSleep(notification _: Notification) {
+        updateMountReadinessState(displayAwake: false)
+    }
+
+    /// Marks displays as awake in readiness state.
+    @objc private func handleMountReadinessScreensDidWake(notification _: Notification) {
+        updateMountReadinessState(displayAwake: true)
+    }
+
+    /// Marks the user session as inactive in readiness state.
+    @objc private func handleMountReadinessSessionDidResignActive(notification _: Notification) {
+        updateMountReadinessState(sessionActive: false)
+    }
+
+    /// Marks the user session as active in readiness state.
+    @objc private func handleMountReadinessSessionDidBecomeActive(notification _: Notification) {
+        updateMountReadinessState(sessionActive: true)
+    }
+
+    /// Marks the lock screen as shown in readiness state.
+    @objc private func handleMountReadinessScreenLocked(notification _: Notification) {
+        updateMountReadinessState(screenLocked: true)
+    }
+
+    /// Marks the lock screen as dismissed in readiness state.
+    @objc private func handleMountReadinessScreenUnlocked(notification _: Notification) {
+        updateMountReadinessState(screenLocked: false)
+    }
+
+    /// Marks the screensaver as running in readiness state.
+    @objc private func handleMountReadinessScreensaverDidStart(notification _: Notification) {
+        updateMountReadinessState(screensaverRunning: true)
+    }
+
+    /// Marks the screensaver as stopped in readiness state.
+    @objc private func handleMountReadinessScreensaverDidStop(notification _: Notification) {
+        updateMountReadinessState(screensaverRunning: false)
     }
 
     /// Cancels and removes any pending delayed mount task for a volume.
@@ -130,6 +259,8 @@ class ActivityController {
 
                     if success {
                         self.remountCandidates.removeValue(forKey: volumeID)
+                    } else {
+                        self.logger.error("Privileged mount failed for \(volume.logLabel, privacy: .public)")
                     }
                 }
             }
@@ -165,6 +296,7 @@ class ActivityController {
             beginSystemSleepDelay(token: token)
         case .systemHasPoweredOn:
             logger.info("System wake power message received")
+            updateMountReadinessState(systemAwake: true)
         }
     }
 
@@ -182,6 +314,7 @@ class ActivityController {
         }
 
         pendingSystemSleepToken = token
+        updateMountReadinessState(systemAwake: false)
         logger.info("System will sleep received; delaying sleep for up to \(Self.maximumSystemSleepDelaySeconds, privacy: .public) seconds to unmount enabled volumes")
 
         pendingSystemSleepTimeoutTask?.cancel()
