@@ -14,6 +14,7 @@ final class SystemSleepPowerObserver {
     enum Event {
         case canSystemSleep(token: Int)
         case systemWillSleep(token: Int)
+        case systemWillNotSleep
         case systemHasPoweredOn
     }
 
@@ -29,6 +30,9 @@ final class SystemSleepPowerObserver {
 
     /// IOMessage.h constant for the "system will sleep" callback.
     private static let systemWillSleepMessage: natural_t = natural_t(EjectifyIOMessageSystemWillSleep())
+
+    /// IOMessage.h constant for the "system will not sleep" callback.
+    private static let systemWillNotSleepMessage: natural_t = natural_t(EjectifyIOMessageSystemWillNotSleep())
 
     /// IOMessage.h constant for the "system has powered on" callback.
     private static let systemHasPoweredOnMessage: natural_t = natural_t(EjectifyIOMessageSystemHasPoweredOn())
@@ -120,6 +124,8 @@ final class SystemSleepPowerObserver {
             return .canSystemSleep(token: token)
         case systemWillSleepMessage:
             return .systemWillSleep(token: token)
+        case systemWillNotSleepMessage:
+            return .systemWillNotSleep
         case systemHasPoweredOnMessage:
             return .systemHasPoweredOn
         default:

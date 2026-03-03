@@ -21,6 +21,11 @@ static inline uint32_t EjectifyIOMessageSystemWillSleep(void) {
     return kIOMessageSystemWillSleep;
 }
 
+/// Returns IOMessage.h constant `kIOMessageSystemWillNotSleep`.
+static inline uint32_t EjectifyIOMessageSystemWillNotSleep(void) {
+    return kIOMessageSystemWillNotSleep;
+}
+
 /// Returns IOMessage.h constant `kIOMessageSystemHasPoweredOn`.
 static inline uint32_t EjectifyIOMessageSystemHasPoweredOn(void) {
     return kIOMessageSystemHasPoweredOn;

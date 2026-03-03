@@ -290,14 +290,36 @@ class ActivityController {
     private func handleSystemPowerEvent(_ powerEvent: SystemSleepPowerObserver.Event) {
         switch powerEvent {
         case .canSystemSleep(let token):
-            logger.info("System sleep check received; allowing sleep for token \(token, privacy: .public)")
+            logger.info("System sleep check received; attempting early unmount before allowing sleep for token \(token, privacy: .public)")
+            attemptPreSleepUnmountBatch()
             systemSleepPowerObserver?.allowPowerChange(for: token)
         case .systemWillSleep(let token):
             beginSystemSleepDelay(token: token)
+        case .systemWillNotSleep:
+            logger.info("System sleep canceled after sleep check")
+            handleSystemSleepCanceled()
         case .systemHasPoweredOn:
             logger.info("System wake power message received")
             updateMountReadinessState(systemAwake: true)
         }
+    }
+
+    /// Attempts one best-effort unmount pass during idle-sleep preflight.
+    private func attemptPreSleepUnmountBatch() {
+        for volume in ExternalVolume.mountedVolumes().filter({ $0.enabled }) {
+            requestUnmount(for: volume) { _ in }
+        }
+    }
+
+    /// Handles canceled sleep by restoring readiness and triggering one remount pass when ready.
+    private func handleSystemSleepCanceled() {
+        cancelPendingSystemSleepTasks()
+        pendingSystemSleepToken = nil
+        updateMountReadinessState(systemAwake: true)
+        guard isReadyToMount else {
+            return
+        }
+        triggerMountPass()
     }
 
     /// Delays system sleep while unmounting and automatically releases sleep after success or timeout.
