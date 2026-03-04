@@ -16,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var activityController: ActivityController?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        PrivilegedHelperManager.shared.configureOperationMode()
+        VolumeOperationRouter.shared.configureExecutionMode()
 
         statusBar = StatusBar()
         activityController = ActivityController()

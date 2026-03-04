@@ -221,7 +221,7 @@ final class ActivityController {
             }
 
             let success = await withCheckedContinuation { continuation in
-                PrivilegedHelperManager.shared.mount(volumeUUID: volumeID as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { success in
+                VolumeOperationRouter.shared.mount(volumeUUID: volumeID as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { success in
                     continuation.resume(returning: success)
                 }
             }
@@ -386,7 +386,7 @@ final class ActivityController {
         }
     }
 
-    /// Enqueues a privileged unmount request for one volume and tracks in-flight state.
+    /// Enqueues a routed unmount request for one volume and tracks in-flight state.
     private func requestUnmount(for volume: ExternalVolume, completion: @escaping (Bool) -> Void) {
         let volumeID = volume.id
         remountCandidates[volumeID] = volume
@@ -399,7 +399,7 @@ final class ActivityController {
         }
 
         inFlightUnmounts.insert(volumeID)
-        PrivilegedHelperManager.shared.unmount(volumeUUID: volume.id as NSUUID, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success in
+        VolumeOperationRouter.shared.unmount(volumeUUID: volume.id as NSUUID, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success in
             Task { @MainActor [weak self] in
                 guard let self else {
                     completion(success)

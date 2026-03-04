@@ -1,5 +1,5 @@
 //
-//  PrivilegedHelperManager.swift
+//  VolumeOperationRouter.swift
 //  Ejectify
 //
 //  Created by Niels Mouthaan on 25/02/2026.
@@ -7,13 +7,13 @@
 
 import Foundation
 import OSLog
-import ServiceManagement
 
-final class PrivilegedHelperManager: @unchecked Sendable {
+/// Routes volume operations to the privileged helper when available, with in-process fallback.
+final class VolumeOperationRouter: @unchecked Sendable {
 
-    enum OperationMode: String {
-        case local
-        case privilegedHelper
+    enum ExecutionMode: String {
+        case inProcess
+        case helper
     }
 
     /// Wraps completion closures so they can cross Dispatch sendable boundaries safely.
@@ -59,24 +59,23 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         }
     }
 
-    static let shared = PrivilegedHelperManager()
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "PrivilegedHelperManager")
-    private let localOperationQueue = DispatchQueue(label: "nl.nielsmouthaan.Ejectify.LocalDiskOperation", qos: .userInitiated)
+    static let shared = VolumeOperationRouter()
+
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "VolumeOperationRouter")
+    private let lifecycleManager = PrivilegedHelperLifecycleManager.shared
+    private let inProcessOperationQueue = DispatchQueue(label: "nl.nielsmouthaan.Ejectify.InProcessDiskOperation", qos: .userInitiated)
     private let stateLock = NSLock()
-    private var operationModeStorage: OperationMode = .local
+    private var executionModeStorage: ExecutionMode = .inProcess
     private var helperConnection: NSXPCConnection?
-    private var daemonService: SMAppService {
-        SMAppService.daemon(plistName: PrivilegedHelperConfiguration.launchDaemonPlistName)
-    }
 
     /// Returns whether the privileged helper daemon is currently registered and approved to run.
     var isDaemonEnabled: Bool {
-        daemonService.status == .enabled
+        lifecycleManager.isDaemonEnabled
     }
 
-    /// Returns the active operation mode for mount and unmount routing.
-    var operationMode: OperationMode {
-        withStateLock { operationModeStorage }
+    /// Returns the active execution mode for mount and unmount routing.
+    var executionMode: ExecutionMode {
+        withStateLock { executionModeStorage }
     }
 
     /// Appends a message suffix in the format `": <message>"` when a non-empty message is available.
@@ -87,7 +86,7 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         return ": \(message)"
     }
 
-    /// Logs a mount/unmount outcome with a consistent format used by privileged and local execution paths.
+    /// Logs a mount/unmount outcome with a consistent format used by helper and in-process execution paths.
     private nonisolated static func logOperationResult(
         logger: Logger,
         source: String,
@@ -107,25 +106,25 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         }
     }
 
-    /// Runs a closure while holding the shared manager state lock.
+    /// Runs a closure while holding the shared router state lock.
     private func withStateLock<T>(_ action: () -> T) -> T {
         stateLock.lock()
         defer { stateLock.unlock() }
         return action()
     }
 
-    /// Updates operation mode and logs the transition reason.
-    private func setOperationMode(_ mode: OperationMode, reason: String) {
+    /// Updates execution mode and logs the transition reason.
+    private func setExecutionMode(_ mode: ExecutionMode, reason: String) {
         let previousMode = withStateLock {
-            let previous = operationModeStorage
-            operationModeStorage = mode
+            let previous = executionModeStorage
+            executionModeStorage = mode
             return previous
         }
 
         if previousMode == mode {
-            logger.info("Operation mode remains \(mode.rawValue, privacy: .public): \(reason, privacy: .public)")
+            logger.info("Execution mode remains \(mode.rawValue, privacy: .public): \(reason, privacy: .public)")
         } else {
-            logger.info("Operation mode changed from \(previousMode.rawValue, privacy: .public) to \(mode.rawValue, privacy: .public): \(reason, privacy: .public)")
+            logger.info("Execution mode changed from \(previousMode.rawValue, privacy: .public) to \(mode.rawValue, privacy: .public): \(reason, privacy: .public)")
         }
     }
 
@@ -159,17 +158,17 @@ final class PrivilegedHelperManager: @unchecked Sendable {
             guard let self else {
                 return
             }
-            self.logger.warning("Privileged helper XPC connection interrupted; switching to local mode")
+            self.logger.warning("Privileged helper XPC connection interrupted; switching to in-process mode")
             self.invalidateHelperConnection(matching: connection)
-            self.setOperationMode(.local, reason: "helper connection interrupted")
+            self.setExecutionMode(.inProcess, reason: "helper connection interrupted")
         }
         connection.invalidationHandler = { [weak self, weak connection] in
             guard let self else {
                 return
             }
-            self.logger.warning("Privileged helper XPC connection invalidated; switching to local mode")
+            self.logger.warning("Privileged helper XPC connection invalidated; switching to in-process mode")
             self.invalidateHelperConnection(matching: connection)
-            self.setOperationMode(.local, reason: "helper connection invalidated")
+            self.setExecutionMode(.inProcess, reason: "helper connection invalidated")
         }
         connection.resume()
         withStateLock {
@@ -191,14 +190,14 @@ final class PrivilegedHelperManager: @unchecked Sendable {
             }
             self.logger.warning("Privileged helper routing failed while \(operationDescription, privacy: .public): \(error, privacy: .public)")
             self.invalidateHelperConnection(matching: connection)
-            self.setOperationMode(.local, reason: "helper routing failed")
+            self.setExecutionMode(.inProcess, reason: "helper routing failed")
             onRoutingFailure(error)
         }
 
         guard let typedProxy = proxy as? PrivilegedDiskServiceProtocol else {
             logger.warning("Privileged helper proxy could not be created while \(operationDescription, privacy: .public)")
             invalidateHelperConnection(matching: connection)
-            setOperationMode(.local, reason: "helper proxy unavailable")
+            setExecutionMode(.inProcess, reason: "helper proxy unavailable")
             return nil
         }
 
@@ -207,7 +206,7 @@ final class PrivilegedHelperManager: @unchecked Sendable {
 
     /// Starts helper routing by opening XPC and pinging once to verify responsiveness.
     private func initializeHelperRoutingFromStartupPing() {
-        setOperationMode(.local, reason: "awaiting startup helper ping")
+        setExecutionMode(.inProcess, reason: "awaiting startup helper ping")
         invalidateHelperConnection()
         let connection = makeAndStoreHelperConnection()
 
@@ -225,82 +224,30 @@ final class PrivilegedHelperManager: @unchecked Sendable {
             }
 
             if success {
-                self.setOperationMode(.privilegedHelper, reason: "startup helper ping succeeded")
+                self.setExecutionMode(.helper, reason: "startup helper ping succeeded")
                 self.logger.info("Privileged helper is available and will be used for mount and unmount operations")
             } else {
                 let details = message ?? "No additional details"
                 self.logger.warning("Privileged helper startup ping failed: \(details, privacy: .public)")
                 self.invalidateHelperConnection(matching: connection)
-                self.setOperationMode(.local, reason: "startup helper ping failed")
+                self.setExecutionMode(.inProcess, reason: "startup helper ping failed")
             }
         }
     }
 
-    /// Registers the launch daemon so privileged XPC requests can be accepted.
-    private func registerDaemonIfNeeded() {
-        let daemonService = self.daemonService
-        do {
-            switch daemonService.status {
-            case .notRegistered:
-                try daemonService.register()
-                logger.info("Privileged helper daemon was not registered. Registration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
-            case .enabled:
-                logger.info("Privileged helper daemon already registered and enabled")
-            case .requiresApproval:
-                logger.warning("Privileged helper daemon is not runnable yet: \(daemonService.status.statusDescription, privacy: .public)")
-            case .notFound:
-                try daemonService.register()
-                logger.info("Privileged helper daemon service was not found. Registration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
-            @unknown default:
-                logger.warning("Privileged helper daemon reported an unexpected status: \(daemonService.status.statusDescription, privacy: .public)")
-            }
-        } catch {
-            logger.error("Privileged helper daemon registration failed: \(error, privacy: .public)")
-        }
-    }
-
-    /// Registers the launch daemon and returns whether it is ready for privileged routing.
+    /// Configures execution mode from current preferences and startup helper ping result.
     @discardableResult
-    func registerDaemon() -> Bool {
-        registerDaemonIfNeeded()
-        return isDaemonEnabled
-    }
-
-    /// Unregisters the launch daemon and returns whether privileged routing is disabled.
-    @discardableResult
-    func unregisterDaemon() -> Bool {
-        let daemonService = self.daemonService
-        do {
-            switch daemonService.status {
-            case .enabled, .requiresApproval:
-                try daemonService.unregister()
-                logger.info("Privileged helper daemon unregistration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
-            case .notRegistered:
-                logger.info("Privileged helper daemon already unregistered")
-            case .notFound:
-                logger.warning("Privileged helper daemon was not found while attempting unregistration")
-            @unknown default:
-                logger.warning("Privileged helper daemon reported an unexpected status while unregistering: \(daemonService.status.statusDescription, privacy: .public)")
-            }
-        } catch {
-            logger.error("Privileged helper daemon unregistration failed: \(error, privacy: .public)")
-        }
-
-        invalidateHelperConnection()
-        setOperationMode(.local, reason: "daemon unregistered")
-        return !isDaemonEnabled
-    }
-
-    /// Configures operation mode from current preferences and startup helper ping result.
-    @discardableResult
-    func configureOperationMode() -> Bool {
+    func configureExecutionMode() -> Bool {
         guard Preference.useElevatedPermissions else {
-            return unregisterDaemon()
+            let didDisable = lifecycleManager.unregisterDaemon()
+            invalidateHelperConnection()
+            setExecutionMode(.inProcess, reason: "daemon unregistered")
+            return didDisable
         }
 
-        guard registerDaemon() else {
+        guard lifecycleManager.registerDaemon() else {
             invalidateHelperConnection()
-            setOperationMode(.local, reason: "daemon unavailable while elevated permissions are enabled")
+            setExecutionMode(.inProcess, reason: "daemon unavailable while elevated permissions are enabled")
             return false
         }
 
@@ -308,9 +255,9 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         return true
     }
 
-    /// Requests a mount operation with a BSD-name hint, routed by the configured operation mode.
+    /// Requests a mount operation with a BSD-name hint, routed by the active execution mode.
     func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, completion: @escaping (Bool) -> Void) {
-        performRequest(
+        routeOperation(
             operation: .mount,
             volumeUUID: volumeUUID,
             volumeName: volumeName,
@@ -321,9 +268,9 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         }
     }
 
-    /// Requests an unmount operation with a BSD-name hint, routed by the configured operation mode.
+    /// Requests an unmount operation with a BSD-name hint, routed by the active execution mode.
     func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, completion: @escaping (Bool) -> Void) {
-        performRequest(
+        routeOperation(
             operation: .unmount(force: force),
             volumeUUID: volumeUUID,
             volumeName: volumeName,
@@ -338,7 +285,7 @@ final class PrivilegedHelperManager: @unchecked Sendable {
     func setEjectNotificationsMuted(_ muted: Bool, completion: @escaping (Bool, String?) -> Void) {
         let completionBox = ToggleSettingCompletionBox(completion: completion)
 
-        guard operationMode == .privilegedHelper else {
+        guard executionMode == .helper else {
             DispatchQueue.main.async {
                 completionBox.completion(false, "Privileged helper is unavailable")
             }
@@ -361,7 +308,7 @@ final class PrivilegedHelperManager: @unchecked Sendable {
 
         guard let connection = withStateLock({ helperConnection }) else {
             logger.warning("Privileged helper connection unavailable while toggling eject notifications")
-            setOperationMode(.local, reason: "helper connection missing")
+            setExecutionMode(.inProcess, reason: "helper connection missing")
             complete(false, "Privileged helper connection unavailable")
             return
         }
@@ -388,8 +335,8 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         }
     }
 
-    /// Routes mount/unmount requests to helper or local execution based on current operation mode.
-    private func performRequest(
+    /// Routes mount/unmount requests to helper or in-process execution based on current mode.
+    private func routeOperation(
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeUUID: NSUUID,
         volumeName: String,
@@ -397,11 +344,17 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         completion: @escaping (Bool) -> Void,
         request: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?) -> Void) -> Void
     ) {
-        switch operationMode {
-        case .local:
-            performLocalOperation(operation: operation, volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, completion: completion)
-        case .privilegedHelper:
-            performPrivilegedOperation(
+        switch executionMode {
+        case .inProcess:
+            performInProcessDiskOperation(
+                operation: operation,
+                volumeUUID: volumeUUID,
+                volumeName: volumeName,
+                bsdName: bsdName,
+                completion: completion
+            )
+        case .helper:
+            performHelperOperationWithFallback(
                 operation: operation,
                 volumeUUID: volumeUUID,
                 volumeName: volumeName,
@@ -412,8 +365,8 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         }
     }
 
-    /// Executes a helper-backed operation and falls back to local execution on helper routing failures.
-    private func performPrivilegedOperation(
+    /// Executes a helper-backed operation and falls back to in-process execution on helper routing failures.
+    private func performHelperOperationWithFallback(
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeUUID: NSUUID,
         volumeName: String,
@@ -435,21 +388,27 @@ final class PrivilegedHelperManager: @unchecked Sendable {
             }
         }
 
-        let completeWithLocalFallback = {
+        let completeWithInProcessFallback = {
             completeOnce { [weak self] in
                 guard let self else {
                     completion(false)
                     return
                 }
 
-                self.performLocalOperation(operation: operation, volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, completion: completion)
+                self.performInProcessDiskOperation(
+                    operation: operation,
+                    volumeUUID: volumeUUID,
+                    volumeName: volumeName,
+                    bsdName: bsdName,
+                    completion: completion
+                )
             }
         }
 
         guard let connection = withStateLock({ helperConnection }) else {
-            logger.warning("Privileged helper connection unavailable while \(operation.operationName, privacy: .public); falling back to local")
-            setOperationMode(.local, reason: "helper connection missing")
-            completeWithLocalFallback()
+            logger.warning("Privileged helper connection unavailable while \(operation.operationName, privacy: .public); falling back to in-process execution")
+            setExecutionMode(.inProcess, reason: "helper connection missing")
+            completeWithInProcessFallback()
             return
         }
 
@@ -457,10 +416,10 @@ final class PrivilegedHelperManager: @unchecked Sendable {
             for: connection,
             operationDescription: "\(operation.operationName) \(VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID as UUID, bsdName: bsdName))",
             onRoutingFailure: { _ in
-                completeWithLocalFallback()
+                completeWithInProcessFallback()
             }
         ) else {
-            completeWithLocalFallback()
+            completeWithInProcessFallback()
             return
         }
 
@@ -481,8 +440,8 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         }
     }
 
-    /// Executes mount/unmount in the main app process when helper routing is unavailable.
-    private func performLocalOperation(
+    /// Executes mount/unmount in the app process when helper routing is unavailable.
+    private func performInProcessDiskOperation(
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeUUID: NSUUID,
         volumeName: String,
@@ -493,14 +452,14 @@ final class PrivilegedHelperManager: @unchecked Sendable {
         let logger = self.logger
         let completionBox = CompletionBox(completion: completion)
 
-        localOperationQueue.async {
+        inProcessOperationQueue.async {
             let result = DiskArbitrationVolumeOperator.perform(volumeUUID: uuid, volumeName: volumeName, bsdName: bsdName, operation: operation)
             let success = result.0
             let message = result.1
             DispatchQueue.main.async {
                 Self.logOperationResult(
                     logger: logger,
-                    source: "Local",
+                    source: "In-process",
                     operation: operation,
                     volumeName: volumeName,
                     volumeUUID: uuid,

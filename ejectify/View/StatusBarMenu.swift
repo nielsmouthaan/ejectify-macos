@@ -186,7 +186,7 @@ final class StatusBarMenu: NSMenu {
 
     /// Represents enabled elevated permissions only when user preference and daemon state are both active.
     private var elevatedPermissionsMenuState: NSControl.StateValue {
-        (Preference.useElevatedPermissions && PrivilegedHelperManager.shared.isDaemonEnabled) ? .on : .off
+        (Preference.useElevatedPermissions && VolumeOperationRouter.shared.isDaemonEnabled) ? .on : .off
     }
 
     /// Returns whether force-muting notifications is enabled in the system Disk Arbitration plist.
@@ -251,7 +251,7 @@ final class StatusBarMenu: NSMenu {
         let enabledVolumes = volumes.filter { $0.enabled }
         logger.info("Manual unmount-all triggered: \(enabledVolumes.count, privacy: .public) enabled volumes")
         for volume in enabledVolumes {
-            PrivilegedHelperManager.shared.unmount(
+            VolumeOperationRouter.shared.unmount(
                 volumeUUID: volume.id as NSUUID,
                 volumeName: volume.name,
                 bsdName: volume.bsdName,
@@ -282,10 +282,10 @@ final class StatusBarMenu: NSMenu {
     @MainActor
     @objc private func elevatedPermissionsClicked(menuItem: NSMenuItem) {
         let shouldEnable = toggledValue(for: menuItem.state)
-        let helperManager = PrivilegedHelperManager.shared
+        let operationRouter = VolumeOperationRouter.shared
         let previousValue = Preference.useElevatedPermissions
         Preference.useElevatedPermissions = shouldEnable
-        let didSucceed = helperManager.configureOperationMode()
+        let didSucceed = operationRouter.configureExecutionMode()
 
         guard didSucceed else {
             Preference.useElevatedPermissions = previousValue
@@ -325,7 +325,7 @@ final class StatusBarMenu: NSMenu {
     @MainActor
     @objc private func muteNotificationsClicked(menuItem: NSMenuItem) {
         let shouldMute = toggledValue(for: menuItem.state)
-        PrivilegedHelperManager.shared.setEjectNotificationsMuted(shouldMute) { [weak self] success, details in
+        VolumeOperationRouter.shared.setEjectNotificationsMuted(shouldMute) { [weak self] success, details in
             guard let self else {
                 return
             }
