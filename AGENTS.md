@@ -13,5 +13,6 @@ Ejectify is a macOS utility that helps users avoid â€œDisk Not Ejected Properlyâ
 - Use Swift 6.2 or later, using modern Swift concurrency.
 - Do not introduce third-party libraries without asking first.
 - Use [XcodeBuildMCP](https://www.xcodebuildmcp.com) to build and/or test the project, never `xcodebuild`.
-- Document code with concise descriptions above non-obvious functions and properties using `///`. Add inline comments (`//`) for non-obvious logic within function bodies. When updating code, also update documentation.
 - Maintain consistency with existing architecture and naming conventions already used in this repository.
+- Document code with concise descriptions above type, function and property declarations using `///`. Add inline comments (`//`) for non-obvious logic within function bodies. When updating code, also update documentation.
+- Always insert a blank line before every documentation comment (///). The comment must visually belong to the declaration it documents and must not directly follow a {, another declaration, or any other statement.

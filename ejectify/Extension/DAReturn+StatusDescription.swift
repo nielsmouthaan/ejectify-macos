@@ -10,6 +10,8 @@ import Foundation
 
 /// Returns the matching Disk Arbitration constant name for known status codes.
 extension DAReturn {
+
+    /// Stringified Disk Arbitration status constant name for logs.
     var statusDescription: String {
         switch self {
         case Int32(kDAReturnSuccess):

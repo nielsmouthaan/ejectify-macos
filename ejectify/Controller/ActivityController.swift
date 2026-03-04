@@ -12,6 +12,7 @@ import OSLog
 @MainActor
 final class ActivityController {
     
+    /// Logger used for mount/unmount and readiness transition diagnostics.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
 
     /// Volumes eligible for remount, keyed by stable volume UUID.
@@ -61,9 +62,13 @@ final class ActivityController {
     /// Hard cap for delaying system sleep while waiting for unmount completion.
     private static let maximumSystemSleepDelay: Duration = .seconds(maximumSystemSleepDelaySeconds)
 
+    /// Distributed notification posted when the screen lock is engaged.
     private static let screenLockedNotificationName = Notification.Name("com.apple.screenIsLocked")
+
+    /// Distributed notification posted when the screen lock is released.
     private static let screenUnlockedNotificationName = Notification.Name("com.apple.screenIsUnlocked")
 
+    /// Initializes observers based on the current unmount trigger preference.
     init() {
         startMonitoring()
     }
@@ -348,7 +353,11 @@ final class ActivityController {
 
     /// Represents the completion summary for one unmount batch.
     private struct UnmountBatchResult {
+
+        /// Number of enabled volumes included in the batch request.
         let requestedCount: Int
+
+        /// Number of volume unmount requests that reported success.
         let succeededCount: Int
     }
 

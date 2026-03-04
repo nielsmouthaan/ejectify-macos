@@ -9,12 +9,20 @@ import Cocoa
 
 @main
 @MainActor
+
+/// Coordinates app startup and wires core menu/activity controllers.
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
+    /// Shared delegate instance exposed for app-wide coordination.
     static let shared = NSApplication.shared.delegate as! AppDelegate
+
+    /// Owns the menu bar status item and its menu lifecycle.
     var statusBar: StatusBar?
+
+    /// Owns event observation and mount/unmount orchestration.
     var activityController: ActivityController?
 
+    /// Bootstraps routing mode and initializes primary app controllers.
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         VolumeOperationRouter.shared.configureExecutionMode()
 

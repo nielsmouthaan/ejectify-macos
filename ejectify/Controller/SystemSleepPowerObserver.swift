@@ -16,11 +16,22 @@ final class SystemSleepPowerObserver {
         case systemHasPoweredOn
     }
 
+    /// Main-actor callback invoked for translated sleep/wake events.
     private let onPowerMessage: @MainActor (Event) -> Void
+
+    /// Logger used for power notification registration and lifecycle diagnostics.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "SystemSleepPowerObserver")
+
+    /// IOKit root power connection used to acknowledge sleep transitions.
     private var rootPort: io_connect_t = 0
+
+    /// Notification port that delivers power messages to the run loop.
     private var notificationPort: IONotificationPortRef?
+
+    /// Registered notifier token returned by `IORegisterForSystemPower`.
     private var notifierObject: io_object_t = 0
+
+    /// Run loop source receiving callbacks from the notification port.
     private var runLoopSource: CFRunLoopSource?
 
     /// IOMessage.h constant for the "system will sleep" callback.
@@ -29,6 +40,7 @@ final class SystemSleepPowerObserver {
     /// IOMessage.h constant for the "system has powered on" callback.
     private static let systemHasPoweredOnMessage: natural_t = natural_t(EjectifyIOMessageSystemHasPoweredOn())
 
+    /// Creates an observer that forwards translated power events to the supplied handler.
     init(onPowerMessage: @escaping @MainActor (Event) -> Void) {
         self.onPowerMessage = onPowerMessage
     }
@@ -99,6 +111,7 @@ final class SystemSleepPowerObserver {
         IOAllowPowerChange(rootPort, token)
     }
 
+    /// Raw IOKit callback that forwards incoming messages to an observer instance.
     private static let powerCallback: IOServiceInterestCallback = { refCon, _, messageType, messageArgument in
         guard let refCon else {
             return
@@ -132,6 +145,7 @@ final class SystemSleepPowerObserver {
         }
     }
 
+    /// Ensures all IOKit registrations are released when the observer is deallocated.
     deinit {
         stop()
     }

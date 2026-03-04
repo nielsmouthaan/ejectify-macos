@@ -11,6 +11,7 @@ import OSLog
 /// Routes volume operations to the priviledged helper when available, with local fallback.
 final class VolumeOperationRouter: @unchecked Sendable {
 
+    /// Describes where mount/unmount requests are currently executed.
     enum ExecutionMode: String {
         case local
         case priviledgedHelper
@@ -18,8 +19,11 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
     /// Wraps completion closures so they can cross Dispatch sendable boundaries safely.
     private final class CompletionBox: @unchecked Sendable {
+
+        /// Completion closure invoked with operation success state.
         let completion: (Bool) -> Void
 
+        /// Stores a completion closure for deferred execution on main queue.
         init(completion: @escaping (Bool) -> Void) {
             self.completion = completion
         }
@@ -27,8 +31,11 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
     /// Wraps completion closures with error details so they can cross Dispatch sendable boundaries safely.
     private final class ToggleSettingCompletionBox: @unchecked Sendable {
+
+        /// Completion closure invoked with success state and optional error details.
         let completion: (Bool, String?) -> Void
 
+        /// Stores a completion closure for deferred execution on main queue.
         init(completion: @escaping (Bool, String?) -> Void) {
             self.completion = completion
         }
@@ -36,8 +43,11 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
     /// Stores completion actions so they can cross Dispatch sendable boundaries safely.
     private final class ActionBox: @unchecked Sendable {
+
+        /// Arbitrary action to execute once a completion gate permits it.
         let action: () -> Void
 
+        /// Stores an action closure for dispatch-safe forwarding.
         init(action: @escaping () -> Void) {
             self.action = action
         }
@@ -45,9 +55,14 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
     /// Ensures a completion path is only executed once across concurrent callbacks.
     private final class CompletionGate: @unchecked Sendable {
+
+        /// Lock protecting completion state transitions.
         private let lock = NSLock()
+
+        /// Tracks whether completion has already run.
         private var didComplete = false
 
+        /// Executes `action` exactly once across all callers.
         func runOnce(_ action: () -> Void) {
             lock.lock()
             defer { lock.unlock() }
@@ -59,12 +74,22 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
+    /// Shared router instance used throughout the app.
     static let shared = VolumeOperationRouter()
 
+    /// Logger used for routing mode and operation outcomes.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "VolumeOperationRouter")
+
+    /// Queue used for local mount/unmount operations.
     private let localOperationQueue = DispatchQueue(label: "nl.nielsmouthaan.Ejectify.LocalDiskOperation", qos: .userInitiated)
+
+    /// Lock guarding mutable router state.
     private let stateLock = NSLock()
+
+    /// Backing storage for the current execution mode.
     private var executionModeStorage: ExecutionMode = .local
+
+    /// Cached XPC connection to the privileged helper when available.
     private var helperConnection: NSXPCConnection?
 
     /// Returns whether the privileged helper daemon is currently registered and approved to run.

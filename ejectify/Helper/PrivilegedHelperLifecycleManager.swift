@@ -12,10 +12,13 @@ import ServiceManagement
 /// Manages privileged helper daemon registration and approval status.
 final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
 
+    /// Shared lifecycle manager used by app routing logic.
     static let shared = PrivilegedHelperLifecycleManager()
 
+    /// Logger used for daemon registration lifecycle diagnostics.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "PrivilegedHelperLifecycleManager")
 
+    /// Lazily created ServiceManagement daemon handle for status and registration calls.
     private var daemonService: SMAppService {
         SMAppService.daemon(plistName: PrivilegedHelperConfiguration.launchDaemonPlistName)
     }

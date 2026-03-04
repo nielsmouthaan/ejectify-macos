@@ -11,8 +11,11 @@ import OSLog
 
 /// Performs mount and unmount requests via Disk Arbitration for a volume UUID.
 enum DiskArbitrationVolumeOperator {
+
     /// Creates configured Disk Arbitration sessions for shared app/helper usage.
     enum DiskArbitrationSessionFactory {
+
+        /// Creates a Disk Arbitration session and binds callback delivery to the provided queue.
         static func makeSession(dispatchQueue: DispatchQueue) -> DASession? {
             guard let session = DASessionCreate(kCFAllocatorDefault) else {
                 return nil
@@ -25,6 +28,8 @@ enum DiskArbitrationVolumeOperator {
 
     /// Converts volume UUID values from Disk Arbitration descriptions into Foundation UUID values.
     enum VolumeUUIDResolver {
+
+        /// Extracts and normalizes a volume UUID from a disk description dictionary.
         static func volumeUUID(from diskInfo: [NSString: Any]) -> UUID? {
             guard let rawVolumeUUID = diskInfo[kDADiskDescriptionVolumeUUIDKey] else {
                 return nil
@@ -49,10 +54,12 @@ enum DiskArbitrationVolumeOperator {
         }
     }
 
+    /// Represents the supported mount-state operations routed through Disk Arbitration.
     enum Operation {
         case mount
         case unmount(force: Bool)
 
+        /// Human-readable operation name used in logs and error messages.
         var operationName: String {
             switch self {
             case .mount:
@@ -63,11 +70,17 @@ enum DiskArbitrationVolumeOperator {
         }
     }
 
+    /// Holds callback completion state for a single asynchronous Disk Arbitration request.
     private final class CallbackState {
+
+        /// Signals when the asynchronous callback has produced a result.
         let semaphore = DispatchSemaphore(value: 0)
+
+        /// Operation result populated by the callback closure.
         var result: (Bool, String?) = (false, "No response from Disk Arbitration callback")
     }
 
+    /// Logger shared by all disk operation paths.
     private static let logger = Logger(subsystem: "nl.nielsmouthaan.Ejectify", category: "DiskArbitrationVolumeOperator")
 
     /// Shared callback queue used by the shared Disk Arbitration session.

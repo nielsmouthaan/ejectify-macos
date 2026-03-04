@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Adds helpers for identifying disk image-backed Disk Arbitration disks.
 extension DADisk {
     
     /// Returns `true` when Disk Arbitration reports this disk as a disk image.

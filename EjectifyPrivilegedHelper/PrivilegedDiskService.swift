@@ -8,22 +8,28 @@
 import Foundation
 import OSLog
 
+/// Implements privileged XPC endpoints for mount/unmount and notification muting operations.
 final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     
+    /// Logger used for privileged helper operation diagnostics.
     private let logger = Logger(subsystem: "nl.nielsmouthaan.Ejectify", category: "PrivilegedDiskService")
 
+    /// Confirms helper reachability for startup routing checks.
     func ping(withReply reply: @escaping (Bool, String?) -> Void) {
         reply(true, nil)
     }
 
+    /// Performs a privileged mount for the provided volume metadata.
     func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?) -> Void) {
         perform(operation: .mount, volumeUUID: volumeUUID as UUID, volumeName: volumeName, bsdName: bsdName, reply: reply)
     }
 
+    /// Performs a privileged unmount for the provided volume metadata.
     func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?) -> Void) {
         perform(operation: .unmount(force: force), volumeUUID: volumeUUID as UUID, volumeName: volumeName, bsdName: bsdName, reply: reply)
     }
 
+    /// Updates Disk Arbitration eject-notification muting through `defaults`.
     func setEjectNotificationsMuted(muted: Bool, withReply reply: @escaping (Bool, String?) -> Void) {
         let plistPath = PrivilegedHelperConfiguration.diskArbitrationPreferencesPath
         let key = PrivilegedHelperConfiguration.disableEjectNotificationKey

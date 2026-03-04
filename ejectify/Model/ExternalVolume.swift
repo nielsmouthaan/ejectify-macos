@@ -12,6 +12,7 @@ import OSLog
 /// Represents an external/ejectable volume discovered from Disk Arbitration metadata.
 final class ExternalVolume {
     
+    /// Logger used for volume discovery and eligibility diagnostics.
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ExternalVolume")
 
     /// Shared Disk Arbitration session retained for the lifetime of the app so asynchronous callbacks are delivered reliably.
@@ -51,6 +52,7 @@ final class ExternalVolume {
         }
     }
 
+    /// Creates a managed volume model from resolved Disk Arbitration metadata.
     init(id: UUID, name: String, bsdName: String) {
         self.id = id
         self.name = name

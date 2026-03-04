@@ -8,10 +8,13 @@
 import Foundation
 import OSLog
 
+/// Accepts helper XPC connections and exports a single privileged disk service instance.
 final class PrivilegedHelperListenerDelegate: NSObject, NSXPCListenerDelegate {
     
+    /// Exported XPC service handling privileged volume operations.
     private let service = PrivilegedDiskService()
 
+    /// Configures and accepts incoming XPC connections for the privileged service.
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
         newConnection.exportedInterface = NSXPCInterface(with: PrivilegedDiskServiceProtocol.self)
         newConnection.exportedObject = service
@@ -20,8 +23,13 @@ final class PrivilegedHelperListenerDelegate: NSObject, NSXPCListenerDelegate {
     }
 }
 
+/// Logger used during helper daemon bootstrap.
 let logger = Logger(subsystem: "nl.nielsmouthaan.Ejectify", category: "PrivilegedHelperMain")
+
+/// Listener delegate that exports the privileged disk service object.
 let delegate = PrivilegedHelperListenerDelegate()
+
+/// Mach service listener receiving app connections.
 let listener = NSXPCListener(machServiceName: PrivilegedHelperConfiguration.machServiceName)
 listener.delegate = delegate
 listener.resume()

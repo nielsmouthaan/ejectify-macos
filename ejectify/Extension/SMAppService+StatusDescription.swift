@@ -9,6 +9,8 @@ import ServiceManagement
 
 /// Returns the enum case name for each Service Management daemon status.
 extension SMAppService.Status {
+
+    /// Stringified status case for concise logging and diagnostics.
     var statusDescription: String {
         switch self {
         case .notRegistered:

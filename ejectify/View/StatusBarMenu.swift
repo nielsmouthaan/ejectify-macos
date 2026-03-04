@@ -12,12 +12,16 @@ import OSLog
 /// Builds and updates the status bar menu for volume actions and preferences.
 final class StatusBarMenu: NSMenu {
     
+    /// Logger used for menu-driven actions and volume notifications.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "StatusBarMenu")
+    
+    /// Destination URL used by the About action.
     private let aboutURL = URL(string: "https://ejectify.app")!
     
     /// Cached mounted volumes shown in the menu.
     private var volumes: [ExternalVolume]
 
+    /// Required initializer for storyboard/nib usage.
     required init(coder: NSCoder) {
         volumes = ExternalVolume.mountedVolumes()
         super.init(coder: coder)
@@ -25,6 +29,7 @@ final class StatusBarMenu: NSMenu {
         listenForVolumeNotifications()
     }
 
+    /// Initializes the menu, loads mounted volumes, and starts notifications.
     init() {
         volumes = ExternalVolume.mountedVolumes()
         super.init(title: "Ejectify")
@@ -32,6 +37,7 @@ final class StatusBarMenu: NSMenu {
         listenForVolumeNotifications()
     }
 
+    /// Removes registered workspace observers before deallocation.
     deinit {
         NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
