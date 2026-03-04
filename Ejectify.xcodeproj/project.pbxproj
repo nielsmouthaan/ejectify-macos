@@ -21,14 +21,12 @@
 		B8DFADB6256CF511009E9296 /* ExternalVolume.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB2256CF511009E9296 /* ExternalVolume.swift */; };
 		B8DFADB7256CF511009E9296 /* StatusBarMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */; };
 		B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB9256D0565009E9296 /* ActivityController.swift */; };
-		D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */; };
 		C0A100000000000000000001 /* PrivilegedDiskServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */; };
 		C0A100000000000000000002 /* VolumeOperationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000012 /* VolumeOperationRouter.swift */; };
-		D1E700A42F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */; };
 		C0A100000000000000000003 /* PrivilegedDiskServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */; };
 		C0A100000000000000000004 /* PrivilegedDiskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000016 /* PrivilegedDiskService.swift */; };
 		C0A100000000000000000005 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000015 /* main.swift */; };
-		C0A100000000000000000006 /* EjectifyPrivilegedHelper in CopyFiles */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000017 /* EjectifyPrivilegedHelper */; };
+		C0A100000000000000000006 /* EjectifyPrivilegedHelper in CopyFiles */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000017 /* EjectifyPrivilegedHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		C0A100000000000000000007 /* nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000013 /* nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist */; };
 		C0A100000000000000000051 /* DiskArbitrationVolumeOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */; };
 		C0A100000000000000000052 /* DiskArbitrationVolumeOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */; };
@@ -37,6 +35,8 @@
 		C0A100000000000000000062 /* VolumeLogLabelFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */; };
 		C0A100000000000000000064 /* PrivilegedHelperConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */; };
 		C0A100000000000000000065 /* PrivilegedHelperConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */; };
+		D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */; };
+		D1E700A42F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,7 +79,6 @@
 		B82E12D22570FF0F004547C7 /* Preference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preference.swift; sourceTree = "<group>"; };
 		B835A2852634529D002D232D /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B85E03F025AF54D300CA51C5 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
-		B8A74B4B2DF6989C00D67001 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B85E03F225AF5B8A00CA51C5 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B85E03F525B1DAAB00CA51C5 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		B85E040225B1EA1700CA51C5 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -90,6 +89,7 @@
 		B89F413425ACA62200E0B8C1 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B89F413725AEE3D000E0B8C1 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B89F413925AEE6F200E0B8C1 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		B8A74B4B2DF6989C00D67001 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B8AF59E52569569A003481A8 /* Ejectify.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ejectify.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8AF59E82569569A003481A8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B8AF59EC2569569B003481A8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -100,10 +100,8 @@
 		B8DFADB2256CF511009E9296 /* ExternalVolume.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExternalVolume.swift; sourceTree = "<group>"; };
 		B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusBarMenu.swift; sourceTree = "<group>"; };
 		B8DFADB9256D0565009E9296 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
-		D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSleepPowerObserver.swift; sourceTree = "<group>"; };
 		C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedDiskServiceProtocol.swift; sourceTree = "<group>"; };
 		C0A100000000000000000012 /* VolumeOperationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeOperationRouter.swift; sourceTree = "<group>"; };
-		D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperLifecycleManager.swift; sourceTree = "<group>"; };
 		C0A100000000000000000013 /* nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist; sourceTree = "<group>"; };
 		C0A100000000000000000015 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		C0A100000000000000000016 /* PrivilegedDiskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedDiskService.swift; sourceTree = "<group>"; };
@@ -112,6 +110,8 @@
 		C0A100000000000000000054 /* SMAppService+StatusDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SMAppService+StatusDescription.swift"; sourceTree = "<group>"; };
 		C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeLogLabelFormatter.swift; sourceTree = "<group>"; };
 		C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperConfiguration.swift; sourceTree = "<group>"; };
+		D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSleepPowerObserver.swift; sourceTree = "<group>"; };
+		D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperLifecycleManager.swift; sourceTree = "<group>"; };
 		F22E193528F67EE100899BDE /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -280,8 +280,9 @@
 		B8AF59DD2569569A003481A8 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1220;
-				LastUpgradeCheck = 1410;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					B8AF59E42569569A003481A8 = {
 						CreatedOnToolsVersion = 12.2;
@@ -479,8 +480,10 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = DNG6HL3Y5G;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
+					ENABLE_TESTABILITY = YES;
+					ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -500,6 +503,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
@@ -543,8 +547,10 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = DNG6HL3Y5G;
 				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
+					ENABLE_STRICT_OBJC_MSGSEND = YES;
+					ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -557,6 +563,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
@@ -573,7 +580,6 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 6;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = DNG6HL3Y5G;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Ejectify/Info.plist;
@@ -586,7 +592,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = nl.nielsmouthaan.Ejectify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SWIFT_OBJC_BRIDGING_HEADER = Ejectify/Ejectify-Bridging-Header.h;
+				SWIFT_OBJC_BRIDGING_HEADER = "Ejectify/Ejectify-Bridging-Header.h";
 			};
 			name = Debug;
 		};
@@ -600,7 +606,6 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 6;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = DNG6HL3Y5G;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Ejectify/Info.plist;
@@ -613,7 +618,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = nl.nielsmouthaan.Ejectify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SWIFT_OBJC_BRIDGING_HEADER = Ejectify/Ejectify-Bridging-Header.h;
+				SWIFT_OBJC_BRIDGING_HEADER = "Ejectify/Ejectify-Bridging-Header.h";
 			};
 			name = Release;
 		};
@@ -623,7 +628,6 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DNG6HL3Y5G;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.nielsmouthaan.Ejectify.PrivilegedHelper;
@@ -640,7 +644,6 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DNG6HL3Y5G;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.nielsmouthaan.Ejectify.PrivilegedHelper;
