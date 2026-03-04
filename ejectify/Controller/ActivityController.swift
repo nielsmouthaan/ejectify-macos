@@ -142,19 +142,27 @@ final class ActivityController {
         let wasReadyToMount = isReadyToMount
 
         if let systemAwake {
+            logger.info("\(systemAwake ? "System is awake" : "System is sleeping", privacy: .public)")
             self.systemAwake = systemAwake
         }
+
         if let displayAwake {
+            logger.info("\(displayAwake ? "Display is awake" : "Display is sleeping", privacy: .public)")
             self.displayAwake = displayAwake
         }
+
         if let sessionActive {
+            logger.info("\(sessionActive ? "Session is active" : "Session is inactive", privacy: .public)")
             self.sessionActive = sessionActive
         }
+
         if let screenLocked {
+            logger.info("\(screenLocked ? "Screen is locked" : "Screen is unlocked", privacy: .public)")
             self.screenLocked = screenLocked
         }
 
         let isNowReadyToMount = self.isReadyToMount
+
         guard wasReadyToMount != isNowReadyToMount else {
             return
         }
