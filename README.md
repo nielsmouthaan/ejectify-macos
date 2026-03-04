@@ -19,7 +19,6 @@
 
 ⭐ Configure when volumes should be unmounted:
 
-- When the screensaver starts.
 - When the screen is locked.
 - When the screens started sleeping.
 - When the system starts sleeping.
@@ -44,7 +43,7 @@ Make sure Ejectify is copied into your Applications directory and run from there
 
 ### Why do I still receive notifications?
 
-Ejectify works by (trying to) unmount volumes (on external disks) before your screensaver starts, screen locks, display(s) turns off, or the system starts sleeping. Sometimes this doesn't result in the desired behavior. In this case, try the following:
+Ejectify works by (trying to) unmount volumes (on external disks) before your screen locks, display(s) turns off, or the system starts sleeping. Sometimes this doesn't result in the desired behavior. In this case, try the following:
 
 - Ensure the correct volumes are checked in Ejectify's status bar menu. Ejectify will only attempt to unmount those.
 

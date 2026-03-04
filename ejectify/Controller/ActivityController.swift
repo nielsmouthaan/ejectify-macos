@@ -8,7 +8,7 @@
 import AppKit
 import OSLog
 
-/// Responds to sleep/lock/screen-saver events by unmounting and remounting enabled volumes.
+/// Responds to sleep/lock/display events by unmounting and remounting enabled volumes.
 @MainActor
 class ActivityController {
     
@@ -51,12 +51,9 @@ class ActivityController {
     /// Tracks whether the lock screen is currently active.
     private var screenLocked = false
 
-    /// Tracks whether the system screensaver is currently running.
-    private var screensaverRunning = false
-
     /// Returns whether the system is considered ready for one mount pass.
     private var isReadyToMount: Bool {
-        systemAwake && displayAwake && sessionActive && !screenLocked && !screensaverRunning
+        systemAwake && displayAwake && sessionActive && !screenLocked
     }
 
     /// Maximum number of seconds sleep may be deferred while unmounting.
@@ -92,8 +89,6 @@ class ActivityController {
     /// Registers only the selected unmount trigger while remounting remains readiness-based.
     private func registerUnmountTriggerObserver() {
         switch Preference.unmountWhen {
-        case .screensaverStarted:
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstart"), object: nil)
         case .screenIsLocked:
             DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsLocked"), object: nil)
         case .screensStartedSleeping:
@@ -117,8 +112,6 @@ class ActivityController {
 
         DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessScreenLocked(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsLocked"), object: nil)
         DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessScreenUnlocked(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsUnlocked"), object: nil)
-        DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessScreensaverDidStart(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstart"), object: nil)
-        DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessScreensaverDidStop(notification:)), name: NSNotification.Name(rawValue: "com.apple.screensaver.didstop"), object: nil)
     }
 
     /// Applies state updates and triggers one mount pass when readiness transitions to true.
@@ -126,8 +119,7 @@ class ActivityController {
         systemAwake: Bool? = nil,
         displayAwake: Bool? = nil,
         sessionActive: Bool? = nil,
-        screenLocked: Bool? = nil,
-        screensaverRunning: Bool? = nil
+        screenLocked: Bool? = nil
     ) {
         let wasReadyToMount = isReadyToMount
 
@@ -142,9 +134,6 @@ class ActivityController {
         }
         if let screenLocked {
             self.screenLocked = screenLocked
-        }
-        if let screensaverRunning {
-            self.screensaverRunning = screensaverRunning
         }
 
         let isNowReadyToMount = self.isReadyToMount
@@ -211,16 +200,6 @@ class ActivityController {
     /// Marks the lock screen as dismissed in readiness state.
     @objc private func handleMountReadinessScreenUnlocked(notification _: Notification) {
         updateMountReadinessState(screenLocked: false)
-    }
-
-    /// Marks the screensaver as running in readiness state.
-    @objc private func handleMountReadinessScreensaverDidStart(notification _: Notification) {
-        updateMountReadinessState(screensaverRunning: true)
-    }
-
-    /// Marks the screensaver as stopped in readiness state.
-    @objc private func handleMountReadinessScreensaverDidStop(notification _: Notification) {
-        updateMountReadinessState(screensaverRunning: false)
     }
 
     /// Cancels and removes any pending mount task for a volume.

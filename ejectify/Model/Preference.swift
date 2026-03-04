@@ -16,7 +16,6 @@ class Preference {
 
     /// Defines which system event triggers automatic unmounting.
     enum UnmountWhen: String {
-        case screensaverStarted = "screensaverStarted"
         case screenIsLocked = "screenIsLocked"
         case screensStartedSleeping = "screensStartedSleeping"
         case systemStartsSleeping = "systemStartsSleeping"
