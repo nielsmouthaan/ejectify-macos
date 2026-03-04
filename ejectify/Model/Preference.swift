@@ -10,7 +10,7 @@ import LaunchAtLogin
 import OSLog
 
 /// Centralizes persisted user preferences used by Ejectify.
-class Preference {
+enum Preference {
     
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "Preference")
 

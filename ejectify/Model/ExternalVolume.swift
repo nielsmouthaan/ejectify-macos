@@ -10,7 +10,7 @@ import OSLog
 @preconcurrency import DiskArbitration
 
 /// Represents an external/ejectable volume discovered from Disk Arbitration metadata.
-class ExternalVolume {
+final class ExternalVolume {
     
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ExternalVolume")
 

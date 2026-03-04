@@ -10,7 +10,7 @@ import OSLog
 
 /// Responds to sleep/lock/display events by unmounting and remounting enabled volumes.
 @MainActor
-class ActivityController {
+final class ActivityController {
     
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
     private let privilegedHelperManager = PrivilegedHelperManager.shared
@@ -62,6 +62,9 @@ class ActivityController {
     /// Hard cap for delaying system sleep while waiting for unmount completion.
     private static let maximumSystemSleepDelay: Duration = .seconds(maximumSystemSleepDelaySeconds)
 
+    private static let screenLockedNotificationName = Notification.Name("com.apple.screenIsLocked")
+    private static let screenUnlockedNotificationName = Notification.Name("com.apple.screenIsUnlocked")
+
     init() {
         startMonitoring()
     }
@@ -90,7 +93,7 @@ class ActivityController {
     private func registerUnmountTriggerObserver() {
         switch Preference.unmountWhen {
         case .screenIsLocked:
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsLocked"), object: nil)
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: Self.screenLockedNotificationName, object: nil)
         case .screensStartedSleeping:
             NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.screensDidSleepNotification, object: nil)
         case .systemStartsSleeping:
@@ -103,15 +106,26 @@ class ActivityController {
 
     /// Registers notifications that update the "ready-to-mount" state.
     private func registerMountReadinessObservers() {
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessSystemWillSleep(notification:)), name: NSWorkspace.willSleepNotification, object: nil)
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessSystemDidWake(notification:)), name: NSWorkspace.didWakeNotification, object: nil)
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessScreensDidSleep(notification:)), name: NSWorkspace.screensDidSleepNotification, object: nil)
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessScreensDidWake(notification:)), name: NSWorkspace.screensDidWakeNotification, object: nil)
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessSessionDidResignActive(notification:)), name: NSWorkspace.sessionDidResignActiveNotification, object: nil)
-        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessSessionDidBecomeActive(notification:)), name: NSWorkspace.sessionDidBecomeActiveNotification, object: nil)
+        let workspaceReadinessNotifications: [Notification.Name] = [
+            NSWorkspace.willSleepNotification,
+            NSWorkspace.didWakeNotification,
+            NSWorkspace.screensDidSleepNotification,
+            NSWorkspace.screensDidWakeNotification,
+            NSWorkspace.sessionDidResignActiveNotification,
+            NSWorkspace.sessionDidBecomeActiveNotification
+        ]
 
-        DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessScreenLocked(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsLocked"), object: nil)
-        DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessScreenUnlocked(notification:)), name: NSNotification.Name(rawValue: "com.apple.screenIsUnlocked"), object: nil)
+        for name in workspaceReadinessNotifications {
+            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(handleMountReadinessNotification(_:)), name: name, object: nil)
+        }
+
+        let distributedReadinessNotifications = [
+            Self.screenLockedNotificationName,
+            Self.screenUnlockedNotificationName
+        ]
+        for name in distributedReadinessNotifications {
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessNotification(_:)), name: name, object: nil)
+        }
     }
 
     /// Applies state updates and triggers one mount pass when readiness transitions to true.
@@ -162,44 +176,28 @@ class ActivityController {
         }
     }
 
-    /// Marks system as sleeping in readiness state.
-    @objc private func handleMountReadinessSystemWillSleep(notification _: Notification) {
-        updateMountReadinessState(systemAwake: false)
-    }
-
-    /// Marks system as awake in readiness state.
-    @objc private func handleMountReadinessSystemDidWake(notification _: Notification) {
-        updateMountReadinessState(systemAwake: true)
-    }
-
-    /// Marks displays as sleeping in readiness state.
-    @objc private func handleMountReadinessScreensDidSleep(notification _: Notification) {
-        updateMountReadinessState(displayAwake: false)
-    }
-
-    /// Marks displays as awake in readiness state.
-    @objc private func handleMountReadinessScreensDidWake(notification _: Notification) {
-        updateMountReadinessState(displayAwake: true)
-    }
-
-    /// Marks the user session as inactive in readiness state.
-    @objc private func handleMountReadinessSessionDidResignActive(notification _: Notification) {
-        updateMountReadinessState(sessionActive: false)
-    }
-
-    /// Marks the user session as active in readiness state.
-    @objc private func handleMountReadinessSessionDidBecomeActive(notification _: Notification) {
-        updateMountReadinessState(sessionActive: true)
-    }
-
-    /// Marks the lock screen as shown in readiness state.
-    @objc private func handleMountReadinessScreenLocked(notification _: Notification) {
-        updateMountReadinessState(screenLocked: true)
-    }
-
-    /// Marks the lock screen as dismissed in readiness state.
-    @objc private func handleMountReadinessScreenUnlocked(notification _: Notification) {
-        updateMountReadinessState(screenLocked: false)
+    /// Applies readiness-state updates from workspace and distributed notifications.
+    @objc private func handleMountReadinessNotification(_ notification: Notification) {
+        switch notification.name {
+        case NSWorkspace.willSleepNotification:
+            updateMountReadinessState(systemAwake: false)
+        case NSWorkspace.didWakeNotification:
+            updateMountReadinessState(systemAwake: true)
+        case NSWorkspace.screensDidSleepNotification:
+            updateMountReadinessState(displayAwake: false)
+        case NSWorkspace.screensDidWakeNotification:
+            updateMountReadinessState(displayAwake: true)
+        case NSWorkspace.sessionDidResignActiveNotification:
+            updateMountReadinessState(sessionActive: false)
+        case NSWorkspace.sessionDidBecomeActiveNotification:
+            updateMountReadinessState(sessionActive: true)
+        case Self.screenLockedNotificationName:
+            updateMountReadinessState(screenLocked: true)
+        case Self.screenUnlockedNotificationName:
+            updateMountReadinessState(screenLocked: false)
+        default:
+            return
+        }
     }
 
     /// Cancels and removes any pending mount task for a volume.
@@ -223,22 +221,20 @@ class ActivityController {
                 self.pendingMountTasks.removeValue(forKey: volumeID)
             }
 
+            let success = await withCheckedContinuation { continuation in
+                self.privilegedHelperManager.mount(volumeUUID: volumeID as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { success in
+                    continuation.resume(returning: success)
+                }
+            }
+
             guard !Task.isCancelled else {
                 return
             }
 
-            privilegedHelperManager.mount(volumeUUID: volume.id as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { [weak self] success in
-                Task { @MainActor [weak self] in
-                    guard let self else {
-                        return
-                    }
-
-                    if success {
-                        self.remountCandidates.removeValue(forKey: volumeID)
-                    } else {
-                        self.logger.error("Privileged mount failed for \(volume.logLabel, privacy: .public)")
-                    }
-                }
+            if success {
+                self.remountCandidates.removeValue(forKey: volumeID)
+            } else {
+                self.logger.error("Privileged mount failed for \(volume.logLabel, privacy: .public)")
             }
         }
     }

@@ -9,7 +9,7 @@ import Cocoa
 
 @main
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate {
 
     static let shared = NSApplication.shared.delegate as! AppDelegate
     var statusBar: StatusBar?

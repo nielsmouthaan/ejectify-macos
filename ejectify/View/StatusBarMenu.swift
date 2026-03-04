@@ -10,9 +10,10 @@ import Carbon
 import OSLog
 
 /// Builds and updates the status bar menu for volume actions and preferences.
-class StatusBarMenu: NSMenu {
+final class StatusBarMenu: NSMenu {
     
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "StatusBarMenu")
+    private let aboutURL = URL(string: "https://ejectify.app")!
     
     /// Cached mounted volumes shown in the menu.
     private var volumes: [ExternalVolume]
@@ -29,6 +30,10 @@ class StatusBarMenu: NSMenu {
         super.init(title: "Ejectify")
         updateMenu()
         listenForVolumeNotifications()
+    }
+
+    deinit {
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
 
     /// Starts observing mount, unmount, and rename events to keep the menu current.
@@ -113,7 +118,7 @@ class StatusBarMenu: NSMenu {
 
     /// Rebuilds all top-level menu sections from current app state.
     private func updateMenu() {
-        self.removeAllItems()
+        removeAllItems()
         buildActionsMenu()
         buildVolumesMenu()
         buildPreferencesMenu()
@@ -132,9 +137,9 @@ class StatusBarMenu: NSMenu {
     private func buildVolumesMenu() {
         addItem(NSMenuItem.separator())
 
-        addItem(makeSectionHeaderItem(title: "Volumes".localized))
+        addItem(NSMenuItem.sectionHeader(title: "Volumes".localized))
 
-        volumes.forEach { (volume) in
+        for volume in volumes {
             let volumeItem = NSMenuItem(title: volume.name, action: #selector(volumeClicked(menuItem:)), keyEquivalent: "")
             volumeItem.target = self
             volumeItem.state = volume.enabled ? .on : .off
@@ -147,7 +152,7 @@ class StatusBarMenu: NSMenu {
     private func buildPreferencesMenu() {
         addItem(NSMenuItem.separator())
 
-        addItem(makeSectionHeaderItem(title: "Preferences".localized))
+        addItem(NSMenuItem.sectionHeader(title: "Preferences".localized))
 
         let launchAtLoginItem = NSMenuItem(title: "Launch at login".localized, action: #selector(launchAtLoginClicked(menuItem:)), keyEquivalent: "")
         launchAtLoginItem.target = self
@@ -209,11 +214,6 @@ class StatusBarMenu: NSMenu {
         return false
     }
 
-    /// Creates a native AppKit section header item for menu grouping.
-    private func makeSectionHeaderItem(title: String) -> NSMenuItem {
-        NSMenuItem.sectionHeader(title: title)
-    }
-
     /// Builds the submenu for selecting the unmount trigger condition.
     private func buildUnmountWhenMenu() -> NSMenu {
         let unmountWhenMenu = NSMenu(title: "Unmount when".localized)
@@ -247,17 +247,16 @@ class StatusBarMenu: NSMenu {
     }
 
     /// Unmounts all currently enabled volumes from the menu action.
-    @objc private func unmountAllClicked(menuItem: NSMenuItem) {
+    @objc private func unmountAllClicked(menuItem _: NSMenuItem) {
         let enabledVolumes = volumes.filter { $0.enabled }
         logger.info("Manual unmount-all triggered: \(enabledVolumes.count, privacy: .public) enabled volumes")
-        enabledVolumes.forEach { volume in
-            let volumeUUID = volume.id as NSUUID
-            let volumeName = volume.name
-            let bsdName = volume.bsdName
-            let forceUnmount = Preference.forceUnmount
-            Task { @MainActor in
-                PrivilegedHelperManager.shared.unmount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, force: forceUnmount) { _ in }
-            }
+        for volume in enabledVolumes {
+            PrivilegedHelperManager.shared.unmount(
+                volumeUUID: volume.id as NSUUID,
+                volumeName: volume.name,
+                bsdName: volume.bsdName,
+                force: Preference.forceUnmount
+            ) { _ in }
         }
         updateMenu()
     }
@@ -347,17 +346,13 @@ class StatusBarMenu: NSMenu {
 
     /// Opens the Ejectify website.
     @objc private func aboutClicked() {
-        guard let url = URL(string: "https://ejectify.app") else {
-            return
-        }
-        NSWorkspace.shared.open(url)
+        NSWorkspace.shared.open(aboutURL)
     }
 
     /// Terminates the app from the menu action.
+    @MainActor
     @objc private func quitClicked() {
-        Task { @MainActor in
-            NSApplication.shared.terminate(nil)
-        }
+        NSApplication.shared.terminate(nil)
     }
 
     /// Shows a user-friendly alert for elevated permission registration failures.
@@ -404,6 +399,7 @@ class StatusBarMenu: NSMenu {
             )
         }
         guard targetCreateStatus == noErr else {
+            logger.error("Failed to create restart target descriptor: status=\(targetCreateStatus, privacy: .public)")
             return
         }
         defer {
@@ -420,6 +416,7 @@ class StatusBarMenu: NSMenu {
             &restartEvent
         )
         guard eventCreateStatus == noErr else {
+            logger.error("Failed to create restart Apple Event: status=\(eventCreateStatus, privacy: .public)")
             return
         }
         defer {
@@ -438,6 +435,7 @@ class StatusBarMenu: NSMenu {
             kAEDefaultTimeout
         )
         guard sendStatus == noErr else {
+            logger.error("Failed to send restart Apple Event: status=\(sendStatus, privacy: .public)")
             return
         }
     }
