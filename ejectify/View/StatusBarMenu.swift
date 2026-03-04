@@ -290,9 +290,12 @@ class StatusBarMenu: NSMenu {
     @objc private func elevatedPermissionsClicked(menuItem: NSMenuItem) {
         let shouldEnable = toggledValue(for: menuItem.state)
         let helperManager = PrivilegedHelperManager.shared
-        let didSucceed = shouldEnable ? helperManager.registerDaemon() : helperManager.unregisterDaemon()
+        let previousValue = Preference.useElevatedPermissions
+        Preference.useElevatedPermissions = shouldEnable
+        let didSucceed = helperManager.configureOperationMode()
 
         guard didSucceed else {
+            Preference.useElevatedPermissions = previousValue
             if shouldEnable {
                 showPermissionAlert(
                     messageText: "Could not enable elevated permissions.".localized,
@@ -307,7 +310,6 @@ class StatusBarMenu: NSMenu {
             return
         }
 
-        Preference.useElevatedPermissions = shouldEnable
         updateMenu()
     }
 

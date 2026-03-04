@@ -12,6 +12,10 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     
     private let logger = Logger(subsystem: "nl.nielsmouthaan.Ejectify", category: "PrivilegedDiskService")
 
+    func ping(withReply reply: @escaping (Bool, String?) -> Void) {
+        reply(true, nil)
+    }
+
     func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?) -> Void) {
         perform(operation: .mount, volumeUUID: volumeUUID as UUID, volumeName: volumeName, bsdName: bsdName, reply: reply)
     }

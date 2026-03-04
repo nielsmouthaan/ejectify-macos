@@ -16,11 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var activityController: ActivityController?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        if Preference.useElevatedPermissions {
-            PrivilegedHelperManager.shared.registerDaemon()
-        } else {
-            PrivilegedHelperManager.shared.unregisterDaemon()
-        }
+        PrivilegedHelperManager.shared.configureOperationMode()
 
         statusBar = StatusBar()
         activityController = ActivityController()
