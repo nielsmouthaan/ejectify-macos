@@ -96,8 +96,6 @@ final class ActivityController {
     /// Registers only the selected unmount trigger while remounting remains readiness-based.
     private func registerUnmountTriggerObserver() {
         switch Preference.unmountWhen {
-        case .screenIsLocked:
-            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: Self.screenLockedNotificationName, object: nil)
         case .screensStartedSleeping:
             NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.screensDidSleepNotification, object: nil)
         case .systemStartsSleeping:

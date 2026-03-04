@@ -17,9 +17,20 @@ enum Preference {
 
     /// Defines which system event triggers automatic unmounting.
     enum UnmountWhen: String {
-        case screenIsLocked = "screenIsLocked"
         case screensStartedSleeping = "screensStartedSleeping"
         case systemStartsSleeping = "systemStartsSleeping"
+
+        /// Creates a trigger value from persisted defaults, mapping legacy values to supported behavior.
+        init(persistedRawValue: String?) {
+            switch persistedRawValue {
+            case Self.screensStartedSleeping.rawValue:
+                self = .screensStartedSleeping
+            case Self.systemStartsSleeping.rawValue:
+                self = .systemStartsSleeping
+            default:
+                self = .systemStartsSleeping
+            }
+        }
     }
 
     /// Controls whether Ejectify launches automatically at user login.
@@ -36,11 +47,7 @@ enum Preference {
     /// Controls which event should trigger automatic unmounting.
     static var unmountWhen: UnmountWhen {
         get {
-            guard let rawValue = UserDefaults.standard.string(forKey: "preference.unmountWhen"),
-                  let value = UnmountWhen(rawValue: rawValue) else {
-                return .systemStartsSleeping
-            }
-            return value
+            UnmountWhen(persistedRawValue: UserDefaults.standard.string(forKey: "preference.unmountWhen"))
         }
         set {
             UserDefaults.standard.set(newValue.rawValue, forKey: "preference.unmountWhen")
