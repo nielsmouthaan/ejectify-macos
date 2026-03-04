@@ -13,8 +13,7 @@ import OSLog
 final class ActivityController {
     
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
-    private let privilegedHelperManager = PrivilegedHelperManager.shared
-    
+
     /// Volumes eligible for remount, keyed by stable volume UUID.
     private var remountCandidates: [UUID: ExternalVolume] = [:]
     
@@ -222,7 +221,7 @@ final class ActivityController {
             }
 
             let success = await withCheckedContinuation { continuation in
-                self.privilegedHelperManager.mount(volumeUUID: volumeID as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { success in
+                PrivilegedHelperManager.shared.mount(volumeUUID: volumeID as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { success in
                     continuation.resume(returning: success)
                 }
             }
@@ -234,7 +233,7 @@ final class ActivityController {
             if success {
                 self.remountCandidates.removeValue(forKey: volumeID)
             } else {
-                self.logger.error("Privileged mount failed for \(volume.logLabel, privacy: .public)")
+                self.logger.error("Mount failed for \(volume.logLabel, privacy: .public)")
             }
         }
     }
@@ -400,7 +399,7 @@ final class ActivityController {
         }
 
         inFlightUnmounts.insert(volumeID)
-        privilegedHelperManager.unmount(volumeUUID: volume.id as NSUUID, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success in
+        PrivilegedHelperManager.shared.unmount(volumeUUID: volume.id as NSUUID, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success in
             Task { @MainActor [weak self] in
                 guard let self else {
                     completion(success)
