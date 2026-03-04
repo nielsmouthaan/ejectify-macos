@@ -11,13 +11,13 @@ import OSLog
 
 /// Builds and updates the status bar menu for volume actions and preferences.
 final class StatusBarMenu: NSMenu {
-    
+
     /// Logger used for menu-driven actions and volume notifications.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "StatusBarMenu")
-    
+
     /// Destination URL used by the About action.
     private let aboutURL = URL(string: "https://ejectify.app")!
-    
+
     /// Cached mounted volumes shown in the menu.
     private var volumes: [ExternalVolume]
 
@@ -226,7 +226,7 @@ final class StatusBarMenu: NSMenu {
         unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "Screen is locked".localized, unmountWhen: .screenIsLocked))
         unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "Display turned off".localized, unmountWhen: .screensStartedSleeping))
         unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "System starts sleeping".localized, unmountWhen: .systemStartsSleeping))
-        
+
         return unmountWhenMenu
     }
 

@@ -11,7 +11,7 @@ import OSLog
 
 /// Centralizes persisted user preferences used by Ejectify.
 enum Preference {
-    
+
     /// Logger used for preference mutation diagnostics.
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "Preference")
 

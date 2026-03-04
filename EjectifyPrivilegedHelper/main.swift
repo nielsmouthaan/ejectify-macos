@@ -10,7 +10,7 @@ import OSLog
 
 /// Accepts helper XPC connections and exports a single privileged disk service instance.
 final class PrivilegedHelperListenerDelegate: NSObject, NSXPCListenerDelegate {
-    
+
     /// Exported XPC service handling privileged volume operations.
     private let service = PrivilegedDiskService()
 

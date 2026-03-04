@@ -10,7 +10,7 @@ import OSLog
 
 /// Implements privileged XPC endpoints for mount/unmount and notification muting operations.
 final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
-    
+
     /// Logger used for privileged helper operation diagnostics.
     private let logger = Logger(subsystem: "nl.nielsmouthaan.Ejectify", category: "PrivilegedDiskService")
 

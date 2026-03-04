@@ -11,16 +11,16 @@ import OSLog
 /// Responds to sleep/lock/display events by unmounting and remounting enabled volumes.
 @MainActor
 final class ActivityController {
-    
+
     /// Logger used for mount/unmount and readiness transition diagnostics.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
 
     /// Volumes eligible for remount, keyed by stable volume UUID.
     private var remountCandidates: [UUID: ExternalVolume] = [:]
-    
+
     /// Volume UUIDs currently processing an unmount request.
     private var inFlightUnmounts: Set<UUID> = []
-    
+
     /// Pending mount tasks keyed by volume UUID.
     private var pendingMountTasks: [UUID: Task<Void, Never>] = [:]
 

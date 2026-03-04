@@ -12,7 +12,7 @@ import Foundation
 
     /// Pings the privileged helper to prewarm XPC routing before the first disk operation.
     func ping(withReply reply: @escaping (Bool, String?) -> Void)
-    
+
     /// Mounts a volume identified by UUID with a BSD-name resolve hint.
     func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?) -> Void)
 
