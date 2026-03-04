@@ -62,7 +62,6 @@ final class VolumeOperationRouter: @unchecked Sendable {
     static let shared = VolumeOperationRouter()
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "VolumeOperationRouter")
-    private let lifecycleManager = PrivilegedHelperLifecycleManager.shared
     private let localOperationQueue = DispatchQueue(label: "nl.nielsmouthaan.Ejectify.LocalDiskOperation", qos: .userInitiated)
     private let stateLock = NSLock()
     private var executionModeStorage: ExecutionMode = .local
@@ -70,7 +69,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
     /// Returns whether the privileged helper daemon is currently registered and approved to run.
     var isDaemonEnabled: Bool {
-        lifecycleManager.isDaemonEnabled
+        PrivilegedHelperLifecycleManager.shared.isDaemonEnabled
     }
 
     /// Returns the active execution mode for mount and unmount routing.
@@ -239,13 +238,13 @@ final class VolumeOperationRouter: @unchecked Sendable {
     @discardableResult
     func configureExecutionMode() -> Bool {
         guard Preference.useElevatedPermissions else {
-            let didDisable = lifecycleManager.unregisterDaemon()
+            let didDisable = PrivilegedHelperLifecycleManager.shared.unregisterDaemon()
             invalidateHelperConnection()
             setExecutionMode(.local, reason: "daemon unregistered")
             return didDisable
         }
 
-        guard lifecycleManager.registerDaemon() else {
+        guard PrivilegedHelperLifecycleManager.shared.registerDaemon() else {
             invalidateHelperConnection()
             setExecutionMode(.local, reason: "daemon unavailable while elevated permissions are enabled")
             return false
