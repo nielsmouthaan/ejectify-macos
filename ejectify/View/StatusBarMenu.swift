@@ -163,11 +163,6 @@ class StatusBarMenu: NSMenu {
         forceUnmountItem.state = Preference.forceUnmount ? .on : .off
         addItem(forceUnmountItem)
 
-        let mountAfterDelayItem = NSMenuItem(title: "Mount after delay".localized, action: #selector(mountAfterDelayClicked(menuItem:)), keyEquivalent: "")
-        mountAfterDelayItem.target = self
-        mountAfterDelayItem.state = Preference.mountAfterDelay ? .on : .off
-        addItem(mountAfterDelayItem)
-
         let elevatedPermissionsItem = NSMenuItem(title: "Use elevated permissions".localized, action: #selector(elevatedPermissionsClicked(menuItem:)), keyEquivalent: "")
         elevatedPermissionsItem.target = self
         elevatedPermissionsItem.state = elevatedPermissionsMenuState
@@ -349,12 +344,6 @@ class StatusBarMenu: NSMenu {
             showRestartRequiredAlert(shouldMute: shouldMute)
             updateMenu()
         }
-    }
-
-    /// Toggles delayed remount behavior from the menu.
-    @objc private func mountAfterDelayClicked(menuItem: NSMenuItem) {
-        Preference.mountAfterDelay = toggledValue(for: menuItem.state)
-        updateMenu()
     }
 
     /// Opens the Ejectify website.

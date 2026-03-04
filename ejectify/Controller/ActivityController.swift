@@ -21,7 +21,7 @@ class ActivityController {
     /// Volume UUIDs currently processing an unmount request.
     private var inFlightUnmounts: Set<UUID> = []
     
-    /// Pending delayed mount tasks keyed by volume UUID.
+    /// Pending mount tasks keyed by volume UUID.
     private var pendingMountTasks: [UUID: Task<Void, Never>] = [:]
 
     /// Pending completion handlers for each in-flight unmount keyed by volume UUID.
@@ -223,13 +223,13 @@ class ActivityController {
         updateMountReadinessState(screensaverRunning: false)
     }
 
-    /// Cancels and removes any pending delayed mount task for a volume.
+    /// Cancels and removes any pending mount task for a volume.
     private func cancelPendingMountTask(for volumeID: UUID) {
         pendingMountTasks[volumeID]?.cancel()
         pendingMountTasks.removeValue(forKey: volumeID)
     }
 
-    /// Schedules a delayed or immediate mount task for a volume when one is not already pending.
+    /// Schedules an immediate mount task for a volume when one is not already pending.
     private func scheduleMountTask(for volume: ExternalVolume) {
         let volumeID = volume.id
         guard pendingMountTasks[volumeID] == nil else {
@@ -244,9 +244,6 @@ class ActivityController {
                 self.pendingMountTasks.removeValue(forKey: volumeID)
             }
 
-            if Preference.mountAfterDelay {
-                try? await Task.sleep(for: .seconds(5))
-            }
             guard !Task.isCancelled else {
                 return
             }
