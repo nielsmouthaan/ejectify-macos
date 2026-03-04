@@ -130,6 +130,19 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
+    /// Logs when an operation is dispatched, before completion is known.
+    private nonisolated static func logOperationDispatch(
+        logger: Logger,
+        source: String,
+        operation: DiskArbitrationVolumeOperator.Operation,
+        volumeName: String,
+        volumeUUID: UUID,
+        bsdName: String
+    ) {
+        let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID, bsdName: bsdName)
+        logger.info("\(source, privacy: .public) \(operation.operationName, privacy: .public) dispatched for \(volumeLabel, privacy: .public)")
+    }
+
     /// Runs a closure while holding the shared router state lock.
     private func withStateLock<T>(_ action: () -> T) -> T {
         stateLock.lock()
@@ -378,6 +391,14 @@ final class VolumeOperationRouter: @unchecked Sendable {
                 completion: completion
             )
         case .priviledgedHelper:
+            Self.logOperationDispatch(
+                logger: logger,
+                source: "Priviledged helper",
+                operation: operation,
+                volumeName: volumeName,
+                volumeUUID: volumeUUID as UUID,
+                bsdName: bsdName
+            )
             performHelperOperationWithFallback(
                 operation: operation,
                 volumeUUID: volumeUUID,
@@ -476,6 +497,15 @@ final class VolumeOperationRouter: @unchecked Sendable {
         let logger = self.logger
         let completionBox = CompletionBox(completion: completion)
 
+        Self.logOperationDispatch(
+            logger: logger,
+            source: "Local",
+            operation: operation,
+            volumeName: volumeName,
+            volumeUUID: uuid,
+            bsdName: bsdName
+        )
+
         localOperationQueue.async {
             let result = DiskArbitrationVolumeOperator.perform(volumeUUID: uuid, volumeName: volumeName, bsdName: bsdName, operation: operation)
             let success = result.0
@@ -483,7 +513,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
             DispatchQueue.main.async {
                 Self.logOperationResult(
                     logger: logger,
-                    source: "local",
+                    source: "Local",
                     operation: operation,
                     volumeName: volumeName,
                     volumeUUID: uuid,

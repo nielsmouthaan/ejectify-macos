@@ -57,7 +57,7 @@ final class ActivityController {
     }
 
     /// Maximum number of seconds sleep may be deferred while unmounting.
-    private static let maximumSystemSleepDelaySeconds = 5
+    private static let maximumSystemSleepDelaySeconds = 10
 
     /// Hard cap for delaying system sleep while waiting for unmount completion.
     private static let maximumSystemSleepDelay: Duration = .seconds(maximumSystemSleepDelaySeconds)
@@ -217,6 +217,8 @@ final class ActivityController {
             return
         }
 
+        logger.info("Mount request scheduled for \(volume.logLabel, privacy: .public)")
+
         pendingMountTasks[volumeID] = Task { @MainActor [weak self] in
             guard let self else {
                 return
@@ -267,8 +269,10 @@ final class ActivityController {
         switch powerEvent {
         case .systemWillSleep(let token):
             beginSystemSleepDelay(token: token)
+        case .systemWillPowerOn:
+            logger.info("System wake is starting (will power on)")
         case .systemHasPoweredOn:
-            logger.info("System wake power message received")
+            logger.info("System wake power message received (has powered on)")
             updateMountReadinessState(systemAwake: true)
         }
     }
@@ -408,6 +412,7 @@ final class ActivityController {
         }
 
         inFlightUnmounts.insert(volumeID)
+        logger.info("Unmount request scheduled for \(volume.logLabel, privacy: .public)")
         VolumeOperationRouter.shared.unmount(volumeUUID: volume.id as NSUUID, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success in
             Task { @MainActor [weak self] in
                 guard let self else {

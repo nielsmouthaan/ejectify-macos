@@ -13,6 +13,7 @@ final class SystemSleepPowerObserver {
     /// Semantic representation of IOKit power messages consumed by `ActivityController`.
     enum Event {
         case systemWillSleep(token: Int)
+        case systemWillPowerOn
         case systemHasPoweredOn
     }
 
@@ -39,6 +40,9 @@ final class SystemSleepPowerObserver {
 
     /// IOMessage.h constant for the "system has powered on" callback.
     private static let systemHasPoweredOnMessage: natural_t = natural_t(EjectifyIOMessageSystemHasPoweredOn())
+
+    /// IOMessage.h constant for the "system will power on" callback.
+    private static let systemWillPowerOnMessage: natural_t = natural_t(EjectifyIOMessageSystemWillPowerOn())
 
     /// Creates an observer that forwards translated power events to the supplied handler.
     init(onPowerMessage: @escaping @MainActor (Event) -> Void) {
@@ -127,6 +131,8 @@ final class SystemSleepPowerObserver {
         switch messageType {
         case systemWillSleepMessage:
             return .systemWillSleep(token: token)
+        case systemWillPowerOnMessage:
+            return .systemWillPowerOn
         case systemHasPoweredOnMessage:
             return .systemHasPoweredOn
         default:
