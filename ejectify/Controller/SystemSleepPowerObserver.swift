@@ -12,9 +12,7 @@ final class SystemSleepPowerObserver {
 
     /// Semantic representation of IOKit power messages consumed by `ActivityController`.
     enum Event {
-        case canSystemSleep(token: Int)
         case systemWillSleep(token: Int)
-        case systemWillNotSleep
         case systemHasPoweredOn
     }
 
@@ -25,14 +23,8 @@ final class SystemSleepPowerObserver {
     private var notifierObject: io_object_t = 0
     private var runLoopSource: CFRunLoopSource?
 
-    /// IOMessage.h constant for the "can system sleep" callback.
-    private static let canSystemSleepMessage: natural_t = natural_t(EjectifyIOMessageCanSystemSleep())
-
     /// IOMessage.h constant for the "system will sleep" callback.
     private static let systemWillSleepMessage: natural_t = natural_t(EjectifyIOMessageSystemWillSleep())
-
-    /// IOMessage.h constant for the "system will not sleep" callback.
-    private static let systemWillNotSleepMessage: natural_t = natural_t(EjectifyIOMessageSystemWillNotSleep())
 
     /// IOMessage.h constant for the "system has powered on" callback.
     private static let systemHasPoweredOnMessage: natural_t = natural_t(EjectifyIOMessageSystemHasPoweredOn())
@@ -120,12 +112,8 @@ final class SystemSleepPowerObserver {
     /// Converts a raw IOKit callback payload into a typed power event.
     private static func powerEvent(for messageType: natural_t, token: Int) -> Event? {
         switch messageType {
-        case canSystemSleepMessage:
-            return .canSystemSleep(token: token)
         case systemWillSleepMessage:
             return .systemWillSleep(token: token)
-        case systemWillNotSleepMessage:
-            return .systemWillNotSleep
         case systemHasPoweredOnMessage:
             return .systemHasPoweredOn
         default:

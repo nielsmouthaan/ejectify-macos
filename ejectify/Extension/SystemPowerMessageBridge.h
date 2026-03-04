@@ -11,19 +11,9 @@
 #include <stdint.h>
 #include <IOKit/IOMessage.h>
 
-/// Returns IOMessage.h constant `kIOMessageCanSystemSleep`.
-static inline uint32_t EjectifyIOMessageCanSystemSleep(void) {
-    return kIOMessageCanSystemSleep;
-}
-
 /// Returns IOMessage.h constant `kIOMessageSystemWillSleep`.
 static inline uint32_t EjectifyIOMessageSystemWillSleep(void) {
     return kIOMessageSystemWillSleep;
-}
-
-/// Returns IOMessage.h constant `kIOMessageSystemWillNotSleep`.
-static inline uint32_t EjectifyIOMessageSystemWillNotSleep(void) {
-    return kIOMessageSystemWillNotSleep;
 }
 
 /// Returns IOMessage.h constant `kIOMessageSystemHasPoweredOn`.
