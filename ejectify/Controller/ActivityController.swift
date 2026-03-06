@@ -255,8 +255,8 @@ final class ActivityController {
     @discardableResult
     private func startSystemSleepPowerMonitoring() -> Bool {
         if systemSleepPowerObserver == nil {
-            systemSleepPowerObserver = SystemSleepPowerObserver { [weak self] powerEvent in
-                self?.handleSystemPowerEvent(powerEvent)
+            systemSleepPowerObserver = SystemSleepPowerObserver { [weak self] token in
+                self?.beginSystemSleepDelay(token: token)
             }
         }
         return systemSleepPowerObserver?.start() ?? false
@@ -268,19 +268,6 @@ final class ActivityController {
         cancelPendingSystemSleepTasks()
         systemSleepPowerObserver?.stop()
         systemSleepPowerObserver = nil
-    }
-
-    /// Handles typed system power events received through the power observer.
-    private func handleSystemPowerEvent(_ powerEvent: SystemSleepPowerObserver.Event) {
-        switch powerEvent {
-        case .systemWillSleep(let token):
-            beginSystemSleepDelay(token: token)
-        case .systemWillPowerOn:
-            logger.info("System wake is starting (will power on)")
-        case .systemHasPoweredOn:
-            logger.info("System wake power message received (has powered on)")
-            updateMountReadinessState(systemAwake: true)
-        }
     }
 
     /// Delays system sleep while unmounting and automatically releases sleep after success or timeout.

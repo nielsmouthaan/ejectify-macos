@@ -10,15 +10,8 @@ import OSLog
 /// Bridges low-level IOKit power callbacks to a main-actor handler.
 final class SystemSleepPowerObserver {
 
-    /// Semantic representation of IOKit power messages consumed by `ActivityController`.
-    enum Event {
-        case systemWillSleep(token: Int)
-        case systemWillPowerOn
-        case systemHasPoweredOn
-    }
-
-    /// Main-actor callback invoked for translated sleep/wake events.
-    private let onPowerMessage: @MainActor (Event) -> Void
+    /// Main-actor callback invoked when the system begins sleeping.
+    private let onSystemWillSleep: @MainActor (Int) -> Void
 
     /// Logger used for power notification registration and lifecycle diagnostics.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "SystemSleepPowerObserver")
@@ -38,15 +31,9 @@ final class SystemSleepPowerObserver {
     /// IOMessage.h constant for the "system will sleep" callback.
     private static let systemWillSleepMessage: natural_t = natural_t(EjectifyIOMessageSystemWillSleep())
 
-    /// IOMessage.h constant for the "system has powered on" callback.
-    private static let systemHasPoweredOnMessage: natural_t = natural_t(EjectifyIOMessageSystemHasPoweredOn())
-
-    /// IOMessage.h constant for the "system will power on" callback.
-    private static let systemWillPowerOnMessage: natural_t = natural_t(EjectifyIOMessageSystemWillPowerOn())
-
-    /// Creates an observer that forwards translated power events to the supplied handler.
-    init(onPowerMessage: @escaping @MainActor (Event) -> Void) {
-        self.onPowerMessage = onPowerMessage
+    /// Creates an observer that forwards system-sleep tokens to the supplied handler.
+    init(onSystemWillSleep: @escaping @MainActor (Int) -> Void) {
+        self.onSystemWillSleep = onSystemWillSleep
     }
 
     /// Registers for system power notifications and attaches the callback source to the main run loop.
@@ -126,28 +113,14 @@ final class SystemSleepPowerObserver {
         observer.forwardPowerMessage(messageType: messageType, token: token)
     }
 
-    /// Converts a raw IOKit callback payload into a typed power event.
-    private static func powerEvent(for messageType: natural_t, token: Int) -> Event? {
-        switch messageType {
-        case systemWillSleepMessage:
-            return .systemWillSleep(token: token)
-        case systemWillPowerOnMessage:
-            return .systemWillPowerOn
-        case systemHasPoweredOnMessage:
-            return .systemHasPoweredOn
-        default:
-            return nil
-        }
-    }
-
-    /// Forwards callback payload to the configured handler on the main actor.
+    /// Forwards system-sleep callbacks to the configured handler on the main actor.
     private func forwardPowerMessage(messageType: natural_t, token: Int) {
-        guard let powerEvent = Self.powerEvent(for: messageType, token: token) else {
+        guard messageType == Self.systemWillSleepMessage else {
             return
         }
-        let handler = onPowerMessage
+        let handler = onSystemWillSleep
         Task { @MainActor in
-            handler(powerEvent)
+            handler(token)
         }
     }
 
