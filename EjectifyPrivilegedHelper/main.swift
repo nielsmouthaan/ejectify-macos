@@ -33,5 +33,14 @@ let delegate = PrivilegedHelperListenerDelegate()
 let listener = NSXPCListener(machServiceName: PrivilegedHelperConfiguration.machServiceName)
 listener.delegate = delegate
 listener.resume()
+
+/// Posts a Darwin notification that the helper daemon has started.
+func notifyHelperStarted() {
+    let center = CFNotificationCenterGetDarwinNotifyCenter()
+    let name = CFNotificationName(PrivilegedHelperConfiguration.helperStartedNotificationName as CFString)
+    CFNotificationCenterPostNotification(center, name, nil, nil, true)
+}
+
+notifyHelperStarted()
 logger.info("Privileged helper daemon started")
 RunLoop.current.run()

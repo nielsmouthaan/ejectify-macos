@@ -25,6 +25,7 @@ final class StatusBarMenu: NSMenu {
     required init(coder: NSCoder) {
         volumes = ExternalVolume.mountedVolumes()
         super.init(coder: coder)
+        listenForOperationRouterNotifications()
         updateMenu()
         listenForVolumeNotifications()
     }
@@ -33,6 +34,7 @@ final class StatusBarMenu: NSMenu {
     init() {
         volumes = ExternalVolume.mountedVolumes()
         super.init(title: "Ejectify")
+        listenForOperationRouterNotifications()
         updateMenu()
         listenForVolumeNotifications()
     }
@@ -40,6 +42,7 @@ final class StatusBarMenu: NSMenu {
     /// Removes registered workspace observers before deallocation.
     deinit {
         NSWorkspace.shared.notificationCenter.removeObserver(self)
+        NotificationCenter.default.removeObserver(self, name: .volumeOperationRouterDidChange, object: VolumeOperationRouter.shared)
     }
 
     /// Starts observing mount, unmount, and rename events to keep the menu current.
@@ -47,6 +50,16 @@ final class StatusBarMenu: NSMenu {
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumeDidRename(notification:)), name: NSWorkspace.didRenameVolumeNotification, object: nil)
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumeDidMount(notification:)), name: NSWorkspace.didMountNotification, object: nil)
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(volumeDidUnmount(notification:)), name: NSWorkspace.didUnmountNotification, object: nil)
+    }
+
+    /// Observes router state changes so the menu can reflect daemon availability updates.
+    private func listenForOperationRouterNotifications() {
+        NotificationCenter.default.addObserver(self, selector: #selector(operationRouterDidChange(_:)), name: .volumeOperationRouterDidChange, object: VolumeOperationRouter.shared)
+    }
+
+    /// Rebuilds the menu whenever operation routing availability changes.
+    @objc private func operationRouterDidChange(_ notification: Notification) {
+        updateMenu()
     }
 
     /// Handles mount notifications and logs mount metadata provided by NSWorkspace.

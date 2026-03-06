@@ -21,4 +21,10 @@ enum PrivilegedHelperConfiguration {
 
     /// Disk Arbitration preference key controlling eject warning notifications.
     static let disableEjectNotificationKey = "DADisableEjectNotification"
+
+    /// Darwin notification sent by the helper when it has finished starting.
+    static let helperStartedNotificationName = "nl.nielsmouthaan.Ejectify.PrivilegedHelper.started"
+
+    /// In-app notification sent when router state changes and UI should refresh.
+    static let operationRouterDidChangeNotificationName = "nl.nielsmouthaan.Ejectify.VolumeOperationRouter.didChange"
 }

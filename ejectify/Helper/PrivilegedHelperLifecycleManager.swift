@@ -40,7 +40,7 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
             case .enabled:
                 logger.info("Privileged helper daemon already registered and enabled")
             case .requiresApproval:
-                logger.warning("Privileged helper daemon is not runnable yet: \(daemonService.status.statusDescription, privacy: .public)")
+                logger.warning("Privileged helper daemon requires approval")
             case .notFound:
                 try daemonService.register()
                 logger.info("Privileged helper daemon service was not found. Registration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")

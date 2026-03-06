@@ -8,6 +8,12 @@
 import Foundation
 import OSLog
 
+/// Notification posted whenever `VolumeOperationRouter` state has changed and UI should refresh.
+extension Notification.Name {
+
+    static let volumeOperationRouterDidChange = Notification.Name(PrivilegedHelperConfiguration.operationRouterDidChangeNotificationName)
+}
+
 /// Routes volume operations to the priviledged helper when available, with local fallback.
 final class VolumeOperationRouter: @unchecked Sendable {
 
@@ -77,6 +83,25 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Shared router instance used throughout the app.
     static let shared = VolumeOperationRouter()
 
+    /// Darwin notification posted by the privileged helper after daemon startup completes.
+    private static let helperStartedNotification = CFNotificationName(PrivilegedHelperConfiguration.helperStartedNotificationName as CFString)
+
+    /// C callback invoked for helper startup Darwin notifications.
+    private static let helperStartedNotificationCallback: CFNotificationCallback = { _, observer, name, _, _ in
+        guard let observer else {
+            return
+        }
+
+        guard let name, name.rawValue as String == PrivilegedHelperConfiguration.helperStartedNotificationName else {
+            return
+        }
+
+        let router = Unmanaged<VolumeOperationRouter>.fromOpaque(observer).takeUnretainedValue()
+        DispatchQueue.main.async {
+            router.handleHelperStartedNotification()
+        }
+    }
+
     /// Logger used for routing mode and operation outcomes.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "VolumeOperationRouter")
 
@@ -91,6 +116,16 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
     /// Cached XPC connection to the privileged helper when available.
     private var helperConnection: NSXPCConnection?
+
+    /// Registers helper startup observers and initializes router state.
+    private init() {
+        registerForHelperStartedNotification()
+    }
+
+    /// Removes helper startup observers if the router is deallocated.
+    deinit {
+        unregisterForHelperStartedNotification()
+    }
 
     /// Returns whether the privileged helper daemon is currently registered and approved to run.
     var isDaemonEnabled: Bool {
@@ -150,6 +185,49 @@ final class VolumeOperationRouter: @unchecked Sendable {
         return action()
     }
 
+    /// Posts a notification consumed by menu/UI components that mirror router state.
+    private func notifyStateDidChange() {
+        NotificationCenter.default.post(name: .volumeOperationRouterDidChange, object: self)
+    }
+
+    /// Registers a Darwin notification observer for helper-started signals.
+    private func registerForHelperStartedNotification() {
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            Unmanaged.passUnretained(self).toOpaque(),
+            Self.helperStartedNotificationCallback,
+            Self.helperStartedNotification.rawValue,
+            nil,
+            .deliverImmediately
+        )
+    }
+
+    /// Unregisters the helper-started Darwin observer.
+    private func unregisterForHelperStartedNotification() {
+        CFNotificationCenterRemoveObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            Unmanaged.passUnretained(self).toOpaque(),
+            nil,
+            nil
+        )
+    }
+
+    /// Re-evaluates helper availability after receiving a helper-started signal.
+    @MainActor
+    private func handleHelperStartedNotification() {
+        logger.info("Received privileged helper startup signal; reconciling routing state")
+
+        guard Preference.useElevatedPermissions else {
+            logger.info("Ignoring privileged helper startup signal because elevated permissions preference is disabled")
+            return
+        }
+
+        let didSucceed = configureExecutionMode()
+        if !didSucceed {
+            logger.warning("Privileged helper startup signal received, but helper reconciliation still failed")
+        }
+    }
+
     /// Updates execution mode and logs the transition reason.
     private func setExecutionMode(_ mode: ExecutionMode, reason: String) {
         let previousMode = withStateLock {
@@ -163,6 +241,8 @@ final class VolumeOperationRouter: @unchecked Sendable {
         } else {
             logger.info("Execution mode changed from \(previousMode.rawValue, privacy: .public) to \(mode.rawValue, privacy: .public): \(reason, privacy: .public)")
         }
+
+        notifyStateDidChange()
     }
 
     /// Removes and invalidates the cached helper connection.
