@@ -12,7 +12,7 @@ import OSLog
 final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
 
     /// Logger used for privileged helper operation diagnostics.
-    private let logger = Logger(subsystem: "nl.nielsmouthaan.Ejectify", category: "PrivilegedDiskService")
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify.PrivilegedHelper", category: "PrivilegedDiskService")
 
     /// Confirms helper reachability for startup routing checks.
     func ping(withReply reply: @escaping (Bool, String?) -> Void) {

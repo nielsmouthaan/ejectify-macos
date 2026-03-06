@@ -24,7 +24,7 @@ final class PrivilegedHelperListenerDelegate: NSObject, NSXPCListenerDelegate {
 }
 
 /// Logger used during helper daemon bootstrap.
-let logger = Logger(subsystem: "nl.nielsmouthaan.Ejectify", category: "PrivilegedHelperMain")
+let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify.PrivilegedHelper", category: "PrivilegedHelperMain")
 
 /// Listener delegate that exports the privileged disk service object.
 let delegate = PrivilegedHelperListenerDelegate()
