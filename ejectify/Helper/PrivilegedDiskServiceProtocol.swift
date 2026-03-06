@@ -22,4 +22,7 @@ import Foundation
     /// Enables or disables macOS "Disk Not Ejected Properly" notifications.
     func setEjectNotificationsMuted(muted: Bool, withReply reply: @escaping (Bool, String?) -> Void)
 
+    /// Requests the privileged helper daemon to terminate itself.
+    func requestTermination(withReply reply: @escaping (Bool, String?) -> Void)
+
 }

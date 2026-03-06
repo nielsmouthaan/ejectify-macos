@@ -46,6 +46,12 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         reply(true, nil)
     }
 
+    /// Terminates the helper process on app request.
+    func requestTermination(withReply _: @escaping (Bool, String?) -> Void) {
+        logger.info("Received helper termination request from app")
+        exit(EXIT_SUCCESS)
+    }
+
     /// Executes a shared Disk Arbitration operation and returns the result through XPC.
     private func perform(
         operation: DiskArbitrationVolumeOperator.Operation,

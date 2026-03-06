@@ -29,4 +29,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar = StatusBar()
         activityController = ActivityController()
     }
+
+    /// Sends a best-effort helper shutdown request when the app is quitting.
+    func applicationWillTerminate(_ notification: Notification) {
+        VolumeOperationRouter.shared.requestHelperTermination()
+    }
 }

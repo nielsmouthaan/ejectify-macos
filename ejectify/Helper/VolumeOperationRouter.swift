@@ -452,6 +452,20 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
+    /// Sends a best-effort request for the privileged helper daemon to terminate itself.
+    func requestHelperTermination() {
+        guard PrivilegedHelperLifecycleManager.shared.isDaemonEnabled else {
+            return
+        }
+
+        guard let connection = withStateLock({ helperConnection }) else {
+            return
+        }
+
+        let proxy = connection.remoteObjectProxyWithErrorHandler { _ in } as? PrivilegedDiskServiceProtocol
+        proxy?.requestTermination { _, _ in }
+    }
+
     /// Routes mount/unmount requests to priviledged helper or local execution based on current mode.
     private func routeOperation(
         operation: DiskArbitrationVolumeOperator.Operation,
