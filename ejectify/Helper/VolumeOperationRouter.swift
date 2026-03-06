@@ -117,6 +117,9 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Cached XPC connection to the privileged helper when available.
     private var helperConnection: NSXPCConnection?
 
+    /// Tracks whether startup helper routing initialization is currently running.
+    private var isStartupRoutingInitializationInProgress = false
+
     /// Registers helper startup observers and initializes router state.
     private init() {
         registerForHelperStartedNotification()
@@ -135,6 +138,16 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Returns the active execution mode for mount and unmount routing.
     var executionMode: ExecutionMode {
         withStateLock { executionModeStorage }
+    }
+
+    /// Returns whether startup helper routing initialization is currently running.
+    private var isStartupRoutingInitializationActive: Bool {
+        withStateLock { isStartupRoutingInitializationInProgress }
+    }
+
+    /// Returns whether there is an active helper XPC connection.
+    private var hasHelperConnection: Bool {
+        withStateLock { helperConnection != nil }
     }
 
     /// Appends a message suffix in the format `": <message>"` when a non-empty message is available.
@@ -187,7 +200,31 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
     /// Posts a notification consumed by menu/UI components that mirror router state.
     private func notifyStateDidChange() {
-        NotificationCenter.default.post(name: .volumeOperationRouterDidChange, object: self)
+        if Thread.isMainThread {
+            NotificationCenter.default.post(name: .volumeOperationRouterDidChange, object: self)
+        } else {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .volumeOperationRouterDidChange, object: self)
+            }
+        }
+    }
+
+    /// Starts startup helper routing initialization only if not already in progress.
+    private func beginStartupRoutingInitialization() -> Bool {
+        withStateLock {
+            guard !isStartupRoutingInitializationInProgress else {
+                return false
+            }
+            isStartupRoutingInitializationInProgress = true
+            return true
+        }
+    }
+
+    /// Marks startup helper routing initialization as completed.
+    private func endStartupRoutingInitialization() {
+        withStateLock {
+            isStartupRoutingInitializationInProgress = false
+        }
     }
 
     /// Registers a Darwin notification observer for helper-started signals.
@@ -222,6 +259,16 @@ final class VolumeOperationRouter: @unchecked Sendable {
             return
         }
 
+        guard !isStartupRoutingInitializationActive else {
+            logger.info("Skipping helper startup reconciliation because startup helper ping is already in progress")
+            return
+        }
+
+        if executionMode == .priviledgedHelper, hasHelperConnection {
+            logger.info("Skipping helper startup reconciliation because privileged helper routing is already active")
+            return
+        }
+
         let didSucceed = configureExecutionMode()
         if !didSucceed {
             logger.warning("Privileged helper startup signal received, but helper reconciliation still failed")
@@ -240,9 +287,8 @@ final class VolumeOperationRouter: @unchecked Sendable {
             logger.info("Execution mode remains \(mode.rawValue, privacy: .public): \(reason, privacy: .public)")
         } else {
             logger.info("Execution mode changed from \(previousMode.rawValue, privacy: .public) to \(mode.rawValue, privacy: .public): \(reason, privacy: .public)")
+            notifyStateDidChange()
         }
-
-        notifyStateDidChange()
     }
 
     /// Removes and invalidates the cached helper connection.
@@ -323,6 +369,11 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
     /// Starts helper routing by opening XPC and pinging once to verify responsiveness.
     private func initializeHelperRoutingFromStartupPing() {
+        guard beginStartupRoutingInitialization() else {
+            logger.info("Skipping startup priviledged helper ping because one is already in progress")
+            return
+        }
+
         setExecutionMode(.local, reason: "awaiting startup priviledged helper ping")
         invalidateHelperConnection()
         let connection = makeAndStoreHelperConnection()
@@ -332,12 +383,16 @@ final class VolumeOperationRouter: @unchecked Sendable {
             operationDescription: "startup ping",
             onRoutingFailure: { _ in }
         ) else {
+            endStartupRoutingInitialization()
             return
         }
 
         proxy.ping { [weak self, weak connection] success, message in
             guard let self else {
                 return
+            }
+            defer {
+                self.endStartupRoutingInitialization()
             }
 
             if success {

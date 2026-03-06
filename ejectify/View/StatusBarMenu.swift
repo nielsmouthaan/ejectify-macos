@@ -59,6 +59,16 @@ final class StatusBarMenu: NSMenu {
 
     /// Rebuilds the menu whenever operation routing availability changes.
     @objc private func operationRouterDidChange(_ notification: Notification) {
+        if Thread.isMainThread {
+            updateMenu()
+            return
+        }
+
+        performSelector(onMainThread: #selector(updateMenuFromMainThread), with: nil, waitUntilDone: false)
+    }
+
+    /// Rebuilds the menu from the main thread when observer callbacks arrive off-main.
+    @objc private func updateMenuFromMainThread() {
         updateMenu()
     }
 
@@ -137,6 +147,11 @@ final class StatusBarMenu: NSMenu {
 
     /// Rebuilds all top-level menu sections from current app state.
     private func updateMenu() {
+        guard Thread.isMainThread else {
+            performSelector(onMainThread: #selector(updateMenuFromMainThread), with: nil, waitUntilDone: false)
+            return
+        }
+
         removeAllItems()
         buildActionsMenu()
         buildVolumesMenu()
