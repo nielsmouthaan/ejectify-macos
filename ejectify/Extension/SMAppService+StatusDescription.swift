@@ -22,7 +22,7 @@ extension SMAppService.Status {
         case .notFound:
             return "notFound"
         @unknown default:
-            return "unknown"
+            return "unknown(\(self.rawValue))"
         }
     }
 }

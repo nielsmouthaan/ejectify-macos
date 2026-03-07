@@ -229,6 +229,15 @@ enum DiskArbitrationVolumeOperator {
         }
 
         let status = DADissenterGetStatus(dissenter)
-        return (false, "Disk Arbitration status: \(status.statusDescription)")
+        let statusReason = DADissenterGetStatusString(dissenter) as String?
+
+        let message: String
+        if let statusReason, !statusReason.isEmpty {
+            message = "Disk Arbitration status: \(status.statusDescription) (\(statusReason))"
+        } else {
+            message = "Disk Arbitration status: \(status.statusDescription)"
+        }
+
+        return (false, message)
     }
 }

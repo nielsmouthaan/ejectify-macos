@@ -41,7 +41,7 @@ extension DAReturn {
         case Int32(kDAReturnUnsupported):
             return "kDAReturnUnsupported"
         default:
-            return "unknown"
+            return "unknown(\(self))"
         }
     }
 }
