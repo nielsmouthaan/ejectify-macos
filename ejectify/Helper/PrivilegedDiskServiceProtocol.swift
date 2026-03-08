@@ -14,10 +14,10 @@ import Foundation
     func ping(withReply reply: @escaping (Bool, String?) -> Void)
 
     /// Mounts a volume identified by UUID with a BSD-name resolve hint.
-    func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?) -> Void)
+    func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?, Int32) -> Void)
 
     /// Unmounts a volume identified by UUID with a BSD-name resolve hint.
-    func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?) -> Void)
+    func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void)
 
     /// Enables or disables macOS "Disk Not Ejected Properly" notifications.
     func setEjectNotificationsMuted(muted: Bool, withReply reply: @escaping (Bool, String?) -> Void)

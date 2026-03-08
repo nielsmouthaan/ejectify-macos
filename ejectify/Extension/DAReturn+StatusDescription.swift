@@ -44,4 +44,27 @@ extension DAReturn {
             return "unknown(\(self))"
         }
     }
+
+    /// Returns whether a failed automatic remount should be retried for this status.
+    var shouldRetryAutomaticRemount: Bool {
+        switch self {
+        case Int32(kDAReturnSuccess):
+            return false
+        case Int32(kDAReturnBadArgument):
+            return false
+        case Int32(kDAReturnNotFound):
+            return false
+        case Int32(kDAReturnNotPermitted):
+            return false
+        case Int32(kDAReturnNotPrivileged):
+            return false
+        case Int32(kDAReturnNotWritable):
+            return false
+        case Int32(kDAReturnUnsupported):
+            return false
+        default:
+            return true
+        }
+    }
+
 }

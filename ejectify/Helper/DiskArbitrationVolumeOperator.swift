@@ -70,6 +70,19 @@ enum DiskArbitrationVolumeOperator {
         }
     }
 
+    /// Captures the outcome of a Disk Arbitration operation.
+    struct OperationResult {
+
+        /// Indicates whether the requested operation succeeded.
+        let success: Bool
+
+        /// Optional descriptive message for logging and diagnostics.
+        let message: String?
+
+        /// Optional Disk Arbitration status returned by a dissenter on failure.
+        let status: DAReturn?
+    }
+
     /// Holds callback completion state for a single asynchronous Disk Arbitration request.
     private final class CallbackState {
 
@@ -77,7 +90,7 @@ enum DiskArbitrationVolumeOperator {
         let semaphore = DispatchSemaphore(value: 0)
 
         /// Operation result populated by the callback closure.
-        var result: (Bool, String?) = (false, "No response from Disk Arbitration callback")
+        var result = OperationResult(success: false, message: "No response from Disk Arbitration callback", status: nil)
     }
 
     /// Logger shared by all disk operation paths.
@@ -100,20 +113,20 @@ enum DiskArbitrationVolumeOperator {
         bsdName: String,
         operation: Operation,
         timeout: TimeInterval = 15
-    ) -> (Bool, String?) {
+    ) -> OperationResult {
         guard let session = diskArbitrationSession else {
-            return (false, "Disk Arbitration session unavailable")
+            return OperationResult(success: false, message: "Disk Arbitration session unavailable", status: nil)
         }
 
         guard let disk = resolveDisk(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, session: session) else {
-            return (false, "Disk for requested volume not found")
+            return OperationResult(success: false, message: "Disk for requested volume not found", status: Int32(kDAReturnNotFound))
         }
 
         if case .mount = operation, isMounted(disk: disk) {
-            return (true, "Volume already mounted")
+            return OperationResult(success: true, message: "Volume already mounted", status: nil)
         }
         if case .unmount = operation, !isMounted(disk: disk) {
-            return (true, "Volume already unmounted")
+            return OperationResult(success: true, message: "Volume already unmounted", status: nil)
         }
 
         let callbackState = CallbackState()
@@ -145,10 +158,19 @@ enum DiskArbitrationVolumeOperator {
 
         let waitResult = callbackState.semaphore.wait(timeout: .now() + timeout)
         if waitResult == .timedOut {
-            return (false, "\(operation.operationName) timed out")
+            return OperationResult(success: false, message: "\(operation.operationName) timed out", status: nil)
         }
 
         return callbackState.result
+    }
+
+    /// Returns whether the requested volume is currently resolvable via Disk Arbitration.
+    static func canResolveDisk(volumeUUID: UUID, volumeName: String, bsdName: String) -> Bool {
+        guard let session = diskArbitrationSession else {
+            return false
+        }
+
+        return resolveDisk(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, session: session, logFailures: false) != nil
     }
 
     /// Returns whether Disk Arbitration currently reports a mounted volume path for this disk.
@@ -160,7 +182,13 @@ enum DiskArbitrationVolumeOperator {
     }
 
     /// Resolves a Disk Arbitration disk, trying the provided BSD name first and falling back to UUID scan.
-    private static func resolveDisk(volumeUUID: UUID, volumeName: String, bsdName: String, session: DASession) -> DADisk? {
+    private static func resolveDisk(
+        volumeUUID: UUID,
+        volumeName: String,
+        bsdName: String,
+        session: DASession,
+        logFailures: Bool = true
+    ) -> DADisk? {
         let targetVolumeLabel = VolumeLogLabelFormatter.label(
             name: volumeName,
             uuid: volumeUUID,
@@ -179,7 +207,9 @@ enum DiskArbitrationVolumeOperator {
             return disk
         }
 
-        logger.error("Disk resolve failed for \(targetVolumeLabel, privacy: .public)")
+        if logFailures {
+            logger.error("Disk resolve failed for \(targetVolumeLabel, privacy: .public)")
+        }
         return nil
     }
 
@@ -222,10 +252,10 @@ enum DiskArbitrationVolumeOperator {
         return nil
     }
 
-    /// Converts a Disk Arbitration dissenter into a success/failure tuple.
-    private static func callbackResult(for dissenter: DADissenter?) -> (Bool, String?) {
+    /// Converts a Disk Arbitration dissenter into an operation result.
+    private static func callbackResult(for dissenter: DADissenter?) -> OperationResult {
         guard let dissenter else {
-            return (true, nil)
+            return OperationResult(success: true, message: nil, status: nil)
         }
 
         let status = DADissenterGetStatus(dissenter)
@@ -238,6 +268,6 @@ enum DiskArbitrationVolumeOperator {
             message = "Disk Arbitration status: \(status.statusDescription)"
         }
 
-        return (false, message)
+        return OperationResult(success: false, message: message, status: status)
     }
 }

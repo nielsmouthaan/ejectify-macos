@@ -7,6 +7,7 @@
 
 import Foundation
 import OSLog
+@preconcurrency import DiskArbitration
 
 /// Notification posted whenever `VolumeOperationRouter` state has changed and UI should refresh.
 extension Notification.Name {
@@ -23,14 +24,14 @@ final class VolumeOperationRouter: @unchecked Sendable {
         case priviledgedHelper
     }
 
-    /// Wraps completion closures so they can cross Dispatch sendable boundaries safely.
-    private final class CompletionBox: @unchecked Sendable {
+    /// Wraps completion closures with optional operation details so they can cross Dispatch sendable boundaries safely.
+    private final class OperationCompletionBox: @unchecked Sendable {
 
-        /// Completion closure invoked with operation success state.
-        let completion: (Bool) -> Void
+        /// Completion closure invoked with operation success state, optional message and optional status.
+        let completion: (Bool, String?, DAReturn?) -> Void
 
         /// Stores a completion closure for deferred execution on main queue.
-        init(completion: @escaping (Bool) -> Void) {
+        init(completion: @escaping (Bool, String?, DAReturn?) -> Void) {
             self.completion = completion
         }
     }
@@ -429,6 +430,13 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
     /// Requests a mount operation with a BSD-name hint, routed by the active execution mode.
     func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, completion: @escaping (Bool) -> Void) {
+        mountWithDetails(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName) { success, _, _ in
+            completion(success)
+        }
+    }
+
+    /// Requests a mount operation with a BSD-name hint and returns optional operation details.
+    func mountWithDetails(volumeUUID: NSUUID, volumeName: String, bsdName: String, completion: @escaping (Bool, String?, DAReturn?) -> Void) {
         routeOperation(
             operation: .mount,
             volumeUUID: volumeUUID,
@@ -447,7 +455,9 @@ final class VolumeOperationRouter: @unchecked Sendable {
             volumeUUID: volumeUUID,
             volumeName: volumeName,
             bsdName: bsdName,
-            completion: completion
+            completion: { success, _, _ in
+                completion(success)
+            }
         ) { proxy, reply in
             proxy.unmount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, force: force, withReply: reply)
         }
@@ -527,8 +537,8 @@ final class VolumeOperationRouter: @unchecked Sendable {
         volumeUUID: NSUUID,
         volumeName: String,
         bsdName: String,
-        completion: @escaping (Bool) -> Void,
-        request: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?) -> Void) -> Void
+        completion: @escaping (Bool, String?, DAReturn?) -> Void,
+        request: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?, Int32) -> Void) -> Void
     ) {
         switch executionMode {
         case .local:
@@ -565,8 +575,8 @@ final class VolumeOperationRouter: @unchecked Sendable {
         volumeUUID: NSUUID,
         volumeName: String,
         bsdName: String,
-        completion: @escaping (Bool) -> Void,
-        request: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?) -> Void) -> Void
+        completion: @escaping (Bool, String?, DAReturn?) -> Void,
+        request: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?, Int32) -> Void) -> Void
     ) {
         let completionGate = CompletionGate()
         let completeOnce: (@escaping () -> Void) -> Void = { action in
@@ -576,16 +586,16 @@ final class VolumeOperationRouter: @unchecked Sendable {
             }
         }
 
-        let complete: (Bool) -> Void = { success in
+        let complete: (Bool, String?, DAReturn?) -> Void = { success, message, status in
             completeOnce {
-                completion(success)
+                completion(success, message, status)
             }
         }
 
         let completeWithLocalFallback = {
             completeOnce { [weak self] in
                 guard let self else {
-                    completion(false)
+                    completion(false, "Router unavailable while falling back to local execution", nil)
                     return
                 }
 
@@ -617,7 +627,8 @@ final class VolumeOperationRouter: @unchecked Sendable {
             return
         }
 
-        request(proxy) { [weak self] success, message in
+        request(proxy) { [weak self] success, message, statusRawValue in
+            let status: DAReturn? = success ? nil : statusRawValue
             if let logger = self?.logger {
                 Self.logOperationResult(
                     logger: logger,
@@ -630,7 +641,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
                     message: message
                 )
             }
-            complete(success)
+            complete(success, message, status)
         }
     }
 
@@ -640,11 +651,11 @@ final class VolumeOperationRouter: @unchecked Sendable {
         volumeUUID: NSUUID,
         volumeName: String,
         bsdName: String,
-        completion: @escaping (Bool) -> Void
+        completion: @escaping (Bool, String?, DAReturn?) -> Void
     ) {
         let uuid = volumeUUID as UUID
         let logger = self.logger
-        let completionBox = CompletionBox(completion: completion)
+        let completionBox = OperationCompletionBox(completion: completion)
 
         Self.logOperationDispatch(
             logger: logger,
@@ -657,8 +668,9 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
         localOperationQueue.async {
             let result = DiskArbitrationVolumeOperator.perform(volumeUUID: uuid, volumeName: volumeName, bsdName: bsdName, operation: operation)
-            let success = result.0
-            let message = result.1
+            let success = result.success
+            let message = result.message
+            let status = result.status
             DispatchQueue.main.async {
                 Self.logOperationResult(
                     logger: logger,
@@ -670,7 +682,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
                     success: success,
                     message: message
                 )
-                completionBox.completion(success)
+                completionBox.completion(success, message, status)
             }
         }
     }

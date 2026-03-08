@@ -7,6 +7,7 @@
 
 import AppKit
 import OSLog
+@preconcurrency import DiskArbitration
 
 /// Responds to sleep/lock/display events by unmounting and remounting enabled volumes.
 @MainActor
@@ -61,6 +62,13 @@ final class ActivityController {
 
     /// Hard cap for delaying system sleep while waiting for unmount completion.
     private static let maximumSystemSleepDelay: Duration = .seconds(maximumSystemSleepDelaySeconds)
+
+    /// Delays used for automatic remount retries after a failed attempt.
+    private static let remountRetryDelays: [Duration] = [
+        .seconds(3),
+        .seconds(10),
+        .seconds(30)
+    ]
 
     /// Distributed notification posted when the screen lock is engaged.
     private static let screenLockedNotificationName = Notification.Name("com.apple.screenIsLocked")
@@ -170,6 +178,7 @@ final class ActivityController {
             triggerMountPass()
         } else {
             logger.info("Mount readiness left ready state")
+            cancelAllPendingMountTasks(reason: "Mount readiness left ready state")
         }
     }
 
@@ -216,6 +225,19 @@ final class ActivityController {
         pendingMountTasks.removeValue(forKey: volumeID)
     }
 
+    /// Cancels all currently pending mount or retry tasks.
+    private func cancelAllPendingMountTasks(reason: String) {
+        guard !pendingMountTasks.isEmpty else {
+            return
+        }
+
+        logger.info("Cancelling \(self.pendingMountTasks.count, privacy: .public) pending mount task(s): \(reason, privacy: .public)")
+        for task in pendingMountTasks.values {
+            task.cancel()
+        }
+        pendingMountTasks.removeAll()
+    }
+
     /// Schedules an immediate mount task for a volume when one is not already pending.
     private func scheduleMountTask(for volume: ExternalVolume) {
         let volumeID = volume.id
@@ -233,20 +255,63 @@ final class ActivityController {
                 self.pendingMountTasks.removeValue(forKey: volumeID)
             }
 
-            let success = await withCheckedContinuation { continuation in
-                VolumeOperationRouter.shared.mount(volumeUUID: volumeID as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { success in
-                    continuation.resume(returning: success)
+            var attemptIndex = 0
+
+            while !Task.isCancelled {
+                guard self.isReadyToMount else {
+                    return
                 }
-            }
 
-            guard !Task.isCancelled else {
-                return
-            }
+                guard self.remountCandidates[volumeID] != nil else {
+                    return
+                }
 
-            if success {
-                self.remountCandidates.removeValue(forKey: volumeID)
-            } else {
-                self.logger.error("Mount failed for \(volume.logLabel, privacy: .public)")
+                guard DiskArbitrationVolumeOperator.canResolveDisk(volumeUUID: volume.id, volumeName: volume.name, bsdName: volume.bsdName) else {
+                    self.logger.info("Skipping mount retry because disk is no longer available for \(volume.logLabel, privacy: .public)")
+                    return
+                }
+
+                let result: (success: Bool, message: String?, status: DAReturn?) = await withCheckedContinuation { continuation in
+                    VolumeOperationRouter.shared.mountWithDetails(volumeUUID: volumeID as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { success, message, status in
+                        continuation.resume(returning: (success, message, status))
+                    }
+                }
+
+                guard !Task.isCancelled else {
+                    return
+                }
+
+                if result.success {
+                    self.remountCandidates.removeValue(forKey: volumeID)
+                    return
+                }
+
+                if let message = result.message, !message.isEmpty {
+                    self.logger.error("Mount failed for \(volume.logLabel, privacy: .public): \(message, privacy: .public)")
+                } else {
+                    self.logger.error("Mount failed for \(volume.logLabel, privacy: .public)")
+                }
+
+                guard result.status?.shouldRetryAutomaticRemount ?? true else {
+                    self.logger.info("Mount retry skipped due to non-retryable status for \(volume.logLabel, privacy: .public)")
+                    return
+                }
+
+                guard attemptIndex < Self.remountRetryDelays.count else {
+                    self.logger.info("Mount retry limit reached for \(volume.logLabel, privacy: .public)")
+                    return
+                }
+
+                let retryNumber = attemptIndex + 1
+                let retryDelay = Self.remountRetryDelays[attemptIndex]
+                attemptIndex += 1
+                logger.info("Scheduling mount retry \(retryNumber, privacy: .public)/\(Self.remountRetryDelays.count, privacy: .public) for \(volume.logLabel, privacy: .public)")
+
+                do {
+                    try await Task.sleep(for: retryDelay)
+                } catch {
+                    return
+                }
             }
         }
     }

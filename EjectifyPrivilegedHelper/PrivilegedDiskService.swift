@@ -20,12 +20,12 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     }
 
     /// Performs a privileged mount for the provided volume metadata.
-    func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?) -> Void) {
+    func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
         perform(operation: .mount, volumeUUID: volumeUUID as UUID, volumeName: volumeName, bsdName: bsdName, reply: reply)
     }
 
     /// Performs a privileged unmount for the provided volume metadata.
-    func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?) -> Void) {
+    func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
         perform(operation: .unmount(force: force), volumeUUID: volumeUUID as UUID, volumeName: volumeName, bsdName: bsdName, reply: reply)
     }
 
@@ -58,10 +58,10 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         volumeUUID: UUID,
         volumeName: String,
         bsdName: String,
-        reply: @escaping (Bool, String?) -> Void
+        reply: @escaping (Bool, String?, Int32) -> Void
     ) {
         let result = DiskArbitrationVolumeOperator.perform(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, operation: operation)
-        reply(result.0, result.1)
+        reply(result.success, result.message, result.status ?? 0)
     }
 
     /// Executes a system process and returns its exit status with any output.
