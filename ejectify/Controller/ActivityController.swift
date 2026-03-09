@@ -272,7 +272,7 @@ final class ActivityController {
                 }
 
                 let result: (success: Bool, message: String?, status: DAReturn?) = await withCheckedContinuation { continuation in
-                    VolumeOperationRouter.shared.mountWithDetails(volumeUUID: volumeID as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { success, message, status in
+                    VolumeOperationRouter.shared.mount(volumeUUID: volumeID as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { success, message, status in
                         continuation.resume(returning: (success, message, status))
                     }
                 }

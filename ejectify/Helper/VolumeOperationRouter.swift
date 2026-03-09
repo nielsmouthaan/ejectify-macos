@@ -449,15 +449,8 @@ final class VolumeOperationRouter: @unchecked Sendable {
         return didDisable
     }
 
-    /// Requests a mount operation with a BSD-name hint, routed by the active execution mode.
-    func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, completion: @escaping (Bool) -> Void) {
-        mountWithDetails(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName) { success, _, _ in
-            completion(success)
-        }
-    }
-
     /// Requests a mount operation with a BSD-name hint and returns optional operation details.
-    func mountWithDetails(volumeUUID: NSUUID, volumeName: String, bsdName: String, completion: @escaping (Bool, String?, DAReturn?) -> Void) {
+    func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, completion: @escaping (Bool, String?, DAReturn?) -> Void) {
         routeOperation(
             operation: .mount,
             volumeUUID: volumeUUID,
