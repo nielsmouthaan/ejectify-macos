@@ -19,11 +19,11 @@ final class StatusBarMenu: NSMenu {
     private let aboutURL = URL(string: "https://ejectify.app")!
 
     /// Cached mounted volumes shown in the menu.
-    private var volumes: [ExternalVolume]
+    private var volumes: [Volume]
 
     /// Required initializer for storyboard/nib usage.
     required init(coder: NSCoder) {
-        volumes = ExternalVolume.mountedVolumes()
+        volumes = Volume.mountedVolumes()
         super.init(coder: coder)
         listenForOperationRouterNotifications()
         updateMenu()
@@ -32,7 +32,7 @@ final class StatusBarMenu: NSMenu {
 
     /// Initializes the menu, loads mounted volumes, and starts notifications.
     init() {
-        volumes = ExternalVolume.mountedVolumes()
+        volumes = Volume.mountedVolumes()
         super.init(title: "Ejectify")
         listenForOperationRouterNotifications()
         updateMenu()
@@ -74,7 +74,7 @@ final class StatusBarMenu: NSMenu {
 
     /// Handles mount notifications and logs mount metadata provided by NSWorkspace.
     @objc private func volumeDidMount(notification: Notification) {
-        if let volume = managedExternalVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
+        if let volume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
             logger.info("Volume did mount: \(volume.logLabel, privacy: .public)")
         }
         refreshVolumesMenu()
@@ -82,7 +82,7 @@ final class StatusBarMenu: NSMenu {
 
     /// Handles unmount notifications and logs unmount metadata provided by NSWorkspace.
     @objc private func volumeDidUnmount(notification: Notification) {
-        if let volume = managedExternalVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
+        if let volume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
             logger.info("Volume did unmount: \(volume.logLabel, privacy: .public)")
         }
         refreshVolumesMenu()
@@ -90,8 +90,8 @@ final class StatusBarMenu: NSMenu {
 
     /// Handles rename notifications and logs old/new metadata provided by NSWorkspace.
     @objc private func volumeDidRename(notification: Notification) {
-        let newVolume = managedExternalVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey)
-        let oldVolume = managedExternalVolume(from: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey)
+        let newVolume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey)
+        let oldVolume = managedVolume(from: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey)
         guard newVolume != nil || oldVolume != nil else {
             refreshVolumesMenu()
             return
@@ -113,7 +113,7 @@ final class StatusBarMenu: NSMenu {
 
     /// Refreshes the in-memory volume list and rebuilds the status menu.
     private func refreshVolumesMenu() {
-        volumes = ExternalVolume.mountedVolumes()
+        volumes = Volume.mountedVolumes()
         updateMenu()
     }
 
@@ -122,22 +122,18 @@ final class StatusBarMenu: NSMenu {
         notification.userInfo?[key] as? String ?? ""
     }
 
-    /// Resolves a notification URL to a managed external volume using the same filter as `mountedVolumes`.
-    private func managedExternalVolume(from notification: Notification, urlKey: String) -> ExternalVolume? {
+    /// Resolves a notification URL to a managed volume using the same filter as `mountedVolumes`.
+    private func managedVolume(from notification: Notification, urlKey: String) -> Volume? {
         guard let url = notification.userInfo?[urlKey] as? URL else {
             return nil
         }
 
-        guard ExternalVolume.isManagedMountedVolumeURL(url) else {
-            return nil
-        }
-
-        return ExternalVolume.fromURL(url: url)
+        return Volume.fromURL(url: url)
     }
 
     /// Returns a canonical log label and omits unavailable metadata when notification details are missing.
     private func volumeLogLabel(from notification: Notification, urlKey: String, nameKey: String) -> String {
-        if let volume = managedExternalVolume(from: notification, urlKey: urlKey) {
+        if let volume = managedVolume(from: notification, urlKey: urlKey) {
             return volume.logLabel
         }
 
@@ -296,7 +292,7 @@ final class StatusBarMenu: NSMenu {
 
     /// Toggles automatic handling for a specific volume row.
     @objc private func volumeClicked(menuItem: NSMenuItem) {
-        guard let volume = menuItem.representedObject as? ExternalVolume else {
+        guard let volume = menuItem.representedObject as? Volume else {
             return
         }
         let newEnabledValue = toggledValue(for: menuItem.state)

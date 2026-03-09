@@ -17,7 +17,7 @@ final class ActivityController {
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
 
     /// Volumes eligible for remount, keyed by stable volume UUID.
-    private var remountCandidates: [UUID: ExternalVolume] = [:]
+    private var remountCandidates: [UUID: Volume] = [:]
 
     /// Volume UUIDs currently processing an unmount request.
     private var inFlightUnmounts: Set<UUID> = []
@@ -93,10 +93,10 @@ final class ActivityController {
         logger.info("Monitoring configured for trigger: \(Preference.unmountWhen.rawValue, privacy: .public)")
     }
 
-    /// Unmounts all currently enabled external volumes and tracks attempted unmounts for remount attempts.
+    /// Unmounts all currently enabled volumes and tracks attempted unmounts for remount attempts.
     @objc func unmountVolumes(notification: Notification) {
         logger.info("Unmount trigger received: \(notification.name.rawValue, privacy: .public)")
-        for volume in ExternalVolume.mountedVolumes().filter({ $0.enabled }) {
+        for volume in Volume.mountedVolumes().filter({ $0.enabled }) {
             requestUnmount(for: volume) { _ in }
         }
     }
@@ -239,7 +239,7 @@ final class ActivityController {
     }
 
     /// Schedules an immediate mount task for a volume when one is not already pending.
-    private func scheduleMountTask(for volume: ExternalVolume) {
+    private func scheduleMountTask(for volume: Volume) {
         let volumeID = volume.id
         guard pendingMountTasks[volumeID] == nil else {
             return
@@ -425,7 +425,7 @@ final class ActivityController {
 
     /// Unmounts all enabled volumes and waits for every callback to complete.
     private func unmountEnabledVolumesAndWait() async -> UnmountBatchResult {
-        let enabledVolumes = ExternalVolume.mountedVolumes().filter { $0.enabled }
+        let enabledVolumes = Volume.mountedVolumes().filter { $0.enabled }
         guard !enabledVolumes.isEmpty else {
             return UnmountBatchResult(requestedCount: 0, succeededCount: 0)
         }
@@ -458,7 +458,7 @@ final class ActivityController {
     }
 
     /// Enqueues a routed unmount request for one volume and tracks in-flight state.
-    private func requestUnmount(for volume: ExternalVolume, completion: @escaping (Bool) -> Void) {
+    private func requestUnmount(for volume: Volume, completion: @escaping (Bool) -> Void) {
         let volumeID = volume.id
         remountCandidates[volumeID] = volume
         cancelPendingMountTask(for: volumeID)
