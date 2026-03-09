@@ -37,6 +37,9 @@
 		C0A100000000000000000065 /* PrivilegedHelperConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */; };
 		D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */; };
 		D1E700A42F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */; };
+		D1E700A52F8A000100C0D001 /* OnboardingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */; };
+		D1E700A72F8A000100C0D001 /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A82F8A000100C0D001 /* OnboardingViewModel.swift */; };
+		D1E700A92F8A000100C0D001 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700AA2F8A000100C0D001 /* OnboardingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -112,6 +115,9 @@
 		C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperConfiguration.swift; sourceTree = "<group>"; };
 		D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSleepPowerObserver.swift; sourceTree = "<group>"; };
 		D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperLifecycleManager.swift; sourceTree = "<group>"; };
+		D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindowController.swift; sourceTree = "<group>"; };
+		D1E700A82F8A000100C0D001 /* OnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModel.swift; sourceTree = "<group>"; };
+		D1E700AA2F8A000100C0D001 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		F22E193528F67EE100899BDE /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -185,6 +191,8 @@
 			isa = PBXGroup;
 			children = (
 				B8DFADB9256D0565009E9296 /* ActivityController.swift */,
+				D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */,
+				D1E700A82F8A000100C0D001 /* OnboardingViewModel.swift */,
 				D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */,
 			);
 			path = Controller;
@@ -202,6 +210,7 @@
 		B8DFADB3256CF511009E9296 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				D1E700AA2F8A000100C0D001 /* OnboardingView.swift */,
 				B8DFADB0256CF511009E9296 /* StatusBar.swift */,
 				B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */,
 			);
@@ -378,10 +387,13 @@
 				B8DFADB6256CF511009E9296 /* Volume.swift in Sources */,
 				B89F413025ACA09700E0B8C1 /* String+Localized.swift in Sources */,
 				B8AF59E92569569A003481A8 /* AppDelegate.swift in Sources */,
+				D1E700A52F8A000100C0D001 /* OnboardingWindowController.swift in Sources */,
+				D1E700A72F8A000100C0D001 /* OnboardingViewModel.swift in Sources */,
 				B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */,
 				D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */,
 				B82E12D32570FF0F004547C7 /* Preference.swift in Sources */,
 				B89F412525AC9D7200E0B8C1 /* DADisk+DiskImage.swift in Sources */,
+				D1E700A92F8A000100C0D001 /* OnboardingView.swift in Sources */,
 				B8DFADB5256CF511009E9296 /* StatusBar.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -214,9 +214,9 @@ final class StatusBarMenu: NSMenu {
         state == .off
     }
 
-    /// Represents enabled elevated permissions only when user preference and daemon state are both active.
+    /// Represents enabled elevated permissions when the privileged helper is approved and enabled.
     private var elevatedPermissionsMenuState: NSControl.StateValue {
-        (Preference.useElevatedPermissions && VolumeOperationRouter.shared.isDaemonEnabled) ? .on : .off
+        VolumeOperationRouter.shared.isDaemonEnabled ? .on : .off
     }
 
     /// Returns whether force-muting notifications is enabled in the system Disk Arbitration plist.
@@ -312,22 +312,28 @@ final class StatusBarMenu: NSMenu {
     @objc private func elevatedPermissionsClicked(menuItem: NSMenuItem) {
         let shouldEnable = toggledValue(for: menuItem.state)
         let operationRouter = VolumeOperationRouter.shared
-        let previousValue = Preference.useElevatedPermissions
-        Preference.useElevatedPermissions = shouldEnable
-        let didSucceed = operationRouter.configureExecutionMode()
+        let didSucceed: Bool
 
-        guard didSucceed else {
-            Preference.useElevatedPermissions = previousValue
-            if shouldEnable {
-                showPermissionAlert(
-                    messageText: "Could not enable elevated permissions.".localized,
-                    informativeText: "Check System Settings if Ejectify is enabled.".localized
-                )
-            } else {
-                showPermissionAlert(
-                    messageText: "Could not disable elevated permissions.".localized
-                )
+        if shouldEnable {
+            didSucceed = operationRouter.requestPrivilegedExecutionMode()
+            guard !didSucceed else {
+                updateMenu()
+                return
             }
+
+            showPermissionAlert(
+                messageText: "Could not enable elevated permissions.".localized,
+                informativeText: "Check System Settings if Ejectify is enabled.".localized
+            )
+            updateMenu()
+            return
+        }
+
+        didSucceed = operationRouter.disablePrivilegedExecutionMode()
+        guard didSucceed else {
+            showPermissionAlert(
+                messageText: "Could not disable elevated permissions.".localized
+            )
             updateMenu()
             return
         }

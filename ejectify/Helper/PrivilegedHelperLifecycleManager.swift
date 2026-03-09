@@ -23,9 +23,14 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
         SMAppService.daemon(plistName: PrivilegedHelperConfiguration.launchDaemonPlistName)
     }
 
+    /// Returns the current ServiceManagement status for the privileged helper daemon.
+    var daemonStatus: SMAppService.Status {
+        daemonService.status
+    }
+
     /// Returns whether the privileged helper daemon is currently registered and approved to run.
     var isDaemonEnabled: Bool {
-        daemonService.status == .enabled
+        daemonStatus == .enabled
     }
 
     /// Registers the launch daemon and returns whether it is ready for privileged routing.
@@ -75,6 +80,11 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
         }
 
         return !isDaemonEnabled
+    }
+
+    /// Opens System Settings directly at Login Items to guide helper approval.
+    func openSystemSettingsLoginItems() {
+        SMAppService.openSystemSettingsLoginItems()
     }
 
 }

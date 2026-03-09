@@ -69,19 +69,14 @@ enum Preference {
         }
     }
 
-    /// Controls whether the app should keep the privileged helper daemon registered.
-    static var useElevatedPermissions: Bool {
+    /// Tracks whether startup onboarding has already been shown and completed.
+    static var hasSeenOnboarding: Bool {
         get {
-            let key = "preference.useElevatedPermissions"
-            if let value = UserDefaults.standard.object(forKey: key) as? Bool {
-                return value
-            }
-
-            return true
+            UserDefaults.standard.bool(forKey: "preference.hasSeenOnboarding")
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: "preference.useElevatedPermissions")
-            logger.info("Preference changed: useElevatedPermissions=\(newValue, privacy: .public)")
+            UserDefaults.standard.set(newValue, forKey: "preference.hasSeenOnboarding")
+            logger.info("Preference changed: hasSeenOnboarding=\(newValue, privacy: .public)")
         }
     }
 }

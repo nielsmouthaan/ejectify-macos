@@ -255,11 +255,6 @@ final class VolumeOperationRouter: @unchecked Sendable {
     private func handleHelperStartedNotification() {
         logger.info("Received privileged helper startup signal; reconciling routing state")
 
-        guard Preference.useElevatedPermissions else {
-            logger.info("Ignoring privileged helper startup signal because elevated permissions preference is disabled")
-            return
-        }
-
         guard !isStartupRoutingInitializationActive else {
             logger.info("Skipping helper startup reconciliation because startup helper ping is already in progress")
             return
@@ -408,24 +403,46 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
-    /// Configures execution mode from current preferences and startup helper ping result.
+    /// Configures execution mode from current helper approval status and startup helper ping result.
     @discardableResult
     func configureExecutionMode() -> Bool {
-        guard Preference.useElevatedPermissions else {
-            let didDisable = PrivilegedHelperLifecycleManager.shared.unregisterDaemon()
-            invalidateHelperConnection()
-            setExecutionMode(.local, reason: "daemon unregistered")
-            return didDisable
-        }
+        let status = PrivilegedHelperLifecycleManager.shared.daemonStatus
 
-        guard PrivilegedHelperLifecycleManager.shared.registerDaemon() else {
+        guard status == .enabled else {
             invalidateHelperConnection()
-            setExecutionMode(.local, reason: "daemon unavailable while elevated permissions are enabled")
+            setExecutionMode(.local, reason: "daemon status is \(status.statusDescription)")
             return false
         }
 
         initializeHelperRoutingFromStartupPing()
         return true
+    }
+
+    /// Attempts to register and enable privileged helper execution after an explicit user action.
+    @discardableResult
+    func requestPrivilegedExecutionMode() -> Bool {
+        if isDaemonEnabled {
+            return configureExecutionMode()
+        }
+
+        guard PrivilegedHelperLifecycleManager.shared.registerDaemon() else {
+            let status = PrivilegedHelperLifecycleManager.shared.daemonStatus
+            invalidateHelperConnection()
+            setExecutionMode(.local, reason: "daemon registration requires user approval or failed: \(status.statusDescription)")
+            return false
+        }
+
+        initializeHelperRoutingFromStartupPing()
+        return true
+    }
+
+    /// Disables privileged helper execution and switches routing to local mode.
+    @discardableResult
+    func disablePrivilegedExecutionMode() -> Bool {
+        let didDisable = PrivilegedHelperLifecycleManager.shared.unregisterDaemon()
+        invalidateHelperConnection()
+        setExecutionMode(.local, reason: "daemon unregistered by user action")
+        return didDisable
     }
 
     /// Requests a mount operation with a BSD-name hint, routed by the active execution mode.
