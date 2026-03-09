@@ -11,8 +11,27 @@ import OSLog
 /// Implements privileged XPC endpoints for mount/unmount and notification muting operations.
 final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
 
+    /// Stores XPC reply closures so they can safely cross sendable dispatch boundaries.
+    private final class ReplyBox: @unchecked Sendable {
+
+        /// Reply closure returning success, optional message, and optional status.
+        let reply: (Bool, String?, Int32) -> Void
+
+        /// Wraps one XPC reply closure.
+        init(reply: @escaping (Bool, String?, Int32) -> Void) {
+            self.reply = reply
+        }
+    }
+
     /// Logger used for privileged helper operation diagnostics.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify.PrivilegedHelper", category: "PrivilegedDiskService")
+
+    /// Queue used to execute mount/unmount requests concurrently.
+    private let operationQueue = DispatchQueue(
+        label: "nl.nielsmouthaan.Ejectify.PrivilegedHelper.DiskOperation",
+        qos: .userInitiated,
+        attributes: .concurrent
+    )
 
     /// Confirms helper reachability for startup routing checks.
     func ping(withReply reply: @escaping (Bool, String?) -> Void) {
@@ -60,8 +79,34 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         bsdName: String,
         reply: @escaping (Bool, String?, Int32) -> Void
     ) {
-        let result = DiskArbitrationVolumeOperator.perform(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, operation: operation)
-        reply(result.success, result.message, result.status ?? 0)
+        let replyBox = ReplyBox(reply: reply)
+        let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID, bsdName: bsdName)
+        logger.info("Privileged helper \(operation.operationName, privacy: .public) queued for \(volumeLabel, privacy: .public)")
+
+        operationQueue.async { [logger] in
+            logger.info("Privileged helper \(operation.operationName, privacy: .public) started for \(volumeLabel, privacy: .public)")
+            let result = DiskArbitrationVolumeOperator.perform(
+                volumeUUID: volumeUUID,
+                volumeName: volumeName,
+                bsdName: bsdName,
+                operation: operation
+            )
+
+            let messageSuffix: String
+            if let message = result.message, !message.isEmpty {
+                messageSuffix = ": \(message)"
+            } else {
+                messageSuffix = ""
+            }
+
+            if result.success {
+                logger.info("Privileged helper \(operation.operationName, privacy: .public) finished for \(volumeLabel, privacy: .public)\(messageSuffix, privacy: .public)")
+            } else {
+                logger.error("Privileged helper \(operation.operationName, privacy: .public) failed for \(volumeLabel, privacy: .public)\(messageSuffix, privacy: .public)")
+            }
+
+            replyBox.reply(result.success, result.message, result.status ?? 0)
+        }
     }
 
     /// Executes a system process and returns its exit status with any output.

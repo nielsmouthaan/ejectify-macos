@@ -107,7 +107,11 @@ final class VolumeOperationRouter: @unchecked Sendable {
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "VolumeOperationRouter")
 
     /// Queue used for local mount/unmount operations.
-    private let localOperationQueue = DispatchQueue(label: "nl.nielsmouthaan.Ejectify.LocalDiskOperation", qos: .userInitiated)
+    private let localOperationQueue = DispatchQueue(
+        label: "nl.nielsmouthaan.Ejectify.LocalDiskOperation",
+        qos: .userInitiated,
+        attributes: .concurrent
+    )
 
     /// Lock guarding mutable router state.
     private let stateLock = NSLock()
