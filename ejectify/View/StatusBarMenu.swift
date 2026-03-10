@@ -82,7 +82,7 @@ final class StatusBarMenu: NSMenu {
 
     /// Handles unmount notifications and logs unmount metadata provided by NSWorkspace.
     @objc private func volumeDidUnmount(notification: Notification) {
-        if let volume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
+        if let volume = cachedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
             logger.info("Volume did unmount: \(volume.logLabel, privacy: .public)")
         }
         refreshVolumesMenu()
@@ -90,24 +90,11 @@ final class StatusBarMenu: NSMenu {
 
     /// Handles rename notifications and logs old/new metadata provided by NSWorkspace.
     @objc private func volumeDidRename(notification: Notification) {
-        let newVolume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey)
-        let oldVolume = managedVolume(from: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey)
-        guard newVolume != nil || oldVolume != nil else {
-            refreshVolumesMenu()
-            return
+        if let volume = cachedVolume(from: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey) {
+            let newVolumeName = notification.userInfo?[NSWorkspace.localizedVolumeNameUserInfoKey] as? String ?? ""
+            let newVolumeLabel = VolumeLogLabelFormatter.label(name: newVolumeName, uuid: volume.id, bsdName: volume.bsdName)
+            logger.info("Volume did rename: \(volume.logLabel, privacy: .public) -> \(newVolumeLabel, privacy: .public)")
         }
-
-        let newVolumeLabel = volumeLogLabel(
-            from: notification,
-            urlKey: NSWorkspace.volumeURLUserInfoKey,
-            nameKey: NSWorkspace.localizedVolumeNameUserInfoKey
-        )
-        let oldVolumeLabel = volumeLogLabel(
-            from: notification,
-            urlKey: NSWorkspace.oldVolumeURLUserInfoKey,
-            nameKey: NSWorkspace.oldLocalizedVolumeNameUserInfoKey
-        )
-        logger.info("Volume did rename: \(oldVolumeLabel, privacy: .public) -> \(newVolumeLabel, privacy: .public)")
         refreshVolumesMenu()
     }
 
@@ -117,9 +104,14 @@ final class StatusBarMenu: NSMenu {
         updateMenu()
     }
 
-    /// Returns a string metadata value from notification userInfo or an empty string when absent.
-    private func stringUserInfoValue(_ key: String, from notification: Notification) -> String {
-        notification.userInfo?[key] as? String ?? ""
+    /// Returns a volume from cached `volumes` by matching a notification URL path.
+    private func cachedVolume(from notification: Notification, urlKey: String) -> Volume? {
+        guard let url = notification.userInfo?[urlKey] as? URL else {
+            return nil
+        }
+
+        let targetPath = url.standardizedFileURL.path
+        return volumes.first(where: { $0.url.standardizedFileURL.path == targetPath })
     }
 
     /// Resolves a notification URL to a managed volume using the same filter as `mountedVolumes`.
@@ -129,16 +121,6 @@ final class StatusBarMenu: NSMenu {
         }
 
         return Volume.fromURL(url: url)
-    }
-
-    /// Returns a canonical log label and omits unavailable metadata when notification details are missing.
-    private func volumeLogLabel(from notification: Notification, urlKey: String, nameKey: String) -> String {
-        if let volume = managedVolume(from: notification, urlKey: urlKey) {
-            return volume.logLabel
-        }
-
-        let localizedName = stringUserInfoValue(nameKey, from: notification)
-        return VolumeLogLabelFormatter.label(name: localizedName, uuidString: "", bsdName: "")
     }
 
     /// Rebuilds all top-level menu sections from current app state.

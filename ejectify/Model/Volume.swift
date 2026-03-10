@@ -30,6 +30,9 @@ final class Volume {
     /// Human-readable volume name displayed in UI and logs.
     let name: String
 
+    /// Mounted volume URL used for notification correlation.
+    let url: URL
+
     /// BSD disk identifier associated with this volume (for example `disk6s2`).
     let bsdName: String
 
@@ -53,9 +56,10 @@ final class Volume {
     }
 
     /// Creates a managed volume model from resolved Disk Arbitration metadata.
-    init(id: UUID, name: String, bsdName: String) {
+    init(id: UUID, name: String, url: URL, bsdName: String) {
         self.id = id
         self.name = name
+        self.url = url
         self.bsdName = bsdName
     }
 
@@ -109,7 +113,7 @@ final class Volume {
             return nil
         }
 
-        return Volume(id: volumeUUID, name: name, bsdName: bsdName)
+        return Volume(id: volumeUUID, name: name, url: url, bsdName: bsdName)
     }
 
 }
