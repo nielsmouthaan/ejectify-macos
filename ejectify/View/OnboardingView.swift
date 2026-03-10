@@ -59,3 +59,8 @@ struct OnboardingView: View {
         }
     }
 }
+
+#Preview("Default") {
+    OnboardingView(viewModel: OnboardingViewModel())
+        .frame(width: 460, height: 260)
+}
