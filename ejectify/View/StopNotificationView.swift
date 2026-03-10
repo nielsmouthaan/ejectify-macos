@@ -10,6 +10,8 @@ import SwiftUI
 /// Banner that mimics the Finder "Disk Not Ejected Properly" warning style.
 struct StopNotificationView: View {
 
+    @State private var isAnimatingHandSymbol = false
+
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20)
@@ -39,11 +41,16 @@ struct StopNotificationView: View {
                         .fill(.ultraThinMaterial)
                         .opacity(0.5)
                 }
-            .rotationEffect(.degrees(10))
-            .offset(x: 164, y: -32)
+                .rotationEffect(.degrees(isAnimatingHandSymbol ? 10 : 15))
+                .scaleEffect(isAnimatingHandSymbol ? 0.95 : 1.04)
+                .offset(x: 164, y: -32)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+                        isAnimatingHandSymbol = true
+                    }
+                }
         }
         .frame(width: 350, height: 75)
-        
     }
 }
 
