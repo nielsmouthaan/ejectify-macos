@@ -15,10 +15,8 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            
-            
-            
-            
+            StopNotificationView()
+
             Text("Approve elevated access")
                 .font(.title2.weight(.semibold))
 
