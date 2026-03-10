@@ -8,6 +8,9 @@
 
 "Unmount all" = "Unmount all";
 "Volumes" = "Volumes";
+"Internal" = "Internal";
+"External" = "External";
+"Disk Images" = "Disk Images";
 "Preferences" = "Preferences";
 "Launch at login" = "Launch at login";
 "Use elevated permissions" = "Use elevated permissions";

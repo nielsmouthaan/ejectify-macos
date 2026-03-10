@@ -149,9 +149,20 @@ final class StatusBarMenu: NSMenu {
     private func buildVolumesMenu() {
         addItem(NSMenuItem.separator())
 
-        addItem(NSMenuItem.sectionHeader(title: "Volumes".localized))
+        addVolumeSection(title: "Internal".localized, category: .internalVolume)
+        addVolumeSection(title: "External".localized, category: .external)
+        addVolumeSection(title: "Disk Images".localized, category: .diskImage)
+    }
 
-        for volume in volumes {
+    /// Adds one grouped volume section in the configured category order.
+    private func addVolumeSection(title: String, category: Volume.Category) {
+        let volumesForCategory = volumes.filter { $0.category == category }
+        guard !volumesForCategory.isEmpty else {
+            return
+        }
+
+        addItem(NSMenuItem.sectionHeader(title: title))
+        for volume in volumesForCategory {
             let volumeItem = NSMenuItem(title: volume.name, action: #selector(volumeClicked(menuItem:)), keyEquivalent: "")
             volumeItem.target = self
             volumeItem.state = volume.enabled ? .on : .off

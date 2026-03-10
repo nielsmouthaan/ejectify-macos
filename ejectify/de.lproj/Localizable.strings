@@ -8,6 +8,9 @@
 
 "Unmount all" = "Alle auswerfen";
 "Volumes" = "Volumes";
+"Internal" = "Intern";
+"External" = "Extern";
+"Disk Images" = "Disk-Images";
 "Preferences" = "Einstellungen";
 "Launch at login" = "Beim Login starten";
 "Use elevated permissions" = "Erhöhte Berechtigungen verwenden";

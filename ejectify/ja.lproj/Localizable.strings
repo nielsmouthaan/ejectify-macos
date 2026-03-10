@@ -8,6 +8,9 @@
 
 "Unmount all" = "すべてアンマウント";
 "Volumes" = "ボリューム";
+"Internal" = "内蔵";
+"External" = "外部";
+"Disk Images" = "ディスクイメージ";
 "Preferences" = "環境設定";
 "Launch at login" = "ログイン時に起動";
 "Use elevated permissions" = "管理者権限を使用する";

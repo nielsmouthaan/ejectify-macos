@@ -8,6 +8,9 @@
 
 "Unmount all" = "Tümünü çıkar";
 "Volumes" = "Birimler";
+"Internal" = "Dahili";
+"External" = "Harici";
+"Disk Images" = "Disk İmajları";
 "Preferences" = "Tercihler";
 "Launch at login" = "Başlangıçta çalıştır";
 "Use elevated permissions" = "Yükseltilmiş izinleri kullan";

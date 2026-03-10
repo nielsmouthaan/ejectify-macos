@@ -8,6 +8,9 @@
 
 "Unmount all" = "قم بإلغاء تحميل الكل";
 "Volumes" = "وحدات التخزين";
+"Internal" = "داخلي";
+"External" = "خارجي";
+"Disk Images" = "صور الأقراص";
 "Preferences" = "التفضيلات";
 "Launch at login" = "تشغيل عند تسجيل الدخول";
 "Use elevated permissions" = "استخدام الأذونات المرتفعة";

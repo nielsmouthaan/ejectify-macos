@@ -7,6 +7,9 @@
 
 "Unmount all" = "Vysunúť všetko";
 "Volumes" = "Oddiely";
+"Internal" = "Interné";
+"External" = "Externé";
+"Disk Images" = "Obrazy diskov";
 "Preferences" = "Predvoľby";
 "Launch at login" = "Spustiť pri prihlásení";
 "Use elevated permissions" = "Použiť zvýšené oprávnenia";

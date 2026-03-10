@@ -8,6 +8,9 @@
 
 "Unmount all" = "Извлечь все";
 "Volumes" = "Тома";
+"Internal" = "Внутренние";
+"External" = "Внешние";
+"Disk Images" = "Образы дисков";
 "Preferences" = "Настройки";
 "Launch at login" = "Запускать при старте";
 "Use elevated permissions" = "Использовать повышенные права";

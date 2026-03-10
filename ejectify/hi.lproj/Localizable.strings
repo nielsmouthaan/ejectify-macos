@@ -8,6 +8,9 @@
 
 "Unmount all" = "सभी को अनमाउंट करें";
 "Volumes" = "वॉल्यूम";
+"Internal" = "आंतरिक";
+"External" = "बाहरी";
+"Disk Images" = "डिस्क इमेज";
 "Preferences" = "प्राथमिकताएँ";
 "Launch at login" = "लॉगिन पर लॉन्च करें";
 "Use elevated permissions" = "उन्नत अनुमतियों का उपयोग करें";

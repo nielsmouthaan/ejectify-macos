@@ -12,6 +12,18 @@ import OSLog
 /// Represents a mounted volume discovered from Disk Arbitration metadata.
 final class Volume {
 
+    /// Describes how a volume should be grouped in the menu.
+    enum Category {
+        case internalVolume
+        case external
+        case diskImage
+
+        /// Default auto-(un)mount state used when no user override exists yet.
+        var defaultEnabled: Bool {
+            self != .diskImage
+        }
+    }
+
     /// Logger used for volume discovery and eligibility diagnostics.
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "Volume")
 
@@ -36,19 +48,28 @@ final class Volume {
     /// BSD disk identifier associated with this volume (for example `disk6s2`).
     let bsdName: String
 
+    /// Category used for grouping volumes in the status-bar menu.
+    let category: Category
+
     /// Canonical volume label for logs.
     var logLabel: String {
         VolumeLogLabelFormatter.label(name: name, uuid: id, bsdName: bsdName)
     }
 
-    /// Tracks whether this volume should be managed automatically. Defaults to enabled.
+    /// Tracks whether this volume should be managed automatically.
+    /// Uses a category-based default when no explicit user preference exists.
     var enabled: Bool {
         get {
             let key = "volume." + id.uuidString
-            guard let value = UserDefaults.standard.object(forKey: key) as? Bool else {
-                return true
+            guard let value = UserDefaults.standard.object(forKey: key) else {
+                return category.defaultEnabled
             }
-            return value
+
+            if let boolValue = value as? Bool {
+                return boolValue
+            }
+
+            return category.defaultEnabled
         }
         set {
             UserDefaults.standard.set(newValue, forKey: "volume." + id.uuidString)
@@ -56,11 +77,12 @@ final class Volume {
     }
 
     /// Creates a managed volume model from resolved Disk Arbitration metadata.
-    init(id: UUID, name: String, url: URL, bsdName: String) {
+    init(id: UUID, name: String, url: URL, bsdName: String, category: Category) {
         self.id = id
         self.name = name
         self.url = url
         self.bsdName = bsdName
+        self.category = category
     }
 
     /// Returns currently mounted volumes that Ejectify can manage.
@@ -113,7 +135,16 @@ final class Volume {
             return nil
         }
 
-        return Volume(id: volumeUUID, name: name, url: url, bsdName: bsdName)
+        let category: Category
+        if disk.isDiskImage() {
+            category = .diskImage
+        } else if let isInternalDevice = diskInfo[kDADiskDescriptionDeviceInternalKey] as? Bool, isInternalDevice {
+            category = .internalVolume
+        } else {
+            category = .external
+        }
+
+        return Volume(id: volumeUUID, name: name, url: url, bsdName: bsdName, category: category)
     }
 
 }

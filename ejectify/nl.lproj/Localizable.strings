@@ -8,6 +8,9 @@
 
 "Unmount all" = "Deactiveer alles";
 "Volumes" = "Volumes";
+"Internal" = "Intern";
+"External" = "Extern";
+"Disk Images" = "Schijfkopieën";
 "Preferences" = "Voorkeuren";
 "Launch at login" = "Start bij inloggen";
 "Use elevated permissions" = "Verhoogde machtigingen gebruiken";
