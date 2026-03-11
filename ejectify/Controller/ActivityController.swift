@@ -479,6 +479,9 @@ final class ActivityController {
                 }
 
                 self.inFlightUnmounts.remove(volumeID)
+                if !success {
+                    self.remountCandidates.removeValue(forKey: volumeID)
+                }
                 let completions = self.pendingUnmountCompletions.removeValue(forKey: volumeID) ?? []
                 completions.forEach { $0(success) }
             }
