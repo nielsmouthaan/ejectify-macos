@@ -15,8 +15,8 @@ final class StatusBarMenu: NSMenu {
     /// Logger used for menu-driven actions and volume notifications.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "StatusBarMenu")
 
-    /// Destination URL used by the About action.
-    private let aboutURL = URL(string: "https://ejectify.app")!
+    /// Destination URL used by the Help action.
+    private let helpURL = URL(string: "https://ejectify.app/help")!
 
     /// Cached mounted volumes shown in the menu.
     private var volumes: [Volume]
@@ -255,13 +255,13 @@ final class StatusBarMenu: NSMenu {
         return item
     }
 
-    /// Builds app-level actions such as About and Quit.
+    /// Builds app-level actions such as Help and Quit.
     private func buildAppMenu() {
         addItem(NSMenuItem.separator())
 
-        let aboutItem = NSMenuItem(title: "About Ejectify".localized, action: #selector(aboutClicked), keyEquivalent: "")
-        aboutItem.target = self
-        addItem(aboutItem)
+        let helpItem = NSMenuItem(title: "Help".localized, action: #selector(helpClicked), keyEquivalent: "")
+        helpItem.target = self
+        addItem(helpItem)
 
         let quitItem = NSMenuItem(title: "Quit Ejectify".localized, action: #selector(quitClicked), keyEquivalent: "")
         quitItem.target = self
@@ -372,9 +372,9 @@ final class StatusBarMenu: NSMenu {
         }
     }
 
-    /// Opens the Ejectify website.
-    @objc private func aboutClicked() {
-        NSWorkspace.shared.open(aboutURL)
+    /// Opens the Ejectify Help Center website.
+    @objc private func helpClicked() {
+        NSWorkspace.shared.open(helpURL)
     }
 
     /// Terminates the app from the menu action.

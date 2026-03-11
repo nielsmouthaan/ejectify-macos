@@ -30,5 +30,5 @@
 "Display turned off" = "ディスプレイをオフにしたとき";
 "System starts sleeping" = "システムをスリープしたとき";
 "Force unmount" = "強制的にアンマウント";
-"About Ejectify" = "Ejectifyについて";
+"Help" = "ヘルプ";
 "Quit Ejectify" = "Ejectifyを終了";
