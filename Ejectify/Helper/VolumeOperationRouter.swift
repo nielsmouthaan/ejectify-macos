@@ -337,7 +337,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         withStateLock {
             helperConnection = connection
         }
-        logger.info("Priviledged helper XPC connection established")
+        logger.info("Priviledged helper XPC connection set up")
         return connection
     }
 
