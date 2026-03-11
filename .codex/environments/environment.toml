@@ -9,3 +9,8 @@ script = ""
 name = "Run"
 icon = "run"
 command = "xcodebuildmcp macos build-and-run --project-path \"./Ejectify.xcodeproj\" --scheme \"Ejectify\" --configuration Debug"
+
+[[actions]]
+name = "Package"
+icon = "tool"
+command = "./scripts/package-dmg.sh"
