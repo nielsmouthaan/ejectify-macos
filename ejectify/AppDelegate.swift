@@ -7,7 +7,6 @@
 
 import Cocoa
 
-@main
 @MainActor
 
 /// Coordinates app startup and wires core menu/activity controllers.
