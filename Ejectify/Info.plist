@@ -26,5 +26,13 @@
 	<true/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUAllowsAutomaticUpdates</key>
+	<false/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://ejectify.app/updates/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>+mYYmJOl4Ld/DHtQVz58Y5Y76vLwk6X2Ycvty26wfjk=</string>
 </dict>
 </plist>

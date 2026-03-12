@@ -263,6 +263,10 @@ final class StatusBarMenu: NSMenu {
         helpItem.target = self
         addItem(helpItem)
 
+        let checkForUpdatesItem = NSMenuItem(title: "Check for Updates…".localized, action: #selector(checkForUpdatesClicked), keyEquivalent: "")
+        checkForUpdatesItem.target = self
+        addItem(checkForUpdatesItem)
+
         let quitItem = NSMenuItem(title: "Quit Ejectify".localized, action: #selector(quitClicked), keyEquivalent: "")
         quitItem.target = self
         addItem(quitItem)
@@ -375,6 +379,12 @@ final class StatusBarMenu: NSMenu {
     /// Opens the Ejectify Help Center website.
     @objc private func helpClicked() {
         NSWorkspace.shared.open(helpURL)
+    }
+
+    /// Starts a manual Sparkle update check from the status menu.
+    @MainActor
+    @objc private func checkForUpdatesClicked() {
+        AppDelegate.shared.checkForUpdates()
     }
 
     /// Terminates the app from the menu action.

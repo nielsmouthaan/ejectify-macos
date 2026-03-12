@@ -21,6 +21,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Owns event observation and mount/unmount orchestration.
     var activityController: ActivityController?
 
+    /// Owns Sparkle updater lifecycle and manual update actions.
+    private var updateController: UpdateController?
+
     /// Owns the onboarding window lifecycle while guidance is presented.
     private var onboardingWindowController: OnboardingWindowController?
 
@@ -30,7 +33,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusBar = StatusBar()
         activityController = ActivityController()
+        let updateController = UpdateController()
+        self.updateController = updateController
+        updateController.start()
         presentOnboardingIfNeeded()
+    }
+
+    /// Starts a user-initiated Sparkle update check.
+    func checkForUpdates() {
+        updateController?.checkForUpdates()
     }
 
     /// Sends a best-effort helper shutdown request when the app is quitting.
