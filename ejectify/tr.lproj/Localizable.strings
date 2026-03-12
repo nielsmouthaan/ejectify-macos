@@ -32,3 +32,15 @@
 "Force unmount" = "Çıkarmaya zorla";
 "About Ejectify" = "Ejectify Hakkında";
 "Quit Ejectify" = "Ejectify'dan Çık";
+
+"No more %@ notifications" = "Artık \"%@\" bildirimi yok";
+"Disk Not Ejected Properly" = "Disk Düzgün Çıkarılmadı";
+"Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify, Mac'iniz uykuya geçtiğinde birimleri otomatik olarak ayırmayı ve uyandığında tekrar bağlamayı dener.";
+"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "Diskleri daha güvenilir şekilde bağlayıp ayırabilmesi için Ejectify'a [Sistem Ayarları](x-apple.systempreferences:com.apple.LoginItems-Settings.extension) içinde yükseltilmiş izinler verin veya sistem bildirimi üzerinden onaylayın.";
+"Permissions granted" = "İzinler verildi";
+"Waiting for approval" = "Onay bekleniyor";
+"Open Settings" = "Ayarları Aç";
+"Close" = "Kapat";
+"Skip" = "Atla";
+"Eject \"%@\" before disconnecting or turning it off." = "\"%@\" aygıtını bağlantısını kesmeden veya kapatmadan önce çıkarın.";
+"USB Drive" = "USB Sürücüsü";

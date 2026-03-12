@@ -139,7 +139,7 @@ final class StatusBarMenu: NSMenu {
 
     /// Builds the top "Actions" section.
     private func buildActionsMenu() {
-        let unmountAllItem = NSMenuItem(title: "Unmount all".localized, action: #selector(unmountAllClicked(menuItem:)), keyEquivalent: "")
+        let unmountAllItem = NSMenuItem(title: String(localized: "Unmount all"), action: #selector(unmountAllClicked(menuItem:)), keyEquivalent: "")
         unmountAllItem.target = self
         unmountAllItem.isEnabled = !volumes.isEmpty
         addItem(unmountAllItem)
@@ -149,9 +149,9 @@ final class StatusBarMenu: NSMenu {
     private func buildVolumesMenu() {
         addItem(NSMenuItem.separator())
 
-        addVolumeSection(title: "Internal".localized, category: .internalVolume)
-        addVolumeSection(title: "External".localized, category: .external)
-        addVolumeSection(title: "Disk Images".localized, category: .diskImage)
+        addVolumeSection(title: String(localized: "Internal"), category: .internalVolume)
+        addVolumeSection(title: String(localized: "External"), category: .external)
+        addVolumeSection(title: String(localized: "Disk Images"), category: .diskImage)
     }
 
     /// Adds one grouped volume section in the configured category order.
@@ -175,28 +175,28 @@ final class StatusBarMenu: NSMenu {
     private func buildPreferencesMenu() {
         addItem(NSMenuItem.separator())
 
-        addItem(NSMenuItem.sectionHeader(title: "Preferences".localized))
+        addItem(NSMenuItem.sectionHeader(title: String(localized: "Preferences")))
 
-        let launchAtLoginItem = NSMenuItem(title: "Launch at login".localized, action: #selector(launchAtLoginClicked(menuItem:)), keyEquivalent: "")
+        let launchAtLoginItem = NSMenuItem(title: String(localized: "Launch at login"), action: #selector(launchAtLoginClicked(menuItem:)), keyEquivalent: "")
         launchAtLoginItem.target = self
         launchAtLoginItem.state = Preference.launchAtLogin ? .on : .off
         addItem(launchAtLoginItem)
 
-        let unmountWhenItem = NSMenuItem(title: "Unmount when".localized, action: nil, keyEquivalent: "")
+        let unmountWhenItem = NSMenuItem(title: String(localized: "Unmount when"), action: nil, keyEquivalent: "")
         unmountWhenItem.submenu = buildUnmountWhenMenu()
         addItem(unmountWhenItem)
 
-        let forceUnmountItem = NSMenuItem(title: "Force unmount".localized, action: #selector(forceUnmountClicked(menuItem:)), keyEquivalent: "")
+        let forceUnmountItem = NSMenuItem(title: String(localized: "Force unmount"), action: #selector(forceUnmountClicked(menuItem:)), keyEquivalent: "")
         forceUnmountItem.target = self
         forceUnmountItem.state = Preference.forceUnmount ? .on : .off
         addItem(forceUnmountItem)
 
-        let elevatedPermissionsItem = NSMenuItem(title: "Use elevated permissions".localized, action: #selector(elevatedPermissionsClicked(menuItem:)), keyEquivalent: "")
+        let elevatedPermissionsItem = NSMenuItem(title: String(localized: "Use elevated permissions"), action: #selector(elevatedPermissionsClicked(menuItem:)), keyEquivalent: "")
         elevatedPermissionsItem.target = self
         elevatedPermissionsItem.state = elevatedPermissionsMenuState
         addItem(elevatedPermissionsItem)
 
-        let muteNotificationsItem = NSMenuItem(title: "Force mute notifications".localized, action: #selector(muteNotificationsClicked(menuItem:)), keyEquivalent: "")
+        let muteNotificationsItem = NSMenuItem(title: String(localized: "Force mute notifications"), action: #selector(muteNotificationsClicked(menuItem:)), keyEquivalent: "")
         muteNotificationsItem.target = self
         muteNotificationsItem.state = isForceMuteNotificationsEnabled() ? .on : .off
         addItem(muteNotificationsItem)
@@ -239,9 +239,9 @@ final class StatusBarMenu: NSMenu {
 
     /// Builds the submenu for selecting the unmount trigger condition.
     private func buildUnmountWhenMenu() -> NSMenu {
-        let unmountWhenMenu = NSMenu(title: "Unmount when".localized)
-        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "Display turned off".localized, unmountWhen: .screensStartedSleeping))
-        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: "System starts sleeping".localized, unmountWhen: .systemStartsSleeping))
+        let unmountWhenMenu = NSMenu(title: String(localized: "Unmount when"))
+        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "Display turned off"), unmountWhen: .screensStartedSleeping))
+        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "System starts sleeping"), unmountWhen: .systemStartsSleeping))
 
         return unmountWhenMenu
     }
@@ -259,11 +259,11 @@ final class StatusBarMenu: NSMenu {
     private func buildAppMenu() {
         addItem(NSMenuItem.separator())
 
-        let aboutItem = NSMenuItem(title: "About Ejectify".localized, action: #selector(aboutClicked), keyEquivalent: "")
+        let aboutItem = NSMenuItem(title: String(localized: "About Ejectify"), action: #selector(aboutClicked), keyEquivalent: "")
         aboutItem.target = self
         addItem(aboutItem)
 
-        let quitItem = NSMenuItem(title: "Quit Ejectify".localized, action: #selector(quitClicked), keyEquivalent: "")
+        let quitItem = NSMenuItem(title: String(localized: "Quit Ejectify"), action: #selector(quitClicked), keyEquivalent: "")
         quitItem.target = self
         addItem(quitItem)
     }
@@ -315,8 +315,8 @@ final class StatusBarMenu: NSMenu {
             }
 
             showPermissionAlert(
-                messageText: "Could not enable elevated permissions.".localized,
-                informativeText: "Check System Settings if Ejectify is enabled.".localized
+                messageText: String(localized: "Could not enable elevated permissions."),
+                informativeText: String(localized: "Check System Settings if Ejectify is enabled.")
             )
             updateMenu()
             return
@@ -325,7 +325,7 @@ final class StatusBarMenu: NSMenu {
         didSucceed = operationRouter.disablePrivilegedExecutionMode()
         guard didSucceed else {
             showPermissionAlert(
-                messageText: "Could not disable elevated permissions.".localized
+                messageText: String(localized: "Could not disable elevated permissions.")
             )
             updateMenu()
             return
@@ -360,7 +360,7 @@ final class StatusBarMenu: NSMenu {
 
             guard success else {
                 showPermissionAlert(
-                    messageText: shouldMute ? "Could not mute notifications".localized : "Could not unmute notifications".localized,
+                    messageText: shouldMute ? String(localized: "Could not mute notifications") : String(localized: "Could not unmute notifications"),
                     informativeText: details
                 )
                 updateMenu()
@@ -398,12 +398,12 @@ final class StatusBarMenu: NSMenu {
     private func showRestartRequiredAlert(shouldMute: Bool) {
         let alert = NSAlert()
         alert.alertStyle = .informational
-        alert.messageText = "Restart required".localized
+        alert.messageText = String(localized: "Restart required")
         alert.informativeText = shouldMute
-            ? "Please restart your Mac to apply the change and mute notifications.".localized
-            : "Please restart your Mac to apply the change and unmute notifications.".localized
-        alert.addButton(withTitle: "Restart".localized)
-        alert.addButton(withTitle: "Later".localized)
+            ? String(localized: "Please restart your Mac to apply the change and mute notifications.")
+            : String(localized: "Please restart your Mac to apply the change and unmute notifications.")
+        alert.addButton(withTitle: String(localized: "Restart"))
+        alert.addButton(withTitle: String(localized: "Later"))
 
         let result = alert.runModal()
         guard result == .alertFirstButtonReturn else {

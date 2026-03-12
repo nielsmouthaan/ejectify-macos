@@ -10,44 +10,27 @@ import SwiftUI
 
 /// Guides first-run users through privileged helper approval with a local-fallback escape hatch.
 @MainActor
-final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
-
-    /// Callback invoked after the window fully closes.
-    private let onDidClose: () -> Void
-
-    /// View model that owns onboarding action and polling state.
-    private let viewModel: OnboardingViewModel
+final class OnboardingWindowController: NSWindowController {
 
     /// Initializes and configures the onboarding window.
-    init(onDidClose: @escaping () -> Void) {
-        self.onDidClose = onDidClose
-        self.viewModel = OnboardingViewModel()
+    init() {
+        let hostingView = NSHostingView(rootView: OnboardingView())
+        let contentSize = hostingView.fittingSize
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 280),
-            styleMask: [.titled],
+            contentRect: NSRect(origin: .zero, size: contentSize),
+            styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
 
         super.init(window: window)
 
-        window.title = "Ejectify Setup"
-        window.delegate = self
-        window.isReleasedWhenClosed = false
-        window.isMovableByWindowBackground = false
-        window.standardWindowButton(.zoomButton)?.isHidden = true
-        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
-        window.contentView = NSHostingView(rootView: OnboardingView(viewModel: viewModel))
-
-        viewModel.setCallbacks(
-            onApproved: { [weak self] in
-                self?.handleApprovalDetected()
-            },
-            onSkipConfirmed: { [weak self] in
-                self?.handleSkipConfirmed()
-            }
-        )
+        window.titlebarAppearsTransparent = true
+        window.setContentSize(contentSize)
+        window.contentMinSize = contentSize
+        window.contentMaxSize = contentSize
+        window.contentView = hostingView
     }
 
     /// Storyboard initialization is unsupported because this controller is built in code.
@@ -65,25 +48,20 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         window.center()
         showWindow(nil)
         window.makeKeyAndOrderFront(nil)
-    }
 
-    /// Stops polling when the window has closed and notifies the owner.
-    func windowWillClose(_ notification: Notification) {
-        viewModel.stopApprovalPolling()
-        onDidClose()
-    }
+        DispatchQueue.main.async { [weak window] in
+            guard
+                let window,
+                let hostingView = window.contentView as? NSHostingView<OnboardingView>
+            else {
+                return
+            }
 
-    /// Finalizes successful onboarding, enables privileged routing, and closes the window.
-    private func handleApprovalDetected() {
-        _ = VolumeOperationRouter.shared.configureExecutionMode()
-        Preference.hasSeenOnboarding = true
-        close()
-    }
-
-    /// Applies local fallback mode after explicit user confirmation and closes onboarding.
-    private func handleSkipConfirmed() {
-        _ = VolumeOperationRouter.shared.disablePrivilegedExecutionMode()
-        Preference.hasSeenOnboarding = true
-        close()
+            let contentSize = hostingView.fittingSize
+            window.setContentSize(contentSize)
+            window.contentMinSize = contentSize
+            window.contentMaxSize = contentSize
+            window.center()
+        }
     }
 }

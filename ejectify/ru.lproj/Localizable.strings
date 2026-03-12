@@ -32,3 +32,15 @@
 "Force unmount" = "Размонтировать принудительно";
 "About Ejectify" = "Об Ejectify";
 "Quit Ejectify" = "Выйти из Ejectify";
+
+"No more %@ notifications" = "Больше никаких уведомлений «%@»";
+"Disk Not Ejected Properly" = "диск извлечен неправильно";
+"Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify автоматически пытается отключать тома, когда Mac переходит в режим сна, и подключать их снова после пробуждения.";
+"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "Предоставьте Ejectify расширенные права в [Системных настройках](x-apple.systempreferences:com.apple.LoginItems-Settings.extension) или подтвердите его через системное уведомление, чтобы надежнее монтировать и размонтировать диски.";
+"Permissions granted" = "Разрешения предоставлены";
+"Waiting for approval" = "Ожидание подтверждения";
+"Open Settings" = "Открыть настройки";
+"Close" = "Закрыть";
+"Skip" = "Пропустить";
+"Eject \"%@\" before disconnecting or turning it off." = "Извлеките \"%@\", прежде чем отключать его или выключать.";
+"USB Drive" = "USB-диск";

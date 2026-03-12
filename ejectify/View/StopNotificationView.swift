@@ -28,7 +28,12 @@ struct StopNotificationView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Disk Not Ejected Properly")
                         .fontWeight(.semibold)
-                    Text("Eject \"USB Drive\" before disconnecting or turning it off.")
+                    Text(
+                        String(
+                            format: String(localized: "Eject \"%@\" before disconnecting or turning it off."),
+                            String(localized: "USB Drive")
+                        )
+                    )
                 }
             }
             .padding(.horizontal, 16)
