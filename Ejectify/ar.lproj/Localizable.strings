@@ -1,0 +1,46 @@
+/* 
+  Localizable.strings
+  Ejectify
+
+  Created by Niels Mouthaan on 11/01/2021.
+  
+*/
+
+"Unmount all" = "قم بإلغاء تحميل الكل";
+"Volumes" = "وحدات التخزين";
+"Internal" = "داخلي";
+"External" = "خارجي";
+"Disk Images" = "صور الأقراص";
+"Preferences" = "التفضيلات";
+"Launch at login" = "تشغيل عند تسجيل الدخول";
+"Use elevated permissions" = "استخدام الأذونات المرتفعة";
+"Force mute notifications" = "فرض كتم الإشعارات";
+"Could not enable elevated permissions." = "تعذر تمكين الأذونات المرتفعة.";
+"Could not mute notifications" = "تعذر كتم الإشعارات";
+"Check System Settings if Ejectify is enabled." = "تحقق من إعدادات النظام مما إذا كان Ejectify ممكّنًا.";
+"Could not disable elevated permissions." = "تعذر تعطيل الأذونات المرتفعة.";
+"Could not unmute notifications" = "تعذر إلغاء كتم الإشعارات";
+"Restart required" = "إعادة التشغيل مطلوبة";
+"Please restart your Mac to apply the change and mute notifications." = "يرجى إعادة تشغيل جهاز Mac لتطبيق التغيير وكتم الإشعارات.";
+"Please restart your Mac to apply the change and unmute notifications." = "يرجى إعادة تشغيل جهاز Mac لتطبيق التغيير وإلغاء كتم الإشعارات.";
+"Later" = "لاحقًا";
+"Restart" = "إعادة التشغيل";
+"Unmount when" = "إخراج عند";
+"Screen is locked" = "قفل الشاشة";
+"Display turned off" = "إيقاف العرض";
+"System starts sleeping" = "الدخول في وضع السكون";
+"Force unmount" = "فرض إلغاء التحميل";
+"Help" = "المساعدة";
+"Quit Ejectify" = "إنهاء Ejectify";
+
+"No more %@ notifications" = "لا مزيد من إشعارات \"%@\"";
+"Disk Not Ejected Properly" = "لم يتم إخراج القرص بشكل صحيح";
+"Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "يحاول Ejectify إلغاء تحميل وحدات التخزين تلقائيًا عندما يدخل Mac في وضع السكون ثم يعيد تحميلها بعد الاستيقاظ.";
+"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "لزيادة الاعتمادية، امنح Ejectify أذونات مرتفعة في [إعدادات النظام](x-apple.systempreferences:com.apple.LoginItems-Settings.extension)، أو وافق عليه عبر إشعار النظام، حتى يتمكن من تحميل الأقراص وإلغاء تحميلها بشكل أكثر موثوقية.";
+"Permissions granted" = "تم منح الأذونات";
+"Waiting for approval" = "بانتظار الموافقة";
+"Open Settings" = "فتح الإعدادات";
+"Close" = "إغلاق";
+"Skip" = "تخطي";
+"Eject \"%@\" before disconnecting or turning it off." = "أخرج \"%@\" قبل فصله أو إيقاف تشغيله.";
+"USB Drive" = "محرك USB";

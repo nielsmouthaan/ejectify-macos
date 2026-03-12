@@ -1,0 +1,46 @@
+/* 
+  Localizable.strings
+  Ejectify
+
+  Created by Niels Mouthaan on 11/01/2021.
+  
+*/
+
+"Unmount all" = "Tout démonter";
+"Volumes" = "Volumes";
+"Internal" = "Interne";
+"External" = "Externe";
+"Disk Images" = "Images disque";
+"Preferences" = "Préférences";
+"Launch at login" = "Ouvrir à l'ouverture de session";
+"Use elevated permissions" = "Utiliser des autorisations élevées";
+"Force mute notifications" = "Forcer la coupure des notifications";
+"Could not enable elevated permissions." = "Impossible d'activer les autorisations élevées.";
+"Could not mute notifications" = "Impossible de couper les notifications";
+"Check System Settings if Ejectify is enabled." = "Vérifiez dans Réglages Système si Ejectify est activé.";
+"Could not disable elevated permissions." = "Impossible de désactiver les autorisations élevées.";
+"Could not unmute notifications" = "Impossible de réactiver les notifications";
+"Restart required" = "Redémarrage requis";
+"Please restart your Mac to apply the change and mute notifications." = "Veuillez redémarrer votre Mac pour appliquer la modification et couper les notifications.";
+"Please restart your Mac to apply the change and unmute notifications." = "Veuillez redémarrer votre Mac pour appliquer la modification et réactiver les notifications.";
+"Later" = "Plus tard";
+"Restart" = "Redémarrer";
+"Unmount when" = "Démonter dès que";
+"Screen is locked" = "L'écran est verrouillé";
+"Display turned off" = "L'écran est éteint";
+"System starts sleeping" = "Le système est suspendu";
+"Force unmount" = "Forcer le démontage";
+"Help" = "Aide";
+"Quit Ejectify" = "Quitter Ejectify";
+
+"No more %@ notifications" = "Plus de notifications \"%@\"";
+"Disk Not Ejected Properly" = "Erreur d’éjection du disque";
+"Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify tente automatiquement de démonter les volumes lorsque votre Mac se met en veille et de les remonter lorsqu’il se réveille.";
+"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "Accordez à Ejectify des autorisations élevées dans les [Réglages Système](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), ou approuvez-le via la notification système, afin qu’il puisse monter et démonter les disques de manière plus fiable.";
+"Permissions granted" = "Autorisations accordées";
+"Waiting for approval" = "En attente d’approbation";
+"Open Settings" = "Ouvrir les réglages";
+"Close" = "Fermer";
+"Skip" = "Ignorer";
+"Eject \"%@\" before disconnecting or turning it off." = "Éjectez \"%@\" avant de le déconnecter ou de l’éteindre.";
+"USB Drive" = "Disque USB";

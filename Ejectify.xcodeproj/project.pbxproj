@@ -11,11 +11,12 @@
 		A1B2C3D525C0AA1100ABC001 /* DAReturn+StatusDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D625C0AA1100ABC001 /* DAReturn+StatusDescription.swift */; };
 		B82E12D32570FF0F004547C7 /* Preference.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82E12D22570FF0F004547C7 /* Preference.swift */; };
 		B82E12D825710006004547C7 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = B82E12D725710006004547C7 /* LaunchAtLogin */; };
+		D2A100A32F9B100100A0C001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = D2A100A52F9B100100A0C001 /* Sparkle */; };
 		B89F412525AC9D7200E0B8C1 /* DADisk+DiskImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89F412425AC9D7200E0B8C1 /* DADisk+DiskImage.swift */; };
 		B89F412B25AC9FD800E0B8C1 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B89F412D25AC9FD800E0B8C1 /* Localizable.strings */; };
 		B8AF59E92569569A003481A8 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8AF59E82569569A003481A8 /* AppDelegate.swift */; };
 		B8AF59ED2569569B003481A8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B8AF59EC2569569B003481A8 /* Assets.xcassets */; };
-		B8AF59F32569569B003481A8 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B8AF59F12569569B003481A8 /* Main.storyboard */; };
+		B8DE32CB2F61FBA9006AA048 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DE32CA2F61FBA9006AA048 /* main.swift */; };
 		B8DFADB5256CF511009E9296 /* StatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB0256CF511009E9296 /* StatusBar.swift */; };
 		B8DFADB6256CF511009E9296 /* Volume.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB2256CF511009E9296 /* Volume.swift */; };
 		B8DFADB7256CF511009E9296 /* StatusBarMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */; };
@@ -39,6 +40,7 @@
 		D1E700A52F8A000100C0D001 /* OnboardingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */; };
 		D1E700A92F8A000100C0D001 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700AA2F8A000100C0D001 /* OnboardingView.swift */; };
 		D1E700AB2F8A000100C0D001 /* StopNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700AC2F8A000100C0D001 /* StopNotificationView.swift */; };
+		D2A100A12F9B100100A0C001 /* UpdateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2A100A22F9B100100A0C001 /* UpdateController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -94,13 +96,14 @@
 		B8AF59E52569569A003481A8 /* Ejectify.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ejectify.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8AF59E82569569A003481A8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B8AF59EC2569569B003481A8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		B8AF59F22569569B003481A8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		B8AF59F42569569B003481A8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B8AF59F52569569B003481A8 /* Ejectify.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Ejectify.entitlements; sourceTree = "<group>"; };
+		B8DE32CA2F61FBA9006AA048 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		B8DFADB0256CF511009E9296 /* StatusBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusBar.swift; sourceTree = "<group>"; };
 		B8DFADB2256CF511009E9296 /* Volume.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Volume.swift; sourceTree = "<group>"; };
 		B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusBarMenu.swift; sourceTree = "<group>"; };
 		B8DFADB9256D0565009E9296 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
+		D2A100A22F9B100100A0C001 /* UpdateController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateController.swift; sourceTree = "<group>"; };
 		C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedDiskServiceProtocol.swift; sourceTree = "<group>"; };
 		C0A100000000000000000012 /* VolumeOperationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeOperationRouter.swift; sourceTree = "<group>"; };
 		C0A100000000000000000013 /* nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist; sourceTree = "<group>"; };
@@ -125,6 +128,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B82E12D825710006004547C7 /* LaunchAtLogin in Frameworks */,
+				D2A100A32F9B100100A0C001 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -176,10 +180,10 @@
 				C0A100000000000000000021 /* Helper */,
 				B8AF59E82569569A003481A8 /* AppDelegate.swift */,
 				B8AF59EC2569569B003481A8 /* Assets.xcassets */,
-				B8AF59F12569569B003481A8 /* Main.storyboard */,
 				B8AF59F42569569B003481A8 /* Info.plist */,
 				B8AF59F52569569B003481A8 /* Ejectify.entitlements */,
 				B89F412D25AC9FD800E0B8C1 /* Localizable.strings */,
+				B8DE32CA2F61FBA9006AA048 /* main.swift */,
 			);
 			path = Ejectify;
 			sourceTree = "<group>";
@@ -190,6 +194,7 @@
 				B8DFADB9256D0565009E9296 /* ActivityController.swift */,
 				D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */,
 				D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */,
+				D2A100A22F9B100100A0C001 /* UpdateController.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -259,6 +264,7 @@
 			name = Ejectify;
 			packageProductDependencies = (
 				B82E12D725710006004547C7 /* LaunchAtLogin */,
+				D2A100A52F9B100100A0C001 /* Sparkle */,
 			);
 			productName = Ejectify;
 			productReference = B8AF59E52569569A003481A8 /* Ejectify.app */;
@@ -322,6 +328,7 @@
 			mainGroup = B8AF59DC2569569A003481A8;
 			packageReferences = (
 				B82E12D625710006004547C7 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */,
+				D2A100A42F9B100100A0C001 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			productRefGroup = B8AF59E62569569A003481A8 /* Products */;
 			projectDirPath = "";
@@ -338,7 +345,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B8AF59F32569569B003481A8 /* Main.storyboard in Resources */,
 				B89F412B25AC9FD800E0B8C1 /* Localizable.strings in Resources */,
 				B8AF59ED2569569B003481A8 /* Assets.xcassets in Resources */,
 			);
@@ -388,8 +394,10 @@
 				B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */,
 				D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */,
 				B82E12D32570FF0F004547C7 /* Preference.swift in Sources */,
+				B8DE32CB2F61FBA9006AA048 /* main.swift in Sources */,
 				B89F412525AC9D7200E0B8C1 /* DADisk+DiskImage.swift in Sources */,
 				D1E700A92F8A000100C0D001 /* OnboardingView.swift in Sources */,
+				D2A100A12F9B100100A0C001 /* UpdateController.swift in Sources */,
 				B8DFADB5256CF511009E9296 /* StatusBar.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -438,14 +446,6 @@
 				B801B8192B4EA8BE00EC23D1 /* tr */,
 			);
 			name = Localizable.strings;
-			sourceTree = "<group>";
-		};
-		B8AF59F12569569B003481A8 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				B8AF59F22569569B003481A8 /* Base */,
-			);
-			name = Main.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -706,6 +706,14 @@
 				minimumVersion = 4.0.0;
 			};
 		};
+		D2A100A42F9B100100A0C001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -713,6 +721,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = B82E12D625710006004547C7 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */;
 			productName = LaunchAtLogin;
+		};
+		D2A100A52F9B100100A0C001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D2A100A42F9B100100A0C001 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,0 +1,46 @@
+/* 
+  Localizable.strings
+  Ejectify
+
+  Created by Niels Mouthaan on 11/01/2021.
+  
+*/
+
+"Unmount all" = "Извлечь все";
+"Volumes" = "Тома";
+"Internal" = "Внутренние";
+"External" = "Внешние";
+"Disk Images" = "Образы дисков";
+"Preferences" = "Настройки";
+"Launch at login" = "Запускать при старте";
+"Use elevated permissions" = "Использовать повышенные права";
+"Force mute notifications" = "Принудительно отключить уведомления";
+"Could not enable elevated permissions." = "Не удалось включить повышенные права.";
+"Could not mute notifications" = "Не удалось отключить уведомления";
+"Check System Settings if Ejectify is enabled." = "Проверьте в «Системных настройках», включён ли Ejectify.";
+"Could not disable elevated permissions." = "Не удалось отключить повышенные права.";
+"Could not unmute notifications" = "Не удалось снова включить уведомления";
+"Restart required" = "Требуется перезагрузка";
+"Please restart your Mac to apply the change and mute notifications." = "Перезагрузите Mac, чтобы применить изменение и отключить уведомления.";
+"Please restart your Mac to apply the change and unmute notifications." = "Перезагрузите Mac, чтобы применить изменение и снова включить уведомления.";
+"Later" = "Позже";
+"Restart" = "Перезагрузить";
+"Unmount when" = "Извлечь когда";
+"Screen is locked" = "Экран заблокирован";
+"Display turned off" = "Дисплей выключен";
+"System starts sleeping" = "Система перешла в сон";
+"Force unmount" = "Размонтировать принудительно";
+"Help" = "Справка";
+"Quit Ejectify" = "Выйти из Ejectify";
+
+"No more %@ notifications" = "Больше никаких уведомлений «%@»";
+"Disk Not Ejected Properly" = "диск извлечен неправильно";
+"Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify автоматически пытается отключать тома, когда Mac переходит в режим сна, и подключать их снова после пробуждения.";
+"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "Предоставьте Ejectify расширенные права в [Системных настройках](x-apple.systempreferences:com.apple.LoginItems-Settings.extension) или подтвердите его через системное уведомление, чтобы надежнее монтировать и размонтировать диски.";
+"Permissions granted" = "Разрешения предоставлены";
+"Waiting for approval" = "Ожидание подтверждения";
+"Open Settings" = "Открыть настройки";
+"Close" = "Закрыть";
+"Skip" = "Пропустить";
+"Eject \"%@\" before disconnecting or turning it off." = "Извлеките \"%@\", прежде чем отключать его или выключать.";
+"USB Drive" = "USB-диск";
