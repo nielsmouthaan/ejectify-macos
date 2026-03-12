@@ -113,12 +113,15 @@ EXPORT_DIR="$BUILD_DIR/export"
 EXPORT_OPTIONS_PLIST="$BUILD_DIR/ExportOptions.plist"
 
 require_command xcodebuild
-require_command create-dmg
 require_command codesign
 require_command xcrun
 require_command ditto
 require_command defaults
 require_command find
+
+if [[ -z "$PUBLISH_PATH" ]]; then
+  require_command create-dmg
+fi
 
 mkdir -p "$BUILD_DIR" "$DIST_DIR"
 
@@ -159,60 +162,36 @@ fi
 APP_VERSION="$(defaults read "$APP_PATH/Contents/Info" CFBundleShortVersionString)"
 DOWNLOAD_URL_PREFIX="https://ejectify.app/updates"
 SPARKLE_ZIP_PATH="$DIST_DIR/${SCHEME}-${APP_VERSION}.zip"
+NOTARY_ZIP_PATH="$BUILD_DIR/${SCHEME}-${APP_VERSION}-notary.zip"
+DMG_PATH=""
+APPCAST_PATH=""
 
 if [[ -n "$PUBLISH_PATH" ]]; then
   mkdir -p "$PUBLISH_PATH"
+else
+  rm -f "$SPARKLE_ZIP_PATH"
 fi
 
 echo "Verifying app signature..."
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
-echo "Submitting app for notarization..."
-xcrun notarytool submit "$APP_PATH" \
-  --keychain-profile "$NOTARY_PROFILE" \
-  --wait
-
-echo "Stapling app notarization ticket..."
-xcrun stapler staple "$APP_PATH"
-
-if command -v spctl >/dev/null 2>&1; then
-  echo "Gatekeeper app assessment (informational):"
-  spctl -a -vvv -t execute "$APP_PATH" || true
-fi
-
-echo "Creating signed DMG (automatic identity detection)..."
-create-dmg --overwrite "$APP_PATH" "$DIST_DIR"
-
-echo "Locating generated DMG..."
-DMG_PATH="$(find "$DIST_DIR" -maxdepth 1 -type f -name '*.dmg' -print0 | xargs -0 ls -t | head -n 1)"
-
-if [[ -z "$DMG_PATH" || ! -f "$DMG_PATH" ]]; then
-  echo "No DMG found in $DIST_DIR after packaging." >&2
-  exit 1
-fi
-
-echo "Verifying DMG signature..."
-codesign --verify --strict "$DMG_PATH"
-
-echo "Submitting DMG for notarization..."
-xcrun notarytool submit "$DMG_PATH" \
-  --keychain-profile "$NOTARY_PROFILE" \
-  --wait
-
-echo "Stapling DMG notarization ticket..."
-xcrun stapler staple "$DMG_PATH"
-
-echo "Validating stapled DMG ticket..."
-xcrun stapler validate "$DMG_PATH"
-
-if command -v spctl >/dev/null 2>&1; then
-  echo "Gatekeeper DMG assessment (informational):"
-  spctl -a -vvv -t open "$DMG_PATH" || true
-fi
-
-APPCAST_PATH=""
-
 if [[ -n "$PUBLISH_PATH" ]]; then
+  echo "Creating app notarization archive..."
+  ditto -c -k --keepParent "$APP_PATH" "$NOTARY_ZIP_PATH"
+
+  echo "Submitting app archive for notarization..."
+  xcrun notarytool submit "$NOTARY_ZIP_PATH" \
+    --keychain-profile "$NOTARY_PROFILE" \
+    --wait
+
+  echo "Stapling app notarization ticket..."
+  xcrun stapler staple "$APP_PATH"
+
+  if command -v spctl >/dev/null 2>&1; then
+    echo "Gatekeeper app assessment (informational):"
+    spctl -a -vvv -t execute "$APP_PATH" || true
+  fi
+
   echo "Creating Sparkle update archive..."
   ditto -c -k --keepParent "$APP_PATH" "$SPARKLE_ZIP_PATH"
 
@@ -240,13 +219,45 @@ if [[ -n "$PUBLISH_PATH" ]]; then
   cp "$APPCAST_PATH" "$PUBLISH_PATH/appcast.xml"
 
   echo "Published Sparkle artifacts to: $PUBLISH_PATH"
+else
+  echo "Creating signed DMG (automatic identity detection)..."
+  create-dmg --overwrite "$APP_PATH" "$DIST_DIR"
+
+  echo "Locating generated DMG..."
+  DMG_PATH="$(find "$DIST_DIR" -maxdepth 1 -type f -name '*.dmg' -print0 | xargs -0 ls -t | head -n 1)"
+
+  if [[ -z "$DMG_PATH" || ! -f "$DMG_PATH" ]]; then
+    echo "No DMG found in $DIST_DIR after packaging." >&2
+    exit 1
+  fi
+
+  echo "Verifying DMG signature..."
+  codesign --verify --strict "$DMG_PATH"
+
+  echo "Submitting DMG for notarization..."
+  xcrun notarytool submit "$DMG_PATH" \
+    --keychain-profile "$NOTARY_PROFILE" \
+    --wait
+
+  echo "Stapling DMG notarization ticket..."
+  xcrun stapler staple "$DMG_PATH"
+
+  echo "Validating stapled DMG ticket..."
+  xcrun stapler validate "$DMG_PATH"
+
+  if command -v spctl >/dev/null 2>&1; then
+    echo "Gatekeeper DMG assessment (informational):"
+    spctl -a -vvv -t open "$DMG_PATH" || true
+  fi
 fi
 
 echo "Done."
 echo "Project: $PROJECT_PATH"
 echo "Scheme: $SCHEME"
 echo "App: $APP_PATH"
-echo "DMG: $DMG_PATH"
+if [[ -n "$DMG_PATH" ]]; then
+  echo "DMG: $DMG_PATH"
+fi
 if [[ -n "$PUBLISH_PATH" ]]; then
   echo "Sparkle ZIP: $SPARKLE_ZIP_PATH"
   echo "Appcast: $APPCAST_PATH"
