@@ -20,10 +20,18 @@ struct OnboardingView: View {
     
     /// Polling task used to periodically check helper approval status.
     @State private var approvalPollingTask: Task<Void, Never>?
-
+    
     /// Measured rendered width of the localized title text.
     @State private var titleWidth: CGFloat = 0
 
+    /// Action that closes the onboarding window.
+    private let closeAction: () -> Void
+
+    /// Creates onboarding view with an injected close action.
+    init(closeAction: @escaping () -> Void = {}) {
+        self.closeAction = closeAction
+    }
+    
     var body: some View {
         VStack(spacing: 32) {
             StopNotificationView()
@@ -38,13 +46,13 @@ struct OnboardingView: View {
                             .preference(key: TitleWidthPreferenceKey.self, value: geometry.size.width)
                     }
                 }
-
+            
             Text("Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes.")
-                .frame(width: titleWidth)
+                .frame(width: titleWidth == 0 ? nil : titleWidth)
                 .fixedSize(horizontal: false, vertical: true)
             
             Text(.init("Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably."))
-                .frame(width: titleWidth)
+                .frame(width: titleWidth == 0 ? nil : titleWidth)
                 .fixedSize(horizontal: false, vertical: true)
             
             Button {
@@ -70,8 +78,11 @@ struct OnboardingView: View {
             .buttonStyle(.link)
         }
         .multilineTextAlignment(.center)
-        .frame(width: titleWidth)
+        .frame(width: titleWidth == 0 ? nil : titleWidth)
         .padding(24)
+        .background {
+            OnboardingGlassBackground()
+        }
         .onPreferenceChange(TitleWidthPreferenceKey.self) { width in
             titleWidth = width
         }
@@ -92,29 +103,29 @@ struct OnboardingView: View {
     /// Handles the secondary action by skipping approval or closing after approval.
     private func closeClicked() {
         Preference.hasCompletedOnboarding = true
-        NSApp.keyWindow?.performClose(nil)
+        closeAction()
     }
-
+    
     /// Localized title with the localized system warning phrase highlighted.
     private var titleText: Text {
         let warningPhrase = String(localized: "Disk Not Ejected Properly")
         let title = String(format: String(localized: "No more %@ notifications"), warningPhrase)
-
+        
         guard let range = title.range(of: warningPhrase) else {
             return Text(title)
         }
-
+        
         let prefix = String(title[..<range.lowerBound])
         let suffix = String(title[range.upperBound...])
         return Text(prefix) + Text(warningPhrase).fontWeight(.semibold) + Text(suffix)
     }
-
+    
     /// Starts periodic daemon-status monitoring if not already active.
     private func startDaemonStatusMonitoring() {
         guard approvalPollingTask == nil else {
             return
         }
-
+        
         approvalPollingTask = Task {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
@@ -134,14 +145,26 @@ struct OnboardingView: View {
         approvalPollingTask?.cancel()
         approvalPollingTask = nil
     }
-
+    
     /// Preference key used to pass measured title width up the view hierarchy.
     private struct TitleWidthPreferenceKey: PreferenceKey {
-
+        
         static let defaultValue: CGFloat = 0
-
+        
         static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
             value = max(value, nextValue())
+        }
+    }
+    
+    /// Applies a Liquid Glass-style onboarding background with a material fallback.
+    private struct OnboardingGlassBackground: View {
+        var body: some View {
+            let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
+            shape
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    shape.fill(.background.opacity(0.8))
+                )
         }
     }
 }

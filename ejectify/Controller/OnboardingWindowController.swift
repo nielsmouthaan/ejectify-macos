@@ -12,25 +12,33 @@ import SwiftUI
 @MainActor
 final class OnboardingWindowController: NSWindowController {
 
+    /// SwiftUI host view used for dynamic window content-size fitting.
+    private let hostingView: NSHostingView<OnboardingView>
+
     /// Initializes and configures the onboarding window.
     init() {
-        let hostingView = NSHostingView(rootView: OnboardingView())
+        self.hostingView = NSHostingView(rootView: OnboardingView())
         let contentSize = hostingView.fittingSize
 
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: contentSize),
-            styleMask: [.titled, .closable],
+            styleMask: [.closable],
             backing: .buffered,
             defer: false
         )
 
         super.init(window: window)
 
-        window.titlebarAppearsTransparent = true
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.isMovableByWindowBackground = true
         window.setContentSize(contentSize)
         window.contentMinSize = contentSize
         window.contentMaxSize = contentSize
         window.contentView = hostingView
+        hostingView.rootView = OnboardingView(closeAction: { [weak self] in
+            self?.window?.close()
+        })
     }
 
     /// Storyboard initialization is unsupported because this controller is built in code.
@@ -48,20 +56,5 @@ final class OnboardingWindowController: NSWindowController {
         window.center()
         showWindow(nil)
         window.makeKeyAndOrderFront(nil)
-
-        DispatchQueue.main.async { [weak window] in
-            guard
-                let window,
-                let hostingView = window.contentView as? NSHostingView<OnboardingView>
-            else {
-                return
-            }
-
-            let contentSize = hostingView.fittingSize
-            window.setContentSize(contentSize)
-            window.contentMinSize = contentSize
-            window.contentMaxSize = contentSize
-            window.center()
-        }
     }
 }

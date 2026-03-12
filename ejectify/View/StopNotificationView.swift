@@ -11,20 +11,21 @@ import SwiftUI
 struct StopNotificationView: View {
 
     @State private var isAnimatingHandSymbol = false
-
+    @Environment(\.colorScheme) private var colorScheme
+    
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20)
-                .fill(.white)
-                .stroke(.white, lineWidth: 2)
-                .shadow(color: .black.opacity(0.1), radius: 24, x: 0, y: 10)
+                .fill(Color(nsColor: .controlBackgroundColor))
+                .stroke(.primary.opacity(0.2), lineWidth: colorScheme == .dark ? 1 : 0)
+                .shadow(color: .primary.opacity(colorScheme == .dark ? 0.05 : 0.1), radius: 24, x: 0, y: 10)
             HStack(alignment: .center, spacing: 16) {
                 Image(.finderIcon)
                     .resizable()
                     .interpolation(.high)
                     .scaledToFit()
                     .frame(width: 32, height: 32)
-                    .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                    .shadow(color: .primary.opacity(0.3), radius: 1, x: 0, y: 1)
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Disk Not Ejected Properly")
                         .fontWeight(.semibold)
@@ -35,12 +36,13 @@ struct StopNotificationView: View {
                         )
                     )
                 }
+                .multilineTextAlignment(.leading)
             }
             .padding(.horizontal, 16)
             Image(systemName: "hand.raised.circle.fill")
                 .font(.system(size: 54))
                 .foregroundStyle(.red)
-                .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
+                .shadow(color: .primary.opacity(0.2), radius: 1, x: 0, y: 1)
                 .background {
                     Circle()
                         .fill(.ultraThinMaterial)
@@ -60,6 +62,5 @@ struct StopNotificationView: View {
 }
 
 #Preview {
-    StopNotificationView()
-        .padding(100)
+    OnboardingView()
 }
