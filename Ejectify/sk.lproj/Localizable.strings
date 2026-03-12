@@ -31,3 +31,15 @@
 "Force unmount" = "Vynútiť vysunutie";
 "Help" = "Pomoc";
 "Quit Ejectify" = "Ukončiť Ejectify";
+
+"No more %@ notifications" = "Už žiadne upozornenia „%@“";
+"Disk Not Ejected Properly" = "Disk bol nesprávne vysunutý";
+"Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify sa automaticky pokúsi odpojiť zväzky, keď váš Mac prejde do spánku, a po prebudení ich znova pripojí.";
+"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "Pre vyššiu spoľahlivosť udeľte Ejectify zvýšené oprávnenia v [Systémových nastaveniach](x-apple.systempreferences:com.apple.LoginItems-Settings.extension) alebo ho schváľte cez systémové upozornenie, aby mohol spoľahlivejšie pripájať a odpájať disky.";
+"Permissions granted" = "Povolenia udelené";
+"Waiting for approval" = "Čaká sa na schválenie";
+"Open Settings" = "Otvoriť nastavenia";
+"Close" = "Zavrieť";
+"Skip" = "Preskočiť";
+"Eject \"%@\" before disconnecting or turning it off." = "Pred odpojením alebo vypnutím vysuňte „%@“.";
+"USB Drive" = "USB disk";

@@ -14,7 +14,6 @@
 		D2A100A32F9B100100A0C001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = D2A100A52F9B100100A0C001 /* Sparkle */; };
 		B89F412525AC9D7200E0B8C1 /* DADisk+DiskImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89F412425AC9D7200E0B8C1 /* DADisk+DiskImage.swift */; };
 		B89F412B25AC9FD800E0B8C1 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B89F412D25AC9FD800E0B8C1 /* Localizable.strings */; };
-		B89F413025ACA09700E0B8C1 /* String+Localized.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89F412F25ACA09700E0B8C1 /* String+Localized.swift */; };
 		B8AF59E92569569A003481A8 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8AF59E82569569A003481A8 /* AppDelegate.swift */; };
 		B8AF59ED2569569B003481A8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B8AF59EC2569569B003481A8 /* Assets.xcassets */; };
 		B8DE32CB2F61FBA9006AA048 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DE32CA2F61FBA9006AA048 /* main.swift */; };
@@ -39,7 +38,6 @@
 		D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */; };
 		D1E700A42F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */; };
 		D1E700A52F8A000100C0D001 /* OnboardingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */; };
-		D1E700A72F8A000100C0D001 /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A82F8A000100C0D001 /* OnboardingViewModel.swift */; };
 		D1E700A92F8A000100C0D001 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700AA2F8A000100C0D001 /* OnboardingView.swift */; };
 		D1E700AB2F8A000100C0D001 /* StopNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700AC2F8A000100C0D001 /* StopNotificationView.swift */; };
 		D2A100A12F9B100100A0C001 /* UpdateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2A100A22F9B100100A0C001 /* UpdateController.swift */; };
@@ -90,7 +88,6 @@
 		B85E040225B1EA1700CA51C5 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B89F412425AC9D7200E0B8C1 /* DADisk+DiskImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DADisk+DiskImage.swift"; sourceTree = "<group>"; };
 		B89F412C25AC9FD800E0B8C1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		B89F412F25ACA09700E0B8C1 /* String+Localized.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Localized.swift"; sourceTree = "<group>"; };
 		B89F413225ACA19B00E0B8C1 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B89F413425ACA62200E0B8C1 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B89F413725AEE3D000E0B8C1 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -120,7 +117,6 @@
 		D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSleepPowerObserver.swift; sourceTree = "<group>"; };
 		D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperLifecycleManager.swift; sourceTree = "<group>"; };
 		D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindowController.swift; sourceTree = "<group>"; };
-		D1E700A82F8A000100C0D001 /* OnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModel.swift; sourceTree = "<group>"; };
 		D1E700AA2F8A000100C0D001 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		D1E700AC2F8A000100C0D001 /* StopNotificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopNotificationView.swift; sourceTree = "<group>"; };
 		F22E193528F67EE100899BDE /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -150,7 +146,6 @@
 			isa = PBXGroup;
 			children = (
 				B89F412425AC9D7200E0B8C1 /* DADisk+DiskImage.swift */,
-				B89F412F25ACA09700E0B8C1 /* String+Localized.swift */,
 				A1B2C3D625C0AA1100ABC001 /* DAReturn+StatusDescription.swift */,
 				C0A100000000000000000054 /* SMAppService+StatusDescription.swift */,
 			);
@@ -198,7 +193,6 @@
 			children = (
 				B8DFADB9256D0565009E9296 /* ActivityController.swift */,
 				D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */,
-				D1E700A82F8A000100C0D001 /* OnboardingViewModel.swift */,
 				D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */,
 				D2A100A22F9B100100A0C001 /* UpdateController.swift */,
 			);
@@ -394,10 +388,8 @@
 				C0A100000000000000000002 /* VolumeOperationRouter.swift in Sources */,
 				B8DFADB7256CF511009E9296 /* StatusBarMenu.swift in Sources */,
 				B8DFADB6256CF511009E9296 /* Volume.swift in Sources */,
-				B89F413025ACA09700E0B8C1 /* String+Localized.swift in Sources */,
 				B8AF59E92569569A003481A8 /* AppDelegate.swift in Sources */,
 				D1E700A52F8A000100C0D001 /* OnboardingWindowController.swift in Sources */,
-				D1E700A72F8A000100C0D001 /* OnboardingViewModel.swift in Sources */,
 				D1E700AB2F8A000100C0D001 /* StopNotificationView.swift in Sources */,
 				B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */,
 				D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */,

@@ -81,10 +81,4 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
 
         return !isDaemonEnabled
     }
-
-    /// Opens System Settings directly at Login Items to guide helper approval.
-    func openSystemSettingsLoginItems() {
-        SMAppService.openSystemSettingsLoginItems()
-    }
-
 }

@@ -18,7 +18,7 @@ final class StatusBar {
     init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.menu = StatusBarMenu()
-
+        
         if let statusBarButton = statusItem.button {
             statusBarButton.image = NSImage(named: "StatusBarIcon")
             statusBarButton.image?.size = NSSize(width: 16.0, height: 16.0)

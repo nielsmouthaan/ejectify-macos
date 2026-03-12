@@ -33,3 +33,15 @@
 "Help" = "Help";
 "Check for Updates…" = "Check for Updates…";
 "Quit Ejectify" = "Quit Ejectify";
+
+"No more %@ notifications" = "No more %@ notifications";
+"Disk Not Ejected Properly" = "Disk Not Ejected Properly";
+"Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes.";
+"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably.";
+"Permissions granted" = "Permissions granted";
+"Waiting for approval" = "Waiting for approval";
+"Open Settings" = "Open Settings";
+"Close" = "Close";
+"Skip" = "Skip";
+"Eject \"%@\" before disconnecting or turning it off." = "Eject \"%@\" before disconnecting or turning it off.";
+"USB Drive" = "USB Drive";

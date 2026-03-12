@@ -32,3 +32,15 @@
 "Force unmount" = "فرض إلغاء التحميل";
 "Help" = "المساعدة";
 "Quit Ejectify" = "إنهاء Ejectify";
+
+"No more %@ notifications" = "لا مزيد من إشعارات \"%@\"";
+"Disk Not Ejected Properly" = "لم يتم إخراج القرص بشكل صحيح";
+"Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "يحاول Ejectify إلغاء تحميل وحدات التخزين تلقائيًا عندما يدخل Mac في وضع السكون ثم يعيد تحميلها بعد الاستيقاظ.";
+"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "لزيادة الاعتمادية، امنح Ejectify أذونات مرتفعة في [إعدادات النظام](x-apple.systempreferences:com.apple.LoginItems-Settings.extension)، أو وافق عليه عبر إشعار النظام، حتى يتمكن من تحميل الأقراص وإلغاء تحميلها بشكل أكثر موثوقية.";
+"Permissions granted" = "تم منح الأذونات";
+"Waiting for approval" = "بانتظار الموافقة";
+"Open Settings" = "فتح الإعدادات";
+"Close" = "إغلاق";
+"Skip" = "تخطي";
+"Eject \"%@\" before disconnecting or turning it off." = "أخرج \"%@\" قبل فصله أو إيقاف تشغيله.";
+"USB Drive" = "محرك USB";

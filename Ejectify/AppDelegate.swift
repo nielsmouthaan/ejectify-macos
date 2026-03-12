@@ -51,18 +51,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Presents the onboarding window once when startup guidance for helper approval is still needed.
     private func presentOnboardingIfNeeded() {
-//        guard !Preference.hasSeenOnboarding else {
-//            return
-//        }
-//
-//        guard !VolumeOperationRouter.shared.isDaemonEnabled else {
+//        guard !Preference.hasCompletedOnboarding else {
 //            return
 //        }
 
-        let controller = OnboardingWindowController { [weak self] in
-            self?.onboardingWindowController = nil
-        }
-        onboardingWindowController = controller
-        controller.showCentered()
+        onboardingWindowController = OnboardingWindowController()
+        onboardingWindowController?.showCentered()
     }
 }
