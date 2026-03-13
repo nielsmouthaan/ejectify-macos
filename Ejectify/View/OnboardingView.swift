@@ -11,16 +11,16 @@ import ServiceManagement
 
 /// SwiftUI content rendered inside the onboarding window controller.
 struct OnboardingView: View {
-    
-    /// Whether the user has already requested approval via the Open Settings action.
-    @State private var didRequestApproval = false
-    
+
+    /// Whether helper approval is still pending for the current onboarding session.
+    @State private var isAwaitingApproval = !VolumeOperationRouter.shared.isDaemonEnabled
+
     /// Whether privileged helper permissions are currently granted.
     @State private var isPermissionsGranted = VolumeOperationRouter.shared.isDaemonEnabled
-    
+
     /// Polling task used to periodically check helper approval status.
     @State private var approvalPollingTask: Task<Void, Never>?
-    
+
     /// Measured rendered width of the localized title text.
     @State private var titleWidth: CGFloat = 0
 
@@ -31,7 +31,7 @@ struct OnboardingView: View {
     init(closeAction: @escaping () -> Void = {}) {
         self.closeAction = closeAction
     }
-    
+
     var body: some View {
         VStack(spacing: 32) {
             StopNotificationView()
@@ -60,7 +60,7 @@ struct OnboardingView: View {
             } label: {
                 if isPermissionsGranted {
                     Label("Permissions granted", systemImage: "checkmark.circle.fill")
-                } else if didRequestApproval {
+                } else if isAwaitingApproval {
                     HStack(spacing: 8) {
                         ProgressView()
                             .controlSize(.small)
@@ -71,7 +71,7 @@ struct OnboardingView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .disabled(isPermissionsGranted || didRequestApproval)
+            .disabled(isPermissionsGranted)
             Button(isPermissionsGranted ? "Close" : "Skip") {
                 closeClicked()
             }
@@ -87,45 +87,45 @@ struct OnboardingView: View {
             titleWidth = width
         }
         .onAppear {
+            Preference.hasSeenOnboarding = true
             startDaemonStatusMonitoring()
         }
         .onDisappear {
             stopDaemonStatusMonitoring()
         }
     }
-    
+
     /// Opens System Settings to guide users to the elevated-permissions approval UI.
     private func openSettingsClicked() {
-        didRequestApproval = true
+        isAwaitingApproval = true
         SMAppService.openSystemSettingsLoginItems()
     }
-    
+
     /// Handles the secondary action by skipping approval or closing after approval.
     private func closeClicked() {
-        Preference.hasCompletedOnboarding = true
         closeAction()
     }
-    
+
     /// Localized title with the localized system warning phrase highlighted.
     private var titleText: Text {
         let warningPhrase = String(localized: "Disk Not Ejected Properly")
         let title = String(format: String(localized: "No more %@ notifications"), warningPhrase)
-        
+
         guard let range = title.range(of: warningPhrase) else {
             return Text(title)
         }
-        
+
         let prefix = String(title[..<range.lowerBound])
         let suffix = String(title[range.upperBound...])
         return Text(prefix) + Text(warningPhrase).fontWeight(.semibold) + Text(suffix)
     }
-    
+
     /// Starts periodic daemon-status monitoring if not already active.
     private func startDaemonStatusMonitoring() {
         guard approvalPollingTask == nil else {
             return
         }
-        
+
         approvalPollingTask = Task {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
@@ -135,27 +135,30 @@ struct OnboardingView: View {
                 let isDaemonEnabled = VolumeOperationRouter.shared.isDaemonEnabled
                 await MainActor.run {
                     isPermissionsGranted = isDaemonEnabled
+                    if isDaemonEnabled {
+                        isAwaitingApproval = false
+                    }
                 }
             }
         }
     }
-    
+
     /// Stops daemon-status monitoring and clears associated in-memory state.
     private func stopDaemonStatusMonitoring() {
         approvalPollingTask?.cancel()
         approvalPollingTask = nil
     }
-    
+
     /// Preference key used to pass measured title width up the view hierarchy.
     private struct TitleWidthPreferenceKey: PreferenceKey {
-        
+
         static let defaultValue: CGFloat = 0
-        
+
         static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
             value = max(value, nextValue())
         }
     }
-    
+
     /// Applies a Liquid Glass-style onboarding background with a material fallback.
     private struct OnboardingGlassBackground: View {
         var body: some View {

@@ -27,16 +27,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Owns the onboarding window lifecycle while guidance is presented.
     private var onboardingWindowController: OnboardingWindowController?
 
-    /// Bootstraps routing mode and initializes primary app controllers.
+    /// Bootstraps routing mode, applies one-time first-run setup, and initializes primary app controllers.
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        let isFirstLaunch = !Preference.hasSeenOnboarding
         VolumeOperationRouter.shared.configureExecutionMode()
+
+        if isFirstLaunch {
+            Preference.launchAtLogin = true
+
+            // First launch is the only automatic registration attempt so macOS can surface helper approval once; later retries only happen after explicit user action.
+            VolumeOperationRouter.shared.requestPrivilegedExecutionMode()
+        }
 
         statusBar = StatusBar()
         activityController = ActivityController()
         let updateController = UpdateController()
         self.updateController = updateController
         updateController.start()
-        presentOnboardingIfNeeded()
+
+        if isFirstLaunch {
+            showOnboarding()
+        }
     }
 
     /// Starts a user-initiated Sparkle update check.
@@ -49,12 +60,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         VolumeOperationRouter.shared.requestHelperTermination()
     }
 
-    /// Presents the onboarding window once when startup guidance for helper approval is still needed.
-    private func presentOnboardingIfNeeded() {
-        guard !Preference.hasCompletedOnboarding else {
-            return
-        }
-
+    /// Presents the onboarding window.
+    private func showOnboarding() {
         onboardingWindowController = OnboardingWindowController()
         onboardingWindowController?.showCentered()
     }

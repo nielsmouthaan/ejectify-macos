@@ -69,17 +69,14 @@ enum Preference {
         }
     }
 
-    /// Tracks whether startup onboarding has already been completed.
-    static var hasCompletedOnboarding: Bool {
+    /// Tracks whether the one-time onboarding window has already been shown.
+    static var hasSeenOnboarding: Bool {
         get {
-            if UserDefaults.standard.object(forKey: "preference.hasCompletedOnboarding") != nil {
-                return UserDefaults.standard.bool(forKey: "preference.hasCompletedOnboarding")
-            }
             return UserDefaults.standard.bool(forKey: "preference.hasSeenOnboarding")
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: "preference.hasCompletedOnboarding")
-            logger.info("Preference changed: hasCompletedOnboarding=\(newValue, privacy: .public)")
+            UserDefaults.standard.set(newValue, forKey: "preference.hasSeenOnboarding")
+            logger.info("Preference changed: hasSeenOnboarding=\(newValue, privacy: .public)")
         }
     }
 }
