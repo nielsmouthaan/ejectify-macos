@@ -71,7 +71,7 @@ struct OnboardingView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .disabled(isPermissionsGranted)
+            .disabled(isPermissionsGranted || didRequestApproval)
             Button(isPermissionsGranted ? "Close" : "Skip") {
                 closeClicked()
             }

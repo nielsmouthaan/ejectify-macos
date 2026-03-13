@@ -17,28 +17,24 @@ final class OnboardingWindowController: NSWindowController {
 
     /// Initializes and configures the onboarding window.
     init() {
-        self.hostingView = NSHostingView(rootView: OnboardingView())
-        let contentSize = hostingView.fittingSize
-
         let window = NSWindow(
-            contentRect: NSRect(origin: .zero, size: contentSize),
+            contentRect: NSRect(origin: .zero, size: NSZeroSize),
             styleMask: [.closable],
             backing: .buffered,
             defer: false
         )
+        self.hostingView = NSHostingView(rootView: OnboardingView())
 
         super.init(window: window)
 
         window.isOpaque = false
         window.backgroundColor = .clear
         window.isMovableByWindowBackground = true
-        window.setContentSize(contentSize)
-        window.contentMinSize = contentSize
-        window.contentMaxSize = contentSize
         window.contentView = hostingView
         hostingView.rootView = OnboardingView(closeAction: { [weak self] in
             self?.window?.close()
         })
+        updateWindowSize()
     }
 
     /// Storyboard initialization is unsupported because this controller is built in code.
@@ -53,8 +49,22 @@ final class OnboardingWindowController: NSWindowController {
         }
 
         NSApp.activate(ignoringOtherApps: true)
-        window.center()
         showWindow(nil)
+        updateWindowSize()
+        window.center()
         window.makeKeyAndOrderFront(nil)
+    }
+
+    /// Recomputes the window size from the current SwiftUI content before presentation.
+    private func updateWindowSize() {
+        guard let window else {
+            return
+        }
+
+        hostingView.layoutSubtreeIfNeeded()
+        let contentSize = hostingView.fittingSize
+        window.setContentSize(contentSize)
+        window.contentMinSize = contentSize
+        window.contentMaxSize = contentSize
     }
 }
