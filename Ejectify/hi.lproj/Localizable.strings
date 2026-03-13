@@ -36,10 +36,11 @@
 "No more %@ notifications" = "अब \"%@\" सूचनाएं नहीं";
 "Disk Not Ejected Properly" = "डिस्क को ठीक से इजेक्ट नहीं किया गया";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "जब आपका Mac स्लीप में जाता है, Ejectify अपने-आप वॉल्यूम अनमाउंट करने की कोशिश करता है और जागने पर उन्हें फिर से माउंट करता है।";
-"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "डिस्क को अधिक भरोसेमंद तरीके से माउंट और अनमाउंट करने के लिए [सिस्टम सेटिंग्स](x-apple.systempreferences:com.apple.LoginItems-Settings.extension) में Ejectify को ऊंची अनुमति दें, या सिस्टम नोटिफिकेशन से इसे अनुमोदित करें।";
+"Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "डिस्क को अधिक भरोसेमंद तरीके से माउंट और अनमाउंट करने के लिए सिस्टम सेटिंग्स में Ejectify को ऊंची अनुमति दें, या सिस्टम नोटिफिकेशन से इसे अनुमोदित करें।";
 "Permissions granted" = "अनुमतियां मिल गईं";
 "Waiting for approval" = "अनुमोदन की प्रतीक्षा है";
-"Open Settings" = "सेटिंग्स खोलें";
+"Open System Settings" = "सिस्टम सेटिंग्स खोलें";
+"Permissions denied" = "अनुमतियां अस्वीकृत";
 "Close" = "बंद करें";
 "Skip" = "छोड़ें";
 "Eject \"%@\" before disconnecting or turning it off." = "\"%@\" को डिस्कनेक्ट या बंद करने से पहले इजेक्ट करें।";

@@ -36,10 +36,11 @@
 "No more %@ notifications" = "Geen \"%@\"-meldingen meer";
 "Disk Not Ejected Properly" = "Schijf niet juist verwijderd";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify probeert automatisch volumes te ontkoppelen wanneer je Mac in de sluimerstand gaat en ze opnieuw te koppelen wanneer hij weer actief wordt.";
-"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "Geef Ejectify verhoogde bevoegdheden in [Systeeminstellingen](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), of keur het goed via de systeemmelding, zodat het schijven betrouwbaarder kan koppelen en ontkoppelen.";
+"Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Geef Ejectify verhoogde bevoegdheden in Systeeminstellingen, of keur het goed via de systeemmelding, zodat het schijven betrouwbaarder kan koppelen en ontkoppelen.";
 "Permissions granted" = "Machtigingen verleend";
 "Waiting for approval" = "Wachten op goedkeuring";
-"Open Settings" = "Instellingen openen";
+"Open System Settings" = "Systeeminstellingen openen";
+"Permissions denied" = "Machtigingen geweigerd";
 "Close" = "Sluiten";
 "Skip" = "Overslaan";
 "Eject \"%@\" before disconnecting or turning it off." = "Werp \"%@\" uit voordat je het loskoppelt of uitschakelt.";

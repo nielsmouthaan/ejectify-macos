@@ -36,10 +36,11 @@
 "No more %@ notifications" = "「%@」通知はもう表示されません";
 "Disk Not Ejected Properly" = "ディスクの不正な取り出し";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectifyは、Macがスリープに入るときにボリュームのアンマウントを自動で試み、復帰後に再マウントします。";
-"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "ディスクのマウントとアンマウントの信頼性を高めるため、[システム設定](x-apple.systempreferences:com.apple.LoginItems-Settings.extension)でEjectifyに管理者権限を付与するか、システム通知から承認してください。";
+"Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "ディスクのマウントとアンマウントの信頼性を高めるため、システム設定でEjectifyに管理者権限を付与するか、システム通知から承認してください。";
 "Permissions granted" = "権限が付与されました";
 "Waiting for approval" = "承認を待機中";
-"Open Settings" = "設定を開く";
+"Open System Settings" = "システム設定を開く";
+"Permissions denied" = "権限が拒否されました";
 "Close" = "閉じる";
 "Skip" = "スキップ";
 "Eject \"%@\" before disconnecting or turning it off." = "接続を解除するか電源を切る前に「%@」を取り出してください。";

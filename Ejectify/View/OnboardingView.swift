@@ -12,11 +12,8 @@ import ServiceManagement
 /// SwiftUI content rendered inside the onboarding window controller.
 struct OnboardingView: View {
 
-    /// Whether helper approval is still pending for the current onboarding session.
-    @State private var isAwaitingApproval = !VolumeOperationRouter.shared.isDaemonEnabled
-
-    /// Whether privileged helper permissions are currently granted.
-    @State private var isPermissionsGranted = VolumeOperationRouter.shared.isDaemonEnabled
+    /// Current Service Management status for the privileged helper daemon.
+    @State private var daemonStatus = PrivilegedHelperLifecycleManager.shared.daemonStatus
 
     /// Polling task used to periodically check helper approval status.
     @State private var approvalPollingTask: Task<Void, Never>?
@@ -33,7 +30,7 @@ struct OnboardingView: View {
     }
 
     var body: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: 24) {
             StopNotificationView()
                 .padding(.vertical, 32)
             titleText
@@ -50,29 +47,21 @@ struct OnboardingView: View {
             Text("Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes.")
                 .frame(width: titleWidth == 0 ? nil : titleWidth)
                 .fixedSize(horizontal: false, vertical: true)
-            
-            Text(.init("Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably."))
+
+            Text("Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably.")
                 .frame(width: titleWidth == 0 ? nil : titleWidth)
                 .fixedSize(horizontal: false, vertical: true)
-            
+
             Button {
                 openSettingsClicked()
             } label: {
-                if isPermissionsGranted {
-                    Label("Permissions granted", systemImage: "checkmark.circle.fill")
-                } else if isAwaitingApproval {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .controlSize(.small)
-                        Text("Waiting for approval")
-                    }
-                } else {
-                    Text("Open Settings")
-                }
+                Text("Open System Settings")
             }
             .buttonStyle(.borderedProminent)
-            .disabled(isPermissionsGranted)
-            Button(isPermissionsGranted ? "Close" : "Skip") {
+
+            permissionsStatusView
+
+            Button(permissionStatus.isGranted ? "Close" : "Skip") {
                 closeClicked()
             }
             .buttonStyle(.link)
@@ -97,7 +86,6 @@ struct OnboardingView: View {
 
     /// Opens System Settings to guide users to the elevated-permissions approval UI.
     private func openSettingsClicked() {
-        isAwaitingApproval = true
         SMAppService.openSystemSettingsLoginItems()
     }
 
@@ -120,6 +108,52 @@ struct OnboardingView: View {
         return Text(prefix) + Text(warningPhrase).fontWeight(.semibold) + Text(suffix)
     }
 
+    /// Current onboarding presentation state for privileged helper approval.
+    private var permissionStatus: PermissionStatus {
+        PermissionStatus(daemonStatus: daemonStatus)
+    }
+
+    /// Status row shown beneath the primary action while onboarding is displayed.
+    private var permissionsStatusView: some View {
+        HStack(spacing: 8) {
+            statusIndicator
+                .frame(width: 14, height: 14)
+
+            statusLabel
+        }
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: 20)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Indicator shown for the current permission status with a stable layout footprint.
+    @ViewBuilder
+    private var statusIndicator: some View {
+        switch permissionStatus {
+        case .granted:
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        case .waitingForApproval:
+            ProgressView()
+                .controlSize(.small)
+        case .denied:
+            Image(systemName: "xmark.circle.fill")
+                .foregroundStyle(.red)
+        }
+    }
+
+    /// Localized label paired with the current permission-status indicator.
+    private var statusLabel: Text {
+        switch permissionStatus {
+        case .granted:
+            Text("Permissions granted")
+        case .waitingForApproval:
+            Text("Waiting for approval")
+        case .denied:
+            Text("Permissions denied")
+        }
+    }
+
     /// Starts periodic daemon-status monitoring if not already active.
     private func startDaemonStatusMonitoring() {
         guard approvalPollingTask == nil else {
@@ -132,12 +166,9 @@ struct OnboardingView: View {
                 guard !Task.isCancelled else {
                     return
                 }
-                let isDaemonEnabled = VolumeOperationRouter.shared.isDaemonEnabled
+                let daemonStatus = PrivilegedHelperLifecycleManager.shared.daemonStatus
                 await MainActor.run {
-                    isPermissionsGranted = isDaemonEnabled
-                    if isDaemonEnabled {
-                        isAwaitingApproval = false
-                    }
+                    self.daemonStatus = daemonStatus
                 }
             }
         }
@@ -156,6 +187,32 @@ struct OnboardingView: View {
 
         static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
             value = max(value, nextValue())
+        }
+    }
+
+    /// Maps the daemon registration status to the onboarding status presentation.
+    private enum PermissionStatus {
+        case granted
+        case waitingForApproval
+        case denied
+
+        /// Whether the helper is fully approved and available for privileged routing.
+        var isGranted: Bool {
+            self == .granted
+        }
+
+        /// Creates the onboarding status from the current Service Management status.
+        init(daemonStatus: SMAppService.Status) {
+            switch daemonStatus {
+            case .enabled:
+                self = .granted
+            case .requiresApproval:
+                self = .waitingForApproval
+            case .notRegistered, .notFound:
+                self = .denied
+            @unknown default:
+                self = .denied
+            }
         }
     }
 

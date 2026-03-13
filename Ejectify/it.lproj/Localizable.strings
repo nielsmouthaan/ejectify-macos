@@ -36,10 +36,11 @@
 "No more %@ notifications" = "Basta notifiche \"%@\"";
 "Disk Not Ejected Properly" = "Espulsione disco non corretta";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify tenta automaticamente di smontare i volumi quando il Mac va in stop e di montarli di nuovo al riattivarsi.";
-"Grant Ejectify elevated permissions in [System Settings](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), or approve it from the system notification, so it can mount and unmount disks more reliably." = "Concedi a Ejectify autorizzazioni elevate nelle [Impostazioni di Sistema](x-apple.systempreferences:com.apple.LoginItems-Settings.extension), oppure approvalo dalla notifica di sistema, così potrà montare e smontare i dischi in modo più affidabile.";
+"Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Concedi a Ejectify autorizzazioni elevate nelle Impostazioni di Sistema, oppure approvalo dalla notifica di sistema, così potrà montare e smontare i dischi in modo più affidabile.";
 "Permissions granted" = "Autorizzazioni concesse";
 "Waiting for approval" = "In attesa di approvazione";
-"Open Settings" = "Apri Impostazioni";
+"Open System Settings" = "Apri Impostazioni di Sistema";
+"Permissions denied" = "Autorizzazioni negate";
 "Close" = "Chiudi";
 "Skip" = "Salta";
 "Eject \"%@\" before disconnecting or turning it off." = "Espelli \"%@\" prima di scollegarlo o spegnerlo.";
