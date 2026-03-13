@@ -71,6 +71,9 @@ Carthage/Build/
 Dependencies/
 .accio/
 
+# Codex local environment state
+.codex/environments/environment.toml
+
 # fastlane
 #
 # It is recommended to not store the screenshots in the git repo.
