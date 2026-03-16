@@ -16,8 +16,8 @@ final class ActivityController {
     /// Logger used for mount/unmount and readiness transition diagnostics.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
 
-    /// Volumes eligible for remount, keyed by stable volume UUID.
-    private var remountCandidates: [UUID: Volume] = [:]
+    /// Volumes eligible for remount from the latest unmount snapshot.
+    private var remountCandidates: [Volume] = []
 
     /// Volume UUIDs currently processing an unmount request.
     private var inFlightUnmounts: Set<UUID> = []
@@ -96,7 +96,10 @@ final class ActivityController {
     /// Unmounts all currently enabled volumes and tracks attempted unmounts for remount attempts.
     @objc func unmountVolumes(notification: Notification) {
         logger.info("Unmount trigger received: \(notification.name.rawValue, privacy: .public)")
-        for volume in Volume.mountedVolumes().filter({ $0.enabled }) {
+        let enabledVolumes = Volume.mountedVolumes().filter(\.enabled)
+        replaceRemountCandidates(with: enabledVolumes, reason: "Unmount trigger received")
+
+        for volume in enabledVolumes {
             requestUnmount(for: volume) { _ in }
         }
     }
@@ -190,9 +193,25 @@ final class ActivityController {
         }
 
         logger.info("Mount pass triggered: \(self.remountCandidates.count, privacy: .public) candidate(s)")
-        for volume in self.remountCandidates.values {
+        for volume in self.remountCandidates {
             scheduleMountTask(for: volume)
         }
+    }
+
+    /// Replaces the remount snapshot and cancels pending mount work from an older snapshot.
+    private func replaceRemountCandidates(with volumes: [Volume], reason: String) {
+        cancelAllPendingMountTasks(reason: reason)
+        remountCandidates = volumes
+    }
+
+    /// Returns whether the current remount snapshot still includes a volume ID.
+    private func hasRemountCandidate(withID volumeID: UUID) -> Bool {
+        remountCandidates.contains { $0.id == volumeID }
+    }
+
+    /// Removes a volume from the current remount snapshot.
+    private func removeRemountCandidate(withID volumeID: UUID) {
+        remountCandidates.removeAll { $0.id == volumeID }
     }
 
     /// Applies readiness-state updates from workspace and distributed notifications.
@@ -262,12 +281,13 @@ final class ActivityController {
                     return
                 }
 
-                guard self.remountCandidates[volumeID] != nil else {
+                guard self.hasRemountCandidate(withID: volumeID) else {
                     return
                 }
 
                 guard DiskArbitrationVolumeOperator.canResolveDisk(volumeUUID: volume.id, volumeName: volume.name, bsdName: volume.bsdName) else {
                     self.logger.info("Skipping mount retry because disk is no longer available for \(volume.logLabel, privacy: .public)")
+                    self.removeRemountCandidate(withID: volumeID)
                     return
                 }
 
@@ -282,7 +302,7 @@ final class ActivityController {
                 }
 
                 if result.success {
-                    self.remountCandidates.removeValue(forKey: volumeID)
+                    self.removeRemountCandidate(withID: volumeID)
                     return
                 }
 
@@ -294,11 +314,13 @@ final class ActivityController {
 
                 guard result.status?.shouldRetryAutomaticRemount ?? true else {
                     self.logger.info("Mount retry skipped due to non-retryable status for \(volume.logLabel, privacy: .public)")
+                    self.removeRemountCandidate(withID: volumeID)
                     return
                 }
 
                 guard attemptIndex < Self.remountRetryDelays.count else {
                     self.logger.info("Mount retry limit reached for \(volume.logLabel, privacy: .public)")
+                    self.removeRemountCandidate(withID: volumeID)
                     return
                 }
 
@@ -426,6 +448,8 @@ final class ActivityController {
     /// Unmounts all enabled volumes and waits for every callback to complete.
     private func unmountEnabledVolumesAndWait() async -> UnmountBatchResult {
         let enabledVolumes = Volume.mountedVolumes().filter { $0.enabled }
+        replaceRemountCandidates(with: enabledVolumes, reason: "Starting new system sleep unmount snapshot")
+
         guard !enabledVolumes.isEmpty else {
             return UnmountBatchResult(requestedCount: 0, succeededCount: 0)
         }
@@ -460,7 +484,6 @@ final class ActivityController {
     /// Enqueues a routed unmount request for one volume and tracks in-flight state.
     private func requestUnmount(for volume: Volume, completion: @escaping (Bool) -> Void) {
         let volumeID = volume.id
-        remountCandidates[volumeID] = volume
         cancelPendingMountTask(for: volumeID)
         pendingUnmountCompletions[volumeID, default: []].append(completion)
 
@@ -480,7 +503,7 @@ final class ActivityController {
 
                 self.inFlightUnmounts.remove(volumeID)
                 if !success {
-                    self.remountCandidates.removeValue(forKey: volumeID)
+                    self.removeRemountCandidate(withID: volumeID)
                 }
                 let completions = self.pendingUnmountCompletions.removeValue(forKey: volumeID) ?? []
                 completions.forEach { $0(success) }
