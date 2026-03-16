@@ -24,9 +24,16 @@ struct OnboardingView: View {
     /// Action that closes the onboarding window.
     private let closeAction: () -> Void
 
+    /// Action that brings the onboarding window to the foreground after approval resolves.
+    private let approvalResolvedAction: () -> Void
+
     /// Creates onboarding view with an injected close action.
-    init(closeAction: @escaping () -> Void = {}) {
+    init(
+        closeAction: @escaping () -> Void = {},
+        approvalResolvedAction: @escaping () -> Void = {}
+    ) {
         self.closeAction = closeAction
+        self.approvalResolvedAction = approvalResolvedAction
     }
 
     var body: some View {
@@ -81,6 +88,13 @@ struct OnboardingView: View {
         }
         .onDisappear {
             stopDaemonStatusMonitoring()
+        }
+        .onChange(of: permissionStatus) { _, newStatus in
+            guard newStatus != .waitingForApproval else {
+                return
+            }
+
+            approvalResolvedAction()
         }
     }
 
@@ -191,7 +205,7 @@ struct OnboardingView: View {
     }
 
     /// Maps the daemon registration status to the onboarding status presentation.
-    private enum PermissionStatus {
+    private enum PermissionStatus: Equatable {
         case granted
         case waitingForApproval
         case denied

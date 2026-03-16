@@ -33,6 +33,8 @@ final class OnboardingWindowController: NSWindowController {
         window.contentView = hostingView
         hostingView.rootView = OnboardingView(closeAction: { [weak self] in
             self?.window?.close()
+        }, approvalResolvedAction: { [weak self] in
+            self?.bringToFront()
         })
         updateWindowSize()
     }
@@ -52,6 +54,17 @@ final class OnboardingWindowController: NSWindowController {
         showWindow(nil)
         updateWindowSize()
         window.center()
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    /// Re-activates the app and re-keys the onboarding window after approval status changes.
+    func bringToFront() {
+        guard let window else {
+            return
+        }
+
+        NSApp.activate(ignoringOtherApps: true)
+        showWindow(nil)
         window.makeKeyAndOrderFront(nil)
     }
 
