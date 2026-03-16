@@ -1,12 +1,4 @@
-/*
-  Localizable.strings
-  Ejectify
-
-  Created by Tomáš Švec on 05/07/2024.
-*/
-
-"Unmount all" = "Vysunúť všetko";
-"Volumes" = "Oddiely";
+"Unmount all" = "Odpojiť všetko";
 "Internal" = "Interné";
 "External" = "Externé";
 "Disk Images" = "Obrazy diskov";
@@ -24,14 +16,13 @@
 "Please restart your Mac to apply the change and unmute notifications." = "Ak chcete použiť zmenu a zrušiť stlmenie upozornení, reštartujte Mac.";
 "Later" = "Neskôr";
 "Restart" = "Reštartovať";
-"Unmount when" = "Vysunúť pri";
-"Screen is locked" = "Obrazovka je zamknutá";
-"Display turned off" = "Displej je vypnutý";
+"Unmount when" = "Odpojiť pri";
+"Display turned off" = "Displej sa vypne";
 "System starts sleeping" = "Systém sa uspáva";
-"Force unmount" = "Vynútiť vysunutie";
-"Help" = "Pomoc";
+"Force unmount" = "Vynútiť odpojenie";
+"About Ejectify" = "O aplikácii Ejectify";
+"Check for Updates…" = "Skontrolovať aktualizácie…";
 "Quit Ejectify" = "Ukončiť Ejectify";
-
 "No more %@ notifications" = "Už žiadne upozornenia „%@“";
 "Disk Not Ejected Properly" = "Disk bol nesprávne vysunutý";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify sa automaticky pokúsi odpojiť zväzky, keď váš Mac prejde do spánku, a po prebudení ich znova pripojí.";

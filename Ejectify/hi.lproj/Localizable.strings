@@ -1,13 +1,4 @@
-/* 
-  Localizable.strings
-  Ejectify
-
-  Created by Niels Mouthaan on 11/01/2021.
-  
-*/
-
 "Unmount all" = "सभी को अनमाउंट करें";
-"Volumes" = "वॉल्यूम";
 "Internal" = "आंतरिक";
 "External" = "बाहरी";
 "Disk Images" = "डिस्क इमेज";
@@ -17,7 +8,7 @@
 "Force mute notifications" = "सूचनाएँ जबरन म्यूट करें";
 "Could not enable elevated permissions." = "उन्नत अनुमतियाँ सक्षम नहीं की जा सकीं।";
 "Could not mute notifications" = "सूचनाएँ म्यूट नहीं की जा सकीं";
-"Check System Settings if Ejectify is enabled." = "जांचें कि सिस्टम सेटिंग्स में Ejectify सक्षम है या नहीं।";
+"Check System Settings if Ejectify is enabled." = "जांचें कि System Settings में Ejectify सक्षम है या नहीं।";
 "Could not disable elevated permissions." = "उन्नत अनुमतियाँ अक्षम नहीं की जा सकीं।";
 "Could not unmute notifications" = "सूचनाओं का म्यूट हटाया नहीं जा सका";
 "Restart required" = "पुनरारंभ आवश्यक";
@@ -26,20 +17,19 @@
 "Later" = "बाद में";
 "Restart" = "पुनरारंभ";
 "Unmount when" = "अनमाउंट करें जब";
-"Screen is locked" = "स्क्रीन लॉक होता है";
-"Display turned off" = "प्रदर्शन बंद होता है";
-"System starts sleeping" = "सिस्टम स्लीप करना शुरू करता है";
+"Display turned off" = "डिस्प्ले बंद हो जाए";
+"System starts sleeping" = "सिस्टम स्लीप होना शुरू करे";
 "Force unmount" = "जबरन अनमाउंट करें";
-"Help" = "सहायता";
-"Quit Ejectify" = "Ejectify से बाहर निकलें";
-
-"No more %@ notifications" = "अब \"%@\" सूचनाएं नहीं";
-"Disk Not Ejected Properly" = "डिस्क को ठीक से इजेक्ट नहीं किया गया";
+"About Ejectify" = "Ejectify के बारे में";
+"Check for Updates…" = "अपडेट जांचें…";
+"Quit Ejectify" = "Ejectify बंद करें";
+"No more %@ notifications" = "\"%@\" सूचनाएं अब नहीं";
+"Disk Not Ejected Properly" = "Disk Not Ejected Properly";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "जब आपका Mac स्लीप में जाता है, Ejectify अपने-आप वॉल्यूम अनमाउंट करने की कोशिश करता है और जागने पर उन्हें फिर से माउंट करता है।";
-"Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "डिस्क को अधिक भरोसेमंद तरीके से माउंट और अनमाउंट करने के लिए सिस्टम सेटिंग्स में Ejectify को ऊंची अनुमति दें, या सिस्टम नोटिफिकेशन से इसे अनुमोदित करें।";
+"Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "डिस्क को अधिक भरोसेमंद तरीके से माउंट और अनमाउंट करने के लिए System Settings में Ejectify को उन्नत अनुमति दें, या सिस्टम नोटिफिकेशन से इसे अनुमोदित करें।";
 "Permissions granted" = "अनुमतियां मिल गईं";
 "Waiting for approval" = "अनुमोदन की प्रतीक्षा है";
-"Open System Settings" = "सिस्टम सेटिंग्स खोलें";
+"Open System Settings" = "System Settings खोलें";
 "Permissions denied" = "अनुमतियां अस्वीकृत";
 "Close" = "बंद करें";
 "Skip" = "छोड़ें";

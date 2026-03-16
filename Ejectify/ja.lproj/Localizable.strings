@@ -1,19 +1,10 @@
-/* 
-  Localizable.strings
-  Ejectify
-
-  Created by Niels Mouthaan on 11/01/2021.
-  
-*/
-
-"Unmount all" = "すべてアンマウント";
-"Volumes" = "ボリューム";
+"Unmount all" = "すべてマウント解除";
 "Internal" = "内蔵";
 "External" = "外部";
 "Disk Images" = "ディスクイメージ";
-"Preferences" = "環境設定";
+"Preferences" = "設定";
 "Launch at login" = "ログイン時に起動";
-"Use elevated permissions" = "管理者権限を使用する";
+"Use elevated permissions" = "管理者権限を使用";
 "Force mute notifications" = "通知を強制的にミュート";
 "Could not enable elevated permissions." = "管理者権限を有効にできませんでした。";
 "Could not mute notifications" = "通知をミュートできませんでした";
@@ -25,18 +16,17 @@
 "Please restart your Mac to apply the change and unmute notifications." = "変更を適用して通知のミュートを解除するには、Mac を再起動してください。";
 "Later" = "あとで";
 "Restart" = "再起動";
-"Unmount when" = "マウント解除";
-"Screen is locked" = "画面をロックしたとき";
-"Display turned off" = "ディスプレイをオフにしたとき";
-"System starts sleeping" = "システムをスリープしたとき";
-"Force unmount" = "強制的にアンマウント";
-"Help" = "ヘルプ";
-"Quit Ejectify" = "Ejectifyを終了";
-
+"Unmount when" = "マウント解除するタイミング";
+"Display turned off" = "ディスプレイがオフになったとき";
+"System starts sleeping" = "システムがスリープし始めたとき";
+"Force unmount" = "強制的にマウント解除";
+"About Ejectify" = "Ejectify について";
+"Check for Updates…" = "アップデートを確認…";
+"Quit Ejectify" = "Ejectify を終了";
 "No more %@ notifications" = "「%@」通知はもう表示されません";
 "Disk Not Ejected Properly" = "ディスクの不正な取り出し";
-"Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectifyは、Macがスリープに入るときにボリュームのアンマウントを自動で試み、復帰後に再マウントします。";
-"Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "ディスクのマウントとアンマウントの信頼性を高めるため、システム設定でEjectifyに管理者権限を付与するか、システム通知から承認してください。";
+"Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify は、Mac がスリープに入るときにボリュームのマウント解除を自動で試み、スリープ解除後に再マウントします。";
+"Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "ディスクのマウントとアンマウントの信頼性を高めるため、システム設定で Ejectify に管理者権限を付与するか、システム通知から承認してください。";
 "Permissions granted" = "権限が付与されました";
 "Waiting for approval" = "承認を待機中";
 "Open System Settings" = "システム設定を開く";
@@ -44,4 +34,4 @@
 "Close" = "閉じる";
 "Skip" = "スキップ";
 "Eject \"%@\" before disconnecting or turning it off." = "接続を解除するか電源を切る前に「%@」を取り出してください。";
-"USB Drive" = "USBドライブ";
+"USB Drive" = "USB ドライブ";
