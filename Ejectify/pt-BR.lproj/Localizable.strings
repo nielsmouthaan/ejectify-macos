@@ -1,40 +1,30 @@
-/*
-  Localizable.strings
-  Ejectify
-
-  Created by Niels Mouthaan on 11/01/2021.
-
-*/
-
-"Unmount all" = "Ejetar todos";
-"Volumes" = "Volumes";
+"Unmount all" = "Ejetar tudo";
 "Internal" = "Interno";
 "External" = "Externo";
 "Disk Images" = "Imagens de disco";
 "Preferences" = "Preferências";
 "Launch at login" = "Abrir ao iniciar sessão";
 "Use elevated permissions" = "Usar permissões elevadas";
-"Force mute notifications" = "Forçar silenciar notificações";
-"Could not enable elevated permissions." = "Não foi possível ativar permissões elevadas.";
-"Could not mute notifications" = "Não foi possível silenciar notificações";
+"Force mute notifications" = "Forçar silêncio das notificações";
+"Could not enable elevated permissions." = "Não foi possível ativar as permissões elevadas.";
+"Could not mute notifications" = "Não foi possível silenciar as notificações";
 "Check System Settings if Ejectify is enabled." = "Verifique nos Ajustes do Sistema se o Ejectify está ativado.";
-"Could not disable elevated permissions." = "Não foi possível desativar permissões elevadas.";
-"Could not unmute notifications" = "Não foi possível reativar notificações";
-"Restart required" = "Reinicialização necessária";
+"Could not disable elevated permissions." = "Não foi possível desativar as permissões elevadas.";
+"Could not unmute notifications" = "Não foi possível reativar as notificações";
+"Restart required" = "É necessário reiniciar";
 "Please restart your Mac to apply the change and mute notifications." = "Reinicie seu Mac para aplicar a alteração e silenciar as notificações.";
 "Please restart your Mac to apply the change and unmute notifications." = "Reinicie seu Mac para aplicar a alteração e reativar as notificações.";
 "Later" = "Depois";
 "Restart" = "Reiniciar";
 "Unmount when" = "Ejetar quando";
-"Screen is locked" = "Tela bloquear";
-"Display turned off" = "Monitor desligar";
-"System starts sleeping" = "Sistema iniciar repouso";
+"Display turned off" = "A tela for desligada";
+"System starts sleeping" = "O sistema começar a entrar em repouso";
 "Force unmount" = "Forçar ejeção";
-"Help" = "Ajuda";
-"Quit Ejectify" = "Fechar Ejectify";
-
-"No more %@ notifications" = "Chega de notificações \"%@\"";
-"Disk Not Ejected Properly" = "Ejeção Incorreta de Disco";
+"About Ejectify" = "Sobre o Ejectify";
+"Check for Updates…" = "Buscar atualizações…";
+"Quit Ejectify" = "Encerrar o Ejectify";
+"No more %@ notifications" = "Sem mais notificações de %@";
+"Disk Not Ejected Properly" = "O disco não foi ejetado corretamente";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "O Ejectify tenta desmontar volumes automaticamente quando seu Mac entra em repouso e montá-los novamente quando ele desperta.";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Conceda permissões elevadas ao Ejectify em Ajustes do Sistema, ou aprove pela notificação do sistema, para que ele possa montar e desmontar discos com mais confiabilidade.";
 "Permissions granted" = "Permissões concedidas";

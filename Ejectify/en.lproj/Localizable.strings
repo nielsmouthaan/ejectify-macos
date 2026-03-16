@@ -1,13 +1,4 @@
-/* 
-  Localizable.strings
-  Ejectify
-
-  Created by Niels Mouthaan on 11/01/2021.
-  
-*/
-
 "Unmount all" = "Unmount all";
-"Volumes" = "Volumes";
 "Internal" = "Internal";
 "External" = "External";
 "Disk Images" = "Disk Images";
@@ -26,14 +17,12 @@
 "Later" = "Later";
 "Restart" = "Restart";
 "Unmount when" = "Unmount when";
-"Screen is locked" = "Screen is locked";
 "Display turned off" = "Display turned off";
 "System starts sleeping" = "System starts sleeping";
 "Force unmount" = "Force unmount";
-"Help" = "Help";
+"About Ejectify" = "About Ejectify";
 "Check for Updates…" = "Check for Updates…";
 "Quit Ejectify" = "Quit Ejectify";
-
 "No more %@ notifications" = "No more %@ notifications";
 "Disk Not Ejected Properly" = "Disk Not Ejected Properly";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes.";
