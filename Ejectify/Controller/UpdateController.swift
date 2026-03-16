@@ -24,7 +24,7 @@ final class UpdateController {
         updaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil)
     }
 
-    /// Starts Sparkle update scheduling and feed checks.
+    /// Starts Sparkle without scheduling or forcing automatic update checks.
     func start() {
         do {
             try updaterController.updater.start()

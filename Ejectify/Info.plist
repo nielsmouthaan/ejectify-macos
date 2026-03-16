@@ -29,7 +29,7 @@
 	<key>SUAllowsAutomaticUpdates</key>
 	<false/>
 	<key>SUEnableAutomaticChecks</key>
-	<true/>
+	<false/>
 	<key>SUFeedURL</key>
 	<string>https://ejectify.app/updates/appcast.xml</string>
 	<key>SUPublicEDKey</key>
