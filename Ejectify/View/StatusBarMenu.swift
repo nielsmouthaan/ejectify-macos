@@ -104,6 +104,11 @@ final class StatusBarMenu: NSMenu {
         updateMenu()
     }
 
+    /// Rebuilds the menu using the latest mounted volume snapshot.
+    func refreshMenu() {
+        refreshVolumesMenu()
+    }
+
     /// Returns a volume from cached `volumes` by matching a notification URL path.
     private func cachedVolume(from notification: Notification, urlKey: String) -> Volume? {
         guard let url = notification.userInfo?[urlKey] as? URL else {
@@ -139,8 +144,16 @@ final class StatusBarMenu: NSMenu {
 
     /// Builds the top "Actions" section.
     private func buildActionsMenu() {
-        let unmountAllItem = NSMenuItem(title: String(localized: "Unmount all"), action: #selector(unmountAllClicked(menuItem:)), keyEquivalent: "")
+        let isHotKeyRegistered = MainActor.assumeIsolated {
+            AppDelegate.shared.isUnmountAllHotKeyRegistered
+        }
+        let unmountAllItem = NSMenuItem(
+            title: String(localized: "Unmount all"),
+            action: #selector(unmountAllClicked(menuItem:)),
+            keyEquivalent: isHotKeyRegistered ? "u" : ""
+        )
         unmountAllItem.target = self
+        unmountAllItem.keyEquivalentModifierMask = isHotKeyRegistered ? [.control, .command] : []
         unmountAllItem.isEnabled = !volumes.isEmpty
         addItem(unmountAllItem)
     }
@@ -274,17 +287,9 @@ final class StatusBarMenu: NSMenu {
 
     /// Unmounts all currently enabled volumes from the menu action.
     @objc private func unmountAllClicked(menuItem _: NSMenuItem) {
-        let enabledVolumes = volumes.filter { $0.enabled }
-        logger.info("Manual unmount-all triggered: \(enabledVolumes.count, privacy: .public) enabled volumes")
-        for volume in enabledVolumes {
-            VolumeOperationRouter.shared.unmount(
-                volumeUUID: volume.id as NSUUID,
-                volumeName: volume.name,
-                bsdName: volume.bsdName,
-                force: Preference.forceUnmount
-            ) { _ in }
+        MainActor.assumeIsolated {
+            AppDelegate.shared.performManualUnmountAll()
         }
-        updateMenu()
     }
 
     /// Toggles automatic handling for a specific volume row.
