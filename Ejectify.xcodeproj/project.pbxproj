@@ -21,6 +21,7 @@
 		B8DFADB6256CF511009E9296 /* Volume.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB2256CF511009E9296 /* Volume.swift */; };
 		B8DFADB7256CF511009E9296 /* StatusBarMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */; };
 		B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB9256D0565009E9296 /* ActivityController.swift */; };
+		D3F100A12FA2000100B0E001 /* GlobalHotKeyController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3F100A22FA2000100B0E001 /* GlobalHotKeyController.swift */; };
 		C0A100000000000000000001 /* PrivilegedDiskServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */; };
 		C0A100000000000000000002 /* VolumeOperationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000012 /* VolumeOperationRouter.swift */; };
 		C0A100000000000000000003 /* PrivilegedDiskServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */; };
@@ -122,6 +123,7 @@
 		B8DFADB2256CF511009E9296 /* Volume.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Volume.swift; sourceTree = "<group>"; };
 		B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusBarMenu.swift; sourceTree = "<group>"; };
 		B8DFADB9256D0565009E9296 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
+		D3F100A22FA2000100B0E001 /* GlobalHotKeyController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyController.swift; sourceTree = "<group>"; };
 		D2A100A22F9B100100A0C001 /* UpdateController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateController.swift; sourceTree = "<group>"; };
 		C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedDiskServiceProtocol.swift; sourceTree = "<group>"; };
 		C0A100000000000000000012 /* VolumeOperationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeOperationRouter.swift; sourceTree = "<group>"; };
@@ -211,6 +213,7 @@
 			isa = PBXGroup;
 			children = (
 				B8DFADB9256D0565009E9296 /* ActivityController.swift */,
+				D3F100A22FA2000100B0E001 /* GlobalHotKeyController.swift */,
 				D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */,
 				D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */,
 				D2A100A22F9B100100A0C001 /* UpdateController.swift */,
@@ -427,6 +430,7 @@
 				B8DFADB7256CF511009E9296 /* StatusBarMenu.swift in Sources */,
 				B8DFADB6256CF511009E9296 /* Volume.swift in Sources */,
 				B8AF59E92569569A003481A8 /* AppDelegate.swift in Sources */,
+				D3F100A12FA2000100B0E001 /* GlobalHotKeyController.swift in Sources */,
 				D1E700A52F8A000100C0D001 /* OnboardingWindowController.swift in Sources */,
 				D1E700AB2F8A000100C0D001 /* StopNotificationView.swift in Sources */,
 				B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */,

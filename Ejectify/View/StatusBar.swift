@@ -25,4 +25,9 @@ final class StatusBar {
             statusBarButton.image?.isTemplate = true
         }
     }
+
+    /// Rebuilds the status menu to reflect current state.
+    func refreshMenu() {
+        (statusItem.menu as? StatusBarMenu)?.refreshMenu()
+    }
 }
