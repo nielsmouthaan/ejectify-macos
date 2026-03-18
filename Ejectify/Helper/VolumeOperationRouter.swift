@@ -145,6 +145,11 @@ final class VolumeOperationRouter: @unchecked Sendable {
         withStateLock { executionModeStorage }
     }
 
+    /// Returns whether mount and unmount requests are currently routed through the privileged helper.
+    var isUsingPrivilegedHelper: Bool {
+        executionMode == .priviledgedHelper
+    }
+
     /// Returns whether startup helper routing initialization is currently running.
     private var isStartupRoutingInitializationActive: Bool {
         withStateLock { isStartupRoutingInitializationInProgress }
@@ -534,15 +539,29 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Sends a best-effort request for the privileged helper daemon to terminate itself.
     func requestHelperTermination() {
         guard PrivilegedHelperLifecycleManager.shared.isDaemonEnabled else {
+            logger.info("Skipping helper termination request because the daemon is not enabled")
             return
         }
 
         guard let connection = withStateLock({ helperConnection }) else {
+            logger.info("Skipping helper termination request because no active privileged helper connection exists")
             return
         }
 
-        let proxy = connection.remoteObjectProxyWithErrorHandler { _ in } as? PrivilegedDiskServiceProtocol
-        proxy?.requestTermination { _, _ in }
+        logger.info("Requesting privileged helper termination")
+
+        let proxy = connection.remoteObjectProxyWithErrorHandler { [weak self] error in
+            self?.logger.warning("Privileged helper termination request failed: \(error, privacy: .public)")
+        } as? PrivilegedDiskServiceProtocol
+
+        proxy?.requestTermination { [weak self] success, message in
+            if success {
+                self?.logger.info("Privileged helper termination request acknowledged")
+            } else {
+                let details = message ?? "No additional details"
+                self?.logger.warning("Privileged helper termination request was not acknowledged: \(details, privacy: .public)")
+            }
+        }
     }
 
     /// Routes mount/unmount requests to priviledged helper or local execution based on current mode.

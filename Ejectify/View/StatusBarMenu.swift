@@ -220,9 +220,9 @@ final class StatusBarMenu: NSMenu {
         state == .off
     }
 
-    /// Represents enabled elevated permissions when the privileged helper is approved and enabled.
+    /// Represents enabled elevated permissions only when routing is actively using the privileged helper.
     private var elevatedPermissionsMenuState: NSControl.StateValue {
-        VolumeOperationRouter.shared.isDaemonEnabled ? .on : .off
+        VolumeOperationRouter.shared.isUsingPrivilegedHelper ? .on : .off
     }
 
     /// Returns whether force-muting notifications is enabled in the system Disk Arbitration plist.
