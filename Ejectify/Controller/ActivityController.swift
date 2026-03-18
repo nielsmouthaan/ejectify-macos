@@ -16,7 +16,7 @@ final class ActivityController {
     /// Logger used for mount/unmount and readiness transition diagnostics.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
 
-    /// Volumes eligible for remount from the latest unmount snapshot.
+    /// Volumes still pending automatic remount after a successful automatic unmount.
     private var remountCandidates: [Volume] = []
 
     /// Volume UUIDs currently processing an unmount request.
@@ -97,7 +97,7 @@ final class ActivityController {
     @objc func unmountVolumes(notification: Notification) {
         logger.info("Unmount trigger received: \(notification.name.rawValue, privacy: .public)")
         let enabledVolumes = Volume.mountedVolumes().filter(\.enabled)
-        replaceRemountCandidates(with: enabledVolumes, reason: "Unmount trigger received")
+        mergeRemountCandidates(with: enabledVolumes, reason: "Unmount trigger received")
 
         for volume in enabledVolumes {
             requestUnmount(for: volume) { _ in }
@@ -198,18 +198,46 @@ final class ActivityController {
         }
     }
 
-    /// Replaces the remount snapshot and cancels pending mount work from an older snapshot.
-    private func replaceRemountCandidates(with volumes: [Volume], reason: String) {
-        cancelAllPendingMountTasks(reason: reason)
-        remountCandidates = volumes
+    /// Merges new automatic unmounts into the pending remount set while preserving older pending entries.
+    private func mergeRemountCandidates(with volumes: [Volume], reason: String) {
+        let existingCount = remountCandidates.count
+
+        guard !volumes.isEmpty else {
+            if existingCount > 0 {
+                logger.info("Preserving \(existingCount, privacy: .public) pending remount candidate(s): \(reason, privacy: .public)")
+            }
+            return
+        }
+
+        var mergedCandidates = remountCandidates
+        var addedCount = 0
+        var refreshedCount = 0
+
+        for volume in volumes {
+            if let index = mergedCandidates.firstIndex(where: { $0.id == volume.id }) {
+                mergedCandidates[index] = volume
+                refreshedCount += 1
+            } else {
+                mergedCandidates.append(volume)
+                addedCount += 1
+            }
+        }
+
+        remountCandidates = mergedCandidates
+
+        if existingCount > 0 {
+            logger.info(
+                "Merged remount candidates: preserved \(existingCount, privacy: .public), refreshed \(refreshedCount, privacy: .public), added \(addedCount, privacy: .public), total \(self.remountCandidates.count, privacy: .public): \(reason, privacy: .public)"
+            )
+        }
     }
 
-    /// Returns whether the current remount snapshot still includes a volume ID.
+    /// Returns whether the pending remount set still includes a volume ID.
     private func hasRemountCandidate(withID volumeID: UUID) -> Bool {
         remountCandidates.contains { $0.id == volumeID }
     }
 
-    /// Removes a volume from the current remount snapshot.
+    /// Removes a volume from the pending remount set.
     private func removeRemountCandidate(withID volumeID: UUID) {
         remountCandidates.removeAll { $0.id == volumeID }
     }
@@ -448,7 +476,7 @@ final class ActivityController {
     /// Unmounts all enabled volumes and waits for every callback to complete.
     private func unmountEnabledVolumesAndWait() async -> UnmountBatchResult {
         let enabledVolumes = Volume.mountedVolumes().filter { $0.enabled }
-        replaceRemountCandidates(with: enabledVolumes, reason: "Starting new system sleep unmount snapshot")
+        mergeRemountCandidates(with: enabledVolumes, reason: "Starting new system sleep unmount batch")
 
         guard !enabledVolumes.isEmpty else {
             return UnmountBatchResult(requestedCount: 0, succeededCount: 0)
