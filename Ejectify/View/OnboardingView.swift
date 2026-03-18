@@ -12,11 +12,8 @@ import ServiceManagement
 /// SwiftUI content rendered inside the onboarding window controller.
 struct OnboardingView: View {
 
-    /// Current Service Management status for the privileged helper daemon.
-    @State private var daemonStatus = PrivilegedHelperLifecycleManager.shared.daemonStatus
-
-    /// Polling task used to periodically check helper approval status.
-    @State private var approvalPollingTask: Task<Void, Never>?
+    /// Approval monitor backing the onboarding permission state.
+    @ObservedObject private var approvalMonitor: OnboardingApprovalMonitor
 
     /// Measured rendered width of the localized title text.
     @State private var titleWidth: CGFloat = 0
@@ -29,9 +26,11 @@ struct OnboardingView: View {
 
     /// Creates onboarding view with an injected close action.
     init(
+        approvalMonitor: OnboardingApprovalMonitor = OnboardingApprovalMonitor(),
         closeAction: @escaping () -> Void = {},
         approvalResolvedAction: @escaping () -> Void = {}
     ) {
+        self._approvalMonitor = ObservedObject(wrappedValue: approvalMonitor)
         self.closeAction = closeAction
         self.approvalResolvedAction = approvalResolvedAction
     }
@@ -82,15 +81,8 @@ struct OnboardingView: View {
         .onPreferenceChange(TitleWidthPreferenceKey.self) { width in
             titleWidth = width
         }
-        .onAppear {
-            Preference.hasSeenOnboarding = true
-            startDaemonStatusMonitoring()
-        }
-        .onDisappear {
-            stopDaemonStatusMonitoring()
-        }
-        .onChange(of: permissionStatus) { _, newStatus in
-            guard newStatus != .waitingForApproval else {
+        .onChange(of: permissionStatus) { oldStatus, newStatus in
+            guard oldStatus == .waitingForApproval, newStatus != .waitingForApproval else {
                 return
             }
 
@@ -124,7 +116,7 @@ struct OnboardingView: View {
 
     /// Current onboarding presentation state for privileged helper approval.
     private var permissionStatus: PermissionStatus {
-        PermissionStatus(daemonStatus: daemonStatus)
+        PermissionStatus(daemonStatus: approvalMonitor.daemonStatus)
     }
 
     /// Status row shown beneath the primary action while onboarding is displayed.
@@ -166,32 +158,6 @@ struct OnboardingView: View {
         case .denied:
             Text("Permissions denied")
         }
-    }
-
-    /// Starts periodic daemon-status monitoring if not already active.
-    private func startDaemonStatusMonitoring() {
-        guard approvalPollingTask == nil else {
-            return
-        }
-
-        approvalPollingTask = Task {
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
-                guard !Task.isCancelled else {
-                    return
-                }
-                let daemonStatus = PrivilegedHelperLifecycleManager.shared.daemonStatus
-                await MainActor.run {
-                    self.daemonStatus = daemonStatus
-                }
-            }
-        }
-    }
-
-    /// Stops daemon-status monitoring and clears associated in-memory state.
-    private func stopDaemonStatusMonitoring() {
-        approvalPollingTask?.cancel()
-        approvalPollingTask = nil
     }
 
     /// Preference key used to pass measured title width up the view hierarchy.

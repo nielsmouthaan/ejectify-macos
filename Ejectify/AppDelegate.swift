@@ -94,7 +94,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Presents the onboarding window.
     private func showOnboarding() {
-        onboardingWindowController = OnboardingWindowController()
+        onboardingWindowController = OnboardingWindowController { [weak self] in
+            self?.onboardingWindowController = nil
+        }
         onboardingWindowController?.showCentered()
     }
 }
