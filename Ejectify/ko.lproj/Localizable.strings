@@ -33,5 +33,5 @@
 "Permissions denied" = "권한이 거부됨";
 "Close" = "닫기";
 "Skip" = "건너뛰기";
-"Eject \"%@\" before disconnecting or turning it off." = "\"%@\"을(를) 연결 해제하거나 끄기 전에 추출하세요.";
+"Eject \"%@\" before disconnecting or turning it off." = "연결 해제하거나 끄기 전에 ‘%@’을(를) 추출하십시오.";
 "USB Drive" = "USB 드라이브";

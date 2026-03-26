@@ -33,5 +33,5 @@
 "Permissions denied" = "权限被拒绝";
 "Close" = "关闭";
 "Skip" = "跳过";
-"Eject \"%@\" before disconnecting or turning it off." = "请先推出“%@”，再断开连接或关闭它。";
+"Eject \"%@\" before disconnecting or turning it off." = "请先推出“%@”再断开连接或将其关闭。";
 "USB Drive" = "USB 驱动器";

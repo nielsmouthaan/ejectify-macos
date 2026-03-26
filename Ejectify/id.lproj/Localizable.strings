@@ -24,7 +24,7 @@
 "Check for Updates…" = "Periksa Pembaruan…";
 "Quit Ejectify" = "Keluar dari Ejectify";
 "No more %@ notifications" = "Tidak ada lagi notifikasi %@";
-"Disk Not Ejected Properly" = "disk tak keluar dengan benar";
+"Disk Not Ejected Properly" = "Disk Tak Keluar Dengan Benar";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify secara otomatis mencoba melepaskan volume saat Mac Anda tidur dan memasangnya kembali setelah bangun.";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Berikan Ejectify izin tingkat tinggi di Pengaturan Sistem, atau setujui dari notifikasi sistem, agar aplikasi dapat memasang dan melepas disk dengan lebih andal.";
 "Permissions granted" = "Izin diberikan";
@@ -33,5 +33,5 @@
 "Permissions denied" = "Izin ditolak";
 "Close" = "Tutup";
 "Skip" = "Lewati";
-"Eject \"%@\" before disconnecting or turning it off." = "Keluarkan \"%@\" sebelum melepaskannya atau mematikannya.";
+"Eject \"%@\" before disconnecting or turning it off." = "Keluarkan “%@” sebelum memutuskan atau mematikannya.";
 "USB Drive" = "Drive USB";

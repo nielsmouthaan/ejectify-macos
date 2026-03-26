@@ -24,7 +24,7 @@
 "Check for Updates…" = "Caută actualizări…";
 "Quit Ejectify" = "Închide Ejectify";
 "No more %@ notifications" = "Fără alte notificări %@";
-"Disk Not Ejected Properly" = "Discul nu este ejectat corect";
+"Disk Not Ejected Properly" = "Disc ejectat incorect";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify încearcă automat să demonteze volumele când Mac-ul intră în repaus și să le monteze din nou după ce se trezește.";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Acordă-i lui Ejectify permisiuni elevate în Configurări sistem sau aprobă-l din notificarea sistemului, astfel încât să poată monta și demonta discuri mai fiabil.";
 "Permissions granted" = "Permisiuni acordate";
@@ -33,5 +33,5 @@
 "Permissions denied" = "Permisiuni refuzate";
 "Close" = "Închide";
 "Skip" = "Omite";
-"Eject \"%@\" before disconnecting or turning it off." = "Ejectează \"%@\" înainte să îl deconectezi sau să îl oprești.";
+"Eject \"%@\" before disconnecting or turning it off." = "Ejectați „%@” înainte de a‑l deconecta sau de a‑l opri.";
 "USB Drive" = "Unitate USB";

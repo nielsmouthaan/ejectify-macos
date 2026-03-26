@@ -33,5 +33,5 @@
 "Permissions denied" = "Oikeudet evätty";
 "Close" = "Sulje";
 "Skip" = "Ohita";
-"Eject \"%@\" before disconnecting or turning it off." = "Poista \"%@\" ennen kuin irrotat sen tai sammutat sen.";
+"Eject \"%@\" before disconnecting or turning it off." = "Poista ”%@” ennen kuin irrotat tai laitat sen pois päältä.";
 "USB Drive" = "USB-asema";

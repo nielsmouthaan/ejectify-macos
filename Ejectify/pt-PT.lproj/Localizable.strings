@@ -24,7 +24,7 @@
 "Check for Updates…" = "Procurar atualizações…";
 "Quit Ejectify" = "Sair do Ejectify";
 "No more %@ notifications" = "Sem mais notificações de %@";
-"Disk Not Ejected Properly" = "O disco não foi ejetado corretamente";
+"Disk Not Ejected Properly" = "Disco mal ejetado";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "O Ejectify tenta desmontar automaticamente os volumes quando o Mac entra em repouso e montá-los novamente após reativar.";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Dê ao Ejectify permissões elevadas nas Definições do Sistema, ou aprove através da notificação do sistema, para montar e desmontar discos com mais fiabilidade.";
 "Permissions granted" = "Permissões concedidas";
@@ -33,5 +33,5 @@
 "Permissions denied" = "Permissões negadas";
 "Close" = "Fechar";
 "Skip" = "Ignorar";
-"Eject \"%@\" before disconnecting or turning it off." = "Ejete \"%@\" antes de o desligar ou desativar.";
+"Eject \"%@\" before disconnecting or turning it off." = "Ejete “%@” antes de desligar.";
 "USB Drive" = "Unidade USB";

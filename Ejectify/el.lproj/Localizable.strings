@@ -24,7 +24,7 @@
 "Check for Updates…" = "Έλεγχος για ενημερώσεις…";
 "Quit Ejectify" = "Έξοδος από το Ejectify";
 "No more %@ notifications" = "Τέλος οι ειδοποιήσεις %@";
-"Disk Not Ejected Properly" = "Ο δίσκος δεν εξήχθη σωστά";
+"Disk Not Ejected Properly" = "Ο δίσκος δεν εξάχθηκε σωστά";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Το Ejectify προσπαθεί αυτόματα να αποπροσαρτήσει τόμους όταν το Mac σας τίθεται σε ύπνο και να τους προσαρτήσει ξανά όταν ξυπνήσει.";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Δώστε στο Ejectify αυξημένα δικαιώματα στις Ρυθμίσεις συστήματος ή εγκρίνετέ το από την ειδοποίηση του συστήματος, ώστε να μπορεί να προσαρτά και να αποπροσαρτά δίσκους πιο αξιόπιστα.";
 "Permissions granted" = "Τα δικαιώματα δόθηκαν";
@@ -33,5 +33,5 @@
 "Permissions denied" = "Τα δικαιώματα απορρίφθηκαν";
 "Close" = "Κλείσιμο";
 "Skip" = "Παράλειψη";
-"Eject \"%@\" before disconnecting or turning it off." = "Εξαγάγετε το \"%@\" πριν το αποσυνδέσετε ή το απενεργοποιήσετε.";
+"Eject \"%@\" before disconnecting or turning it off." = "Εξαγάγετε το «%@» πριν το αποσυνδέσετε.";
 "USB Drive" = "Μονάδα USB";

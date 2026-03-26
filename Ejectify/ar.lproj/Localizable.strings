@@ -33,5 +33,5 @@
 "Permissions denied" = "تم رفض الأذونات";
 "Close" = "إغلاق";
 "Skip" = "تخطي";
-"Eject \"%@\" before disconnecting or turning it off." = "أخرج \"%@\" قبل فصله أو إيقاف تشغيله.";
+"Eject \"%@\" before disconnecting or turning it off." = "قم بإخراج \"%@\" قبل قطع اتصاله أو إيقاف تشغيله.";
 "USB Drive" = "محرك USB";

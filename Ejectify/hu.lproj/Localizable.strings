@@ -33,5 +33,5 @@
 "Permissions denied" = "Jogosultságok elutasítva";
 "Close" = "Bezárás";
 "Skip" = "Kihagyás";
-"Eject \"%@\" before disconnecting or turning it off." = "Válaszd le a(z) \"%@\" elemet, mielőtt leválasztod vagy kikapcsolod.";
+"Eject \"%@\" before disconnecting or turning it off." = "A leválasztás vagy kikapcsolás előtt adja ki a következőt: „%@”.";
 "USB Drive" = "USB-meghajtó";

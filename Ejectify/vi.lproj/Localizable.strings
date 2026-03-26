@@ -24,7 +24,7 @@
 "Check for Updates…" = "Kiểm tra bản cập nhật…";
 "Quit Ejectify" = "Thoát Ejectify";
 "No more %@ notifications" = "Không còn thông báo %@";
-"Disk Not Ejected Properly" = "Ổ đĩa bị tháo sai cách";
+"Disk Not Ejected Properly" = "Ổ đĩa Bị tháo Sai cách";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify tự động cố gắng gỡ các ổ khi máy Mac chuyển sang chế độ ngủ và gắn lại chúng khi máy thức dậy.";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Hãy cấp cho Ejectify quyền nâng cao trong Cài đặt hệ thống hoặc chấp thuận từ thông báo hệ thống để ứng dụng có thể gắn và ngắt kết nối đĩa đáng tin cậy hơn.";
 "Permissions granted" = "Đã cấp quyền";
@@ -33,5 +33,5 @@
 "Permissions denied" = "Quyền bị từ chối";
 "Close" = "Đóng";
 "Skip" = "Bỏ qua";
-"Eject \"%@\" before disconnecting or turning it off." = "Hãy tháo \"%@\" trước khi ngắt kết nối hoặc tắt nó.";
+"Eject \"%@\" before disconnecting or turning it off." = "Gỡ “%@” trước khi tháo hoặc tắt.";
 "USB Drive" = "Ổ USB";

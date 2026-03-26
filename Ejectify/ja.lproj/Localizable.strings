@@ -33,5 +33,5 @@
 "Permissions denied" = "権限が拒否されました";
 "Close" = "閉じる";
 "Skip" = "スキップ";
-"Eject \"%@\" before disconnecting or turning it off." = "接続を解除するか電源を切る前に「%@」を取り出してください。";
+"Eject \"%@\" before disconnecting or turning it off." = "“%@”の取り出し操作をしてから接続を解除したり電源をオフにしたりしてください。";
 "USB Drive" = "USB ドライブ";

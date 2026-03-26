@@ -24,7 +24,7 @@
 "Check for Updates…" = "ตรวจสอบการอัปเดต…";
 "Quit Ejectify" = "ออกจาก Ejectify";
 "No more %@ notifications" = "ไม่มีการแจ้งเตือน %@ อีก";
-"Disk Not Ejected Properly" = "ดิสก์ดีดออกอย่างไม่ถูกต้อง";
+"Disk Not Ejected Properly" = "ดิสก์เลิกเชื่อมต่ออย่างไม่ถูกต้อง";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify จะพยายามเลิกต่อเชื่อมโวลุ่มโดยอัตโนมัติเมื่อ Mac ของคุณเข้าสู่โหมดพัก และต่อเชื่อมกลับอีกครั้งเมื่อเครื่องตื่นขึ้น";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "ให้สิทธิ์ระดับสูงแก่ Ejectify ในการตั้งค่าระบบ หรืออนุมัติจากการแจ้งเตือนของระบบ เพื่อให้แอปสามารถเมานต์และเลิกเมานต์ดิสก์ได้อย่างน่าเชื่อถือยิ่งขึ้น";
 "Permissions granted" = "ให้สิทธิ์แล้ว";
@@ -33,5 +33,5 @@
 "Permissions denied" = "ปฏิเสธสิทธิ์";
 "Close" = "ปิด";
 "Skip" = "ข้าม";
-"Eject \"%@\" before disconnecting or turning it off." = "นำ \"%@\" ออกก่อนถอดหรือปิดเครื่อง";
+"Eject \"%@\" before disconnecting or turning it off." = "เลิกเชื่อมต่อ “%@” ก่อนถอดออกหรือปิดใช้ดิสก์";
 "USB Drive" = "ไดรฟ์ USB";

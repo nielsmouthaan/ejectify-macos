@@ -33,5 +33,5 @@
 "Permissions denied" = "Tillatelser avslått";
 "Close" = "Lukk";
 "Skip" = "Hopp over";
-"Eject \"%@\" before disconnecting or turning it off." = "Løs ut \"%@\" før du kobler den fra eller slår den av.";
+"Eject \"%@\" before disconnecting or turning it off." = "Mat ut «%@» før den kobles fra eller slås av.";
 "USB Drive" = "USB-stasjon";

@@ -33,5 +33,5 @@
 "Permissions denied" = "Povolenia zamietnuté";
 "Close" = "Zavrieť";
 "Skip" = "Preskočiť";
-"Eject \"%@\" before disconnecting or turning it off." = "Pred odpojením alebo vypnutím vysuňte „%@“.";
+"Eject \"%@\" before disconnecting or turning it off." = "Pred odpojením alebo vypnutím najprv disk s názvom „%@“ vysuňte.";
 "USB Drive" = "USB disk";

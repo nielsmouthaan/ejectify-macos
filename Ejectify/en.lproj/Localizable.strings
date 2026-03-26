@@ -33,5 +33,5 @@
 "Permissions denied" = "Permissions denied";
 "Close" = "Close";
 "Skip" = "Skip";
-"Eject \"%@\" before disconnecting or turning it off." = "Eject \"%@\" before disconnecting or turning it off.";
+"Eject \"%@\" before disconnecting or turning it off." = "Eject “%@” before disconnecting or turning it off.";
 "USB Drive" = "USB Drive";

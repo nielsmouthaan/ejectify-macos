@@ -61,6 +61,52 @@ struct StopNotificationView: View {
     }
 }
 
-#Preview {
+#Preview("English") {
     OnboardingView()
+        .environment(\.locale, Locale(identifier: "en"))
+}
+
+#Preview("Spanish") {
+    OnboardingView()
+        .environment(\.locale, Locale(identifier: "es"))
+}
+
+#Preview("French") {
+    OnboardingView()
+        .environment(\.locale, Locale(identifier: "fr"))
+}
+
+#Preview("German") {
+    OnboardingView()
+        .environment(\.locale, Locale(identifier: "de"))
+}
+
+#Preview("Portuguese (Brazil)") {
+    OnboardingView()
+        .environment(\.locale, Locale(identifier: "pt-BR"))
+}
+
+#Preview("Japanese") {
+    OnboardingView()
+        .environment(\.locale, Locale(identifier: "ja"))
+}
+
+#Preview("Chinese (Simplified)") {
+    OnboardingView()
+        .environment(\.locale, Locale(identifier: "zh-Hans"))
+}
+
+#Preview("Arabic") {
+    OnboardingView()
+        .environment(\.locale, Locale(identifier: "ar"))
+}
+
+#Preview("Hindi") {
+    OnboardingView()
+        .environment(\.locale, Locale(identifier: "hi"))
+}
+
+#Preview("Russian") {
+    OnboardingView()
+        .environment(\.locale, Locale(identifier: "ru"))
 }

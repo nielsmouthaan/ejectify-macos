@@ -24,7 +24,7 @@
 "Check for Updates…" = "Provjeri ima li ažuriranja…";
 "Quit Ejectify" = "Zatvori Ejectify";
 "No more %@ notifications" = "Nema više %@ obavijesti";
-"Disk Not Ejected Properly" = "Disk nije pravilno izvađen";
+"Disk Not Ejected Properly" = "Disk nije pravilno izbačen";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify automatski pokušava odspojiti volumene kada vaš Mac prijeđe u stanje mirovanja i ponovno ih montirati nakon buđenja.";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Dodijelite Ejectifyju povišene ovlasti u Postavkama sustava ili ga odobrite iz sistemske obavijesti kako bi pouzdanije mogao montirati i odspajati diskove.";
 "Permissions granted" = "Dozvole odobrene";
@@ -33,5 +33,5 @@
 "Permissions denied" = "Dozvole odbijene";
 "Close" = "Zatvori";
 "Skip" = "Preskoči";
-"Eject \"%@\" before disconnecting or turning it off." = "Izbacite \"%@\" prije nego što ga odspojite ili isključite.";
+"Eject \"%@\" before disconnecting or turning it off." = "Izbacite “%@” prije no što ga odspojite ili isključite.";
 "USB Drive" = "USB disk";

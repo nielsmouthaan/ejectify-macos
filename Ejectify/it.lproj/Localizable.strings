@@ -33,5 +33,5 @@
 "Permissions denied" = "Autorizzazioni negate";
 "Close" = "Chiudi";
 "Skip" = "Salta";
-"Eject \"%@\" before disconnecting or turning it off." = "Espelli \"%@\" prima di scollegarlo o spegnerlo.";
+"Eject \"%@\" before disconnecting or turning it off." = "Espelli “%@” prima di disconnetterlo o spegnerlo.";
 "USB Drive" = "Unità USB";

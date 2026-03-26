@@ -24,7 +24,7 @@
 "Check for Updates…" = "Søg efter opdateringer…";
 "Quit Ejectify" = "Afslut Ejectify";
 "No more %@ notifications" = "Ingen flere %@-notifikationer";
-"Disk Not Ejected Properly" = "Disken blev ikke skubbet korrekt ud";
+"Disk Not Ejected Properly" = "Disk ikke skubbet rigtigt ud";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify forsøger automatisk at afmontere diske, når din Mac går i dvale, og montere dem igen, når den vågner.";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Giv Ejectify forhøjede tilladelser i Systemindstillinger, eller godkend appen via systemnotifikationen, så den kan montere og afmontere diske mere pålideligt.";
 "Permissions granted" = "Tilladelser givet";
@@ -33,5 +33,5 @@
 "Permissions denied" = "Tilladelser afvist";
 "Close" = "Luk";
 "Skip" = "Spring over";
-"Eject \"%@\" before disconnecting or turning it off." = "Skub \"%@\" ud, før du afbryder forbindelsen eller slukker den.";
+"Eject \"%@\" before disconnecting or turning it off." = "Skub “%@” ud, før forbindelsen afbrydes, eller den slukkes.";
 "USB Drive" = "USB-drev";

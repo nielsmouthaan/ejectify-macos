@@ -33,5 +33,5 @@
 "Permissions denied" = "Machtigingen geweigerd";
 "Close" = "Sluiten";
 "Skip" = "Overslaan";
-"Eject \"%@\" before disconnecting or turning it off." = "Werp \"%@\" uit voordat je het loskoppelt of uitschakelt.";
+"Eject \"%@\" before disconnecting or turning it off." = "Verwijder '%@' vóór je deze loskoppelt of uitschakelt.";
 "USB Drive" = "USB-schijf";
