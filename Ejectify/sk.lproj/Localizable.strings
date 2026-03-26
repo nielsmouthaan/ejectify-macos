@@ -23,7 +23,7 @@
 "About Ejectify" = "O aplikácii Ejectify";
 "Check for Updates…" = "Skontrolovať aktualizácie…";
 "Quit Ejectify" = "Ukončiť Ejectify";
-"No more %@ notifications" = "Už žiadne upozornenia „%@“";
+"No more %@ notifications" = "Už žiadne upozornenia %@";
 "Disk Not Ejected Properly" = "Disk bol nesprávne vysunutý";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify sa automaticky pokúsi odpojiť zväzky, keď váš Mac prejde do spánku, a po prebudení ich znova pripojí.";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Pre vyššiu spoľahlivosť udeľte Ejectify zvýšené oprávnenia v Systémových nastaveniach alebo ho schváľte cez systémové upozornenie, aby mohol spoľahlivejšie pripájať a odpájať disky.";

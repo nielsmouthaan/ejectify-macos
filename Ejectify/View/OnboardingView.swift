@@ -15,9 +15,6 @@ struct OnboardingView: View {
     /// Approval monitor backing the onboarding permission state.
     @ObservedObject private var approvalMonitor: OnboardingApprovalMonitor
 
-    /// Measured rendered width of the localized title text.
-    @State private var titleWidth: CGFloat = 0
-
     /// Action that closes the onboarding window.
     private let closeAction: () -> Void
 
@@ -39,23 +36,14 @@ struct OnboardingView: View {
         VStack(spacing: 24) {
             StopNotificationView()
                 .padding(.vertical, 32)
-            titleText
+            Text("No more \(Text("Disk Not Ejected Properly").fontWeight(.semibold)) notifications")
                 .font(.title2)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-                .background {
-                    GeometryReader { geometry in
-                        Color.clear
-                            .preference(key: TitleWidthPreferenceKey.self, value: geometry.size.width)
-                    }
-                }
+                .fixedSize(horizontal: false, vertical: true)
             
             Text("Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes.")
-                .frame(width: titleWidth == 0 ? nil : titleWidth)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably.")
-                .frame(width: titleWidth == 0 ? nil : titleWidth)
                 .fixedSize(horizontal: false, vertical: true)
 
             Button {
@@ -65,7 +53,15 @@ struct OnboardingView: View {
             }
             .buttonStyle(.borderedProminent)
 
-            permissionsStatusView
+            HStack(spacing: 8) {
+                statusIndicator
+                    .frame(width: 14, height: 14)
+
+                statusLabel
+            }
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 20)
+            .accessibilityElement(children: .combine)
 
             Button(permissionStatus.isGranted ? "Close" : "Skip") {
                 closeClicked()
@@ -73,13 +69,10 @@ struct OnboardingView: View {
             .buttonStyle(.link)
         }
         .multilineTextAlignment(.center)
-        .frame(width: titleWidth == 0 ? nil : titleWidth)
+        .frame(width: 400)
         .padding(24)
         .background {
             OnboardingGlassBackground()
-        }
-        .onPreferenceChange(TitleWidthPreferenceKey.self) { width in
-            titleWidth = width
         }
         .onChange(of: permissionStatus) { oldStatus, newStatus in
             guard oldStatus == .waitingForApproval, newStatus != .waitingForApproval else {
@@ -100,36 +93,9 @@ struct OnboardingView: View {
         closeAction()
     }
 
-    /// Localized title with the localized system warning phrase highlighted.
-    private var titleText: Text {
-        let warningPhrase = String(localized: "Disk Not Ejected Properly")
-        let title = String(format: String(localized: "No more %@ notifications"), warningPhrase)
-
-        guard let range = title.range(of: warningPhrase) else {
-            return Text(title)
-        }
-
-        let prefix = String(title[..<range.lowerBound])
-        let suffix = String(title[range.upperBound...])
-        return Text(prefix) + Text(warningPhrase).fontWeight(.semibold) + Text(suffix)
-    }
-
     /// Current onboarding presentation state for privileged helper approval.
     private var permissionStatus: PermissionStatus {
         PermissionStatus(daemonStatus: approvalMonitor.daemonStatus)
-    }
-
-    /// Status row shown beneath the primary action while onboarding is displayed.
-    private var permissionsStatusView: some View {
-        HStack(spacing: 8) {
-            statusIndicator
-                .frame(width: 14, height: 14)
-
-            statusLabel
-        }
-        .frame(maxWidth: .infinity)
-        .frame(minHeight: 20)
-        .accessibilityElement(children: .combine)
     }
 
     /// Indicator shown for the current permission status with a stable layout footprint.
@@ -209,6 +175,144 @@ struct OnboardingView: View {
     }
 }
 
-#Preview {
-    OnboardingView()
+private struct OnboardingLocalePreview: View {
+
+    let localeIdentifier: String
+
+    var body: some View {
+        OnboardingView()
+            .environment(\.locale, Locale(identifier: localeIdentifier))
+    }
+}
+
+#Preview("Arabic") {
+    OnboardingLocalePreview(localeIdentifier: "ar")
+}
+
+#Preview("Czech") {
+    OnboardingLocalePreview(localeIdentifier: "cs")
+}
+
+#Preview("Danish") {
+    OnboardingLocalePreview(localeIdentifier: "da")
+}
+
+#Preview("German") {
+    OnboardingLocalePreview(localeIdentifier: "de")
+}
+
+#Preview("Greek") {
+    OnboardingLocalePreview(localeIdentifier: "el")
+}
+
+#Preview("English") {
+    OnboardingLocalePreview(localeIdentifier: "en")
+}
+
+#Preview("Spanish") {
+    OnboardingLocalePreview(localeIdentifier: "es")
+}
+
+#Preview("Finnish") {
+    OnboardingLocalePreview(localeIdentifier: "fi")
+}
+
+#Preview("French") {
+    OnboardingLocalePreview(localeIdentifier: "fr")
+}
+
+#Preview("Hebrew") {
+    OnboardingLocalePreview(localeIdentifier: "he")
+}
+
+#Preview("Hindi") {
+    OnboardingLocalePreview(localeIdentifier: "hi")
+}
+
+#Preview("Croatian") {
+    OnboardingLocalePreview(localeIdentifier: "hr")
+}
+
+#Preview("Hungarian") {
+    OnboardingLocalePreview(localeIdentifier: "hu")
+}
+
+#Preview("Indonesian") {
+    OnboardingLocalePreview(localeIdentifier: "id")
+}
+
+#Preview("Italian") {
+    OnboardingLocalePreview(localeIdentifier: "it")
+}
+
+#Preview("Japanese") {
+    OnboardingLocalePreview(localeIdentifier: "ja")
+}
+
+#Preview("Korean") {
+    OnboardingLocalePreview(localeIdentifier: "ko")
+}
+
+#Preview("Malay") {
+    OnboardingLocalePreview(localeIdentifier: "ms")
+}
+
+#Preview("Norwegian Bokmal") {
+    OnboardingLocalePreview(localeIdentifier: "nb")
+}
+
+#Preview("Dutch") {
+    OnboardingLocalePreview(localeIdentifier: "nl")
+}
+
+#Preview("Polish") {
+    OnboardingLocalePreview(localeIdentifier: "pl")
+}
+
+#Preview("Portuguese (Brazil)") {
+    OnboardingLocalePreview(localeIdentifier: "pt-BR")
+}
+
+#Preview("Portuguese (Portugal)") {
+    OnboardingLocalePreview(localeIdentifier: "pt-PT")
+}
+
+#Preview("Romanian") {
+    OnboardingLocalePreview(localeIdentifier: "ro")
+}
+
+#Preview("Russian") {
+    OnboardingLocalePreview(localeIdentifier: "ru")
+}
+
+#Preview("Slovak") {
+    OnboardingLocalePreview(localeIdentifier: "sk")
+}
+
+#Preview("Swedish") {
+    OnboardingLocalePreview(localeIdentifier: "sv")
+}
+
+#Preview("Thai") {
+    OnboardingLocalePreview(localeIdentifier: "th")
+}
+
+#Preview("Turkish") {
+    OnboardingLocalePreview(localeIdentifier: "tr")
+}
+
+#Preview("Ukrainian") {
+    OnboardingLocalePreview(localeIdentifier: "uk")
+}
+
+#Preview("Vietnamese") {
+    OnboardingLocalePreview(localeIdentifier: "vi")
+}
+
+#Preview("Chinese (Simplified)") {
+    OnboardingLocalePreview(localeIdentifier: "zh-Hans")
+}
+
+#Preview("Chinese (Traditional)") {
+    OnboardingLocalePreview(localeIdentifier: "zh-Hant")
 }

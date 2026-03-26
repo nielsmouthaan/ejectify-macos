@@ -23,7 +23,7 @@
 "About Ejectify" = "Ejectify について";
 "Check for Updates…" = "アップデートを確認…";
 "Quit Ejectify" = "Ejectify を終了";
-"No more %@ notifications" = "「%@」通知はもう表示されません";
+"No more %@ notifications" = "%@通知はもう表示されません";
 "Disk Not Ejected Properly" = "ディスクの不正な取り出し";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify は、Mac がスリープに入るときにボリュームのマウント解除を自動で試み、スリープ解除後に再マウントします。";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "ディスクのマウントとアンマウントの信頼性を高めるため、システム設定で Ejectify に管理者権限を付与するか、システム通知から承認してください。";

@@ -11,6 +11,7 @@ import SwiftUI
 struct StopNotificationView: View {
 
     @State private var isAnimatingHandSymbol = false
+
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
@@ -29,12 +30,8 @@ struct StopNotificationView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Disk Not Ejected Properly")
                         .fontWeight(.semibold)
-                    Text(
-                        String(
-                            format: String(localized: "Eject \"%@\" before disconnecting or turning it off."),
-                            String(localized: "USB Drive")
-                        )
-                    )
+
+                    Text("Eject \"\(Text("USB Drive"))\" before disconnecting or turning it off.")
                 }
                 .multilineTextAlignment(.leading)
             }
@@ -59,54 +56,4 @@ struct StopNotificationView: View {
         }
         .frame(width: 350, height: 75)
     }
-}
-
-#Preview("English") {
-    OnboardingView()
-        .environment(\.locale, Locale(identifier: "en"))
-}
-
-#Preview("Spanish") {
-    OnboardingView()
-        .environment(\.locale, Locale(identifier: "es"))
-}
-
-#Preview("French") {
-    OnboardingView()
-        .environment(\.locale, Locale(identifier: "fr"))
-}
-
-#Preview("German") {
-    OnboardingView()
-        .environment(\.locale, Locale(identifier: "de"))
-}
-
-#Preview("Portuguese (Brazil)") {
-    OnboardingView()
-        .environment(\.locale, Locale(identifier: "pt-BR"))
-}
-
-#Preview("Japanese") {
-    OnboardingView()
-        .environment(\.locale, Locale(identifier: "ja"))
-}
-
-#Preview("Chinese (Simplified)") {
-    OnboardingView()
-        .environment(\.locale, Locale(identifier: "zh-Hans"))
-}
-
-#Preview("Arabic") {
-    OnboardingView()
-        .environment(\.locale, Locale(identifier: "ar"))
-}
-
-#Preview("Hindi") {
-    OnboardingView()
-        .environment(\.locale, Locale(identifier: "hi"))
-}
-
-#Preview("Russian") {
-    OnboardingView()
-        .environment(\.locale, Locale(identifier: "ru"))
 }

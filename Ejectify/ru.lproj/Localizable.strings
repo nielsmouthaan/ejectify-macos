@@ -23,7 +23,7 @@
 "About Ejectify" = "О Ejectify";
 "Check for Updates…" = "Проверить обновления…";
 "Quit Ejectify" = "Выйти из Ejectify";
-"No more %@ notifications" = "Больше никаких уведомлений «%@»";
+"No more %@ notifications" = "Больше никаких уведомлений %@";
 "Disk Not Ejected Properly" = "Диск извлечен неправильно";
 "Ejectify automatically attempts to unmount volumes when your Mac goes to sleep and mounts them again after it wakes." = "Ejectify автоматически пытается отключать тома, когда Mac переходит в режим сна, и подключать их снова после пробуждения.";
 "Grant Ejectify elevated permissions in System Settings, or approve it from the system notification, so it can mount and unmount disks more reliably." = "Предоставьте Ejectify повышенные права в Системных настройках или подтвердите его через системное уведомление, чтобы он мог надёжнее монтировать и размонтировать диски.";
