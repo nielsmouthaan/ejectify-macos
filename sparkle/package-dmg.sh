@@ -38,17 +38,35 @@ resolve_project_path() {
 
 resolve_sparkle_tool() {
   local tool_name="$1"
+  local resolved_path
+  local bundled_path="$SCRIPT_DIR/$tool_name"
+  local legacy_bundled_path="$SCRIPT_DIR/bin/$tool_name"
 
-  if command -v "$tool_name" >/dev/null 2>&1; then
-    command -v "$tool_name"
-    return
+  if [[ -x "$bundled_path" ]]; then
+    resolved_path="$bundled_path"
   fi
 
-  local resolved_path
-  resolved_path="$(find "$HOME/Library/Developer/Xcode/DerivedData" -type f -path "*/SourcePackages/checkouts/Sparkle/bin/$tool_name" -perm -111 2>/dev/null | head -n 1)"
+  if [[ -z "$resolved_path" && -x "$legacy_bundled_path" ]]; then
+    resolved_path="$legacy_bundled_path"
+  fi
+
+  if [[ -z "$resolved_path" ]]; then
+    resolved_path="$(find "$HOME/Library/Developer/Xcode/DerivedData" -type f -path "*/SourcePackages/checkouts/Sparkle/bin/$tool_name" -perm -111 2>/dev/null | head -n 1)"
+  fi
+
+  if [[ -z "$resolved_path" ]] && command -v "$tool_name" >/dev/null 2>&1; then
+    resolved_path="$(command -v "$tool_name")"
+  fi
 
   if [[ -z "$resolved_path" ]]; then
     echo "Could not find Sparkle tool '$tool_name'. Build once with Sparkle or install Sparkle tools." >&2
+    exit 1
+  fi
+
+  if xattr -p com.apple.quarantine "$resolved_path" >/dev/null 2>&1; then
+    echo "Sparkle tool '$tool_name' is quarantined by macOS: $resolved_path" >&2
+    echo "Remove the quarantine attribute and rerun:" >&2
+    echo "  xattr -d com.apple.quarantine \"$resolved_path\"" >&2
     exit 1
   fi
 
