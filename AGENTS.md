@@ -4,13 +4,13 @@ This document provides instructions for coding agents working in this repository
 
 ## About Ejectify
 
-Ejectify is a macOS utility that helps users avoid “Disk Not Ejected Properly” warnings and potential data corruption by automatically unmounting external volumes before the system or display goes to sleep and remounting them after it wakes up. From its menu bar interface, users can enable or disable automatic (un)mounting and choose which specific volumes should be handled. Ejectify supports multiple trigger conditions, such as when the screensaver starts, when the screen locks, when the display goes to sleep, or when the system sleeps.  ￼  ￼
+Ejectify is a macOS menu bar utility that helps users avoid “Disk Not Ejected Properly” warnings and potential data corruption by automatically unmounting selected ejectable volumes before the display turns off or the system starts sleeping. It remounts previously unmounted volumes when the Mac is ready again.
 
 ## Coding instructions
 
 ### General instructions
 
-- Use Swift 6.2 or later, using modern Swift concurrency.
+- Use Swift 6, using modern Swift concurrency.
 - Do not introduce third-party libraries without asking first.
 - Maintain consistency with existing architecture and naming conventions already used in this repository.
 - For strings that mirror macOS system UI, notifications, or alerts, use the official Apple localization from the corresponding system language resources instead of writing custom translations. For disk ejection warnings specifically, use `/System/Library/Frameworks/DiskArbitration.framework/Versions/A/Resources/Localizable.loctable` as the source of truth.
