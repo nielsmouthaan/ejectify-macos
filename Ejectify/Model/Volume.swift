@@ -127,14 +127,6 @@ final class Volume {
             return nil
         }
 
-        // Require explicit ejectability metadata and keep only ejectable media.
-        guard let isMediaEjectable = diskInfo[kDADiskDescriptionMediaEjectableKey] as? Bool else {
-            return nil
-        }
-        if !isMediaEjectable {
-            return nil
-        }
-
         let category: Category
         if disk.isDiskImage() {
             category = .diskImage
@@ -142,6 +134,13 @@ final class Volume {
             category = .internalVolume
         } else {
             category = .external
+        }
+
+        let isMediaEjectable = (diskInfo[kDADiskDescriptionMediaEjectableKey] as? Bool) ?? false
+
+        // Include disk images, macOS-ejectable media, and external devices such as Thunderbolt SSDs whose media is not classified as ejectable but can still be unmounted.
+        guard category == .diskImage || isMediaEjectable || category == .external else {
+            return nil
         }
 
         return Volume(id: volumeUUID, name: name, url: url, bsdName: bsdName, category: category)
