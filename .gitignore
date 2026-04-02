@@ -10,4 +10,4 @@ xcuserdata/
 
 # Local distribution artifacts
 dist/
-sparkle/
+release/
