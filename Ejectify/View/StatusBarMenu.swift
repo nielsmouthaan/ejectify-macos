@@ -225,8 +225,7 @@ final class StatusBarMenu: NSMenu {
         VolumeOperationRouter.shared.isUsingPrivilegedHelper ? .on : .off
     }
 
-    /// Returns whether force-muting notifications is enabled in the system Disk Arbitration plist.
-    /// Any read failure or missing value is treated as unmuted (`false`).
+    /// Returns whether force-muting notifications is enabled in the system Disk Arbitration plist, treating any read failure or missing value as unmuted (`false`).
     private func isForceMuteNotificationsEnabled() -> Bool {
         guard
             let preferences = NSDictionary(contentsOfFile: PrivilegedHelperConfiguration.diskArbitrationPreferencesPath),

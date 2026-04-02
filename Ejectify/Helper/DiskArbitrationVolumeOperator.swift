@@ -105,8 +105,7 @@ enum DiskArbitrationVolumeOperator {
     /// Shared Disk Arbitration session for mount/unmount operations.
     nonisolated(unsafe) private static let diskArbitrationSession: DASession? = DiskArbitrationSessionFactory.makeSession(dispatchQueue: callbackQueue)
 
-    /// Executes a Disk Arbitration mount/unmount operation and waits for callback completion.
-    /// The BSD name is used as a fast-path resolve hint before UUID scanning.
+    /// Executes a Disk Arbitration mount/unmount operation and waits for callback completion, using the BSD name as a fast-path resolve hint before UUID scanning.
     static func perform(
         volumeUUID: UUID,
         volumeName: String,

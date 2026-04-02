@@ -56,8 +56,7 @@ final class Volume {
         VolumeLogLabelFormatter.label(name: name, uuid: id, bsdName: bsdName)
     }
 
-    /// Tracks whether this volume should be managed automatically.
-    /// Uses a category-based default when no explicit user preference exists.
+    /// Tracks whether this volume should be managed automatically, using a category-based default when no explicit user preference exists.
     var enabled: Bool {
         get {
             let key = "volume." + id.uuidString
