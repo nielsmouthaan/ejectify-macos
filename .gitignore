@@ -9,5 +9,6 @@ xcuserdata/
 .codex/
 
 # Local distribution artifacts
+build/
 dist/
 release/
