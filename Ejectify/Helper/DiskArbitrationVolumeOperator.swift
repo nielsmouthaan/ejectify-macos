@@ -188,7 +188,7 @@ enum DiskArbitrationVolumeOperator {
         session: DASession,
         logFailures: Bool = true
     ) -> DADisk? {
-        let targetVolumeLabel = VolumeLogLabelFormatter.label(
+        let requestedVolumeLabel = VolumeLogLabelFormatter.label(
             name: volumeName,
             uuid: volumeUUID,
             bsdName: bsdName
@@ -196,20 +196,50 @@ enum DiskArbitrationVolumeOperator {
 
         if !bsdName.isEmpty {
             if let disk = resolveDiskByBSDName(bsdName, volumeUUID: volumeUUID, session: session) {
-                logger.info("Disk resolved for \(targetVolumeLabel, privacy: .public) based on BSD name")
+                let resolvedVolumeLabel = resolvedVolumeLabel(
+                    for: disk,
+                    fallbackName: volumeName,
+                    fallbackUUID: volumeUUID,
+                    fallbackBSDName: bsdName
+                )
+                logger.info("Disk resolved for \(resolvedVolumeLabel, privacy: .public) based on BSD name")
                 return disk
             }
         }
 
         if let disk = resolveDiskByVolumeUUIDScan(volumeUUID: volumeUUID, session: session) {
-            logger.info("Disk resolved for \(targetVolumeLabel, privacy: .public) by scanning devices")
+            let resolvedVolumeLabel = resolvedVolumeLabel(
+                for: disk,
+                fallbackName: volumeName,
+                fallbackUUID: volumeUUID,
+                fallbackBSDName: bsdName
+            )
+            logger.info("Disk resolved for \(resolvedVolumeLabel, privacy: .public) by scanning devices")
             return disk
         }
 
         if logFailures {
-            logger.error("Disk resolve failed for \(targetVolumeLabel, privacy: .public)")
+            logger.error("Disk resolve failed for \(requestedVolumeLabel, privacy: .public)")
         }
         return nil
+    }
+
+    /// Builds a log label from the resolved disk metadata, falling back to the originally requested identifiers when needed.
+    private static func resolvedVolumeLabel(
+        for disk: DADisk,
+        fallbackName: String,
+        fallbackUUID: UUID,
+        fallbackBSDName: String
+    ) -> String {
+        guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
+            return VolumeLogLabelFormatter.label(name: fallbackName, uuid: fallbackUUID, bsdName: fallbackBSDName)
+        }
+
+        let resolvedName = (diskInfo[kDADiskDescriptionVolumeNameKey] as? String) ?? fallbackName
+        let resolvedUUID = VolumeUUIDResolver.volumeUUID(from: diskInfo) ?? fallbackUUID
+        let resolvedBSDName = (diskInfo[kDADiskDescriptionMediaBSDNameKey] as? String) ?? fallbackBSDName
+
+        return VolumeLogLabelFormatter.label(name: resolvedName, uuid: resolvedUUID, bsdName: resolvedBSDName)
     }
 
     /// Resolves a disk using a BSD name when it matches the requested volume UUID.

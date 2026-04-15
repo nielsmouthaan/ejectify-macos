@@ -89,6 +89,7 @@ final class ActivityController {
         stopSystemSleepPowerMonitoring(reason: "Monitoring reconfigured")
         registerUnmountTriggerObserver()
         registerMountReadinessObservers()
+        registerRemountCandidateObservers()
 
         logger.info("Monitoring configured for trigger: \(Preference.unmountWhen.rawValue, privacy: .public)")
     }
@@ -139,6 +140,16 @@ final class ActivityController {
         for name in distributedReadinessNotifications {
             DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessNotification(_:)), name: name, object: nil)
         }
+    }
+
+    /// Registers notifications that reconcile remount candidates when volumes reappear outside the app's own mount flow.
+    private func registerRemountCandidateObservers() {
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(handleManagedVolumeDidMount(_:)),
+            name: NSWorkspace.didMountNotification,
+            object: nil
+        )
     }
 
     /// Applies state updates and triggers one mount pass when readiness transitions to true.
@@ -264,6 +275,19 @@ final class ActivityController {
         default:
             return
         }
+    }
+
+    /// Clears any pending automatic remount state when macOS reports the volume has already mounted.
+    @objc private func handleManagedVolumeDidMount(_ notification: Notification) {
+        guard let volumeURL = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL,
+              let volume = Volume.fromURL(url: volumeURL),
+              hasRemountCandidate(withID: volume.id) else {
+            return
+        }
+
+        cancelPendingMountTask(for: volume.id)
+        removeRemountCandidate(withID: volume.id)
+        logger.info("Remount candidate cleared after external mount notification for \(volume.logLabel, privacy: .public)")
     }
 
     /// Cancels and removes any pending mount task for a volume.
