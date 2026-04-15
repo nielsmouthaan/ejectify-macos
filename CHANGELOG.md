@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.2
+
+- Cleared stale remount candidates when managed volumes remount outside Ejectify's own mount flow, preventing redundant remount attempts and improving resolved-disk logging.
+
 ## 2.0.1
 
 - Added external non-ejectable volumes to the discovery list so more removable media is surfaced consistently.
