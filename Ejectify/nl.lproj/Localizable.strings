@@ -19,6 +19,8 @@
 "Unmount when" = "Deactiveren wanneer";
 "Display turned off" = "Beeldscherm wordt uitgeschakeld";
 "System starts sleeping" = "Systeem in sluimerstand gaat";
+"Screen is locked" = "Scherm is vergrendeld";
+"Screensaver started" = "Screensaver is gestart";
 "Force unmount" = "Forceer deactivatie";
 "About Ejectify" = "Over Ejectify";
 "Check for Updates…" = "Controleer op updates…";

@@ -19,6 +19,8 @@
 "Unmount when" = "Démonter lorsque";
 "Display turned off" = "L’écran s’éteint";
 "System starts sleeping" = "Le système se met en veille";
+"Screen is locked" = "L'écran est verrouillé";
+"Screensaver started" = "L'économiseur d'écran démarre";
 "Force unmount" = "Forcer le démontage";
 "About Ejectify" = "À propos d’Ejectify";
 "Check for Updates…" = "Rechercher des mises à jour…";

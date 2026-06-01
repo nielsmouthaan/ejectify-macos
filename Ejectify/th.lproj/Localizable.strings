@@ -19,6 +19,8 @@
 "Unmount when" = "เลิกเมานต์เมื่อ";
 "Display turned off" = "หน้าจอดับ";
 "System starts sleeping" = "ระบบเริ่มเข้าสู่โหมดพัก";
+"Screen is locked" = "หน้าจอล็อค";
+"Screensaver started" = "โปรแกรมรักษาหน้าจอเริ่มทำงาน";
 "Force unmount" = "บังคับเลิกเมานต์";
 "About Ejectify" = "เกี่ยวกับ Ejectify";
 "Check for Updates…" = "ตรวจสอบการอัปเดต…";

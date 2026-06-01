@@ -19,6 +19,8 @@
 "Unmount when" = "다음 시점에 마운트 해제";
 "Display turned off" = "디스플레이가 꺼질 때";
 "System starts sleeping" = "시스템이 잠자기 시작할 때";
+"Screen is locked" = "화면이 잠길 때";
+"Screensaver started" = "화면 보호기가 시작될 때";
 "Force unmount" = "강제 마운트 해제";
 "About Ejectify" = "Ejectify 정보";
 "Check for Updates…" = "업데이트 확인…";

@@ -252,8 +252,10 @@ final class StatusBarMenu: NSMenu {
     /// Builds the submenu for selecting the unmount trigger condition.
     private func buildUnmountWhenMenu() -> NSMenu {
         let unmountWhenMenu = NSMenu(title: String(localized: "Unmount when"))
-        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "Display turned off"), unmountWhen: .screensStartedSleeping))
         unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "System starts sleeping"), unmountWhen: .systemStartsSleeping))
+        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "Display turned off"), unmountWhen: .screensStartedSleeping))
+        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "Screen is locked"), unmountWhen: .screenIsLocked))
+        unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "Screensaver started"), unmountWhen: .screensaverStarted))
 
         return unmountWhenMenu
     }

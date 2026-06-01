@@ -19,6 +19,8 @@
 "Unmount when" = "Ngắt kết nối khi";
 "Display turned off" = "Màn hình tắt";
 "System starts sleeping" = "Hệ thống bắt đầu ngủ";
+"Screen is locked" = "Màn hình bị khóa";
+"Screensaver started" = "Trình bảo vệ màn hình bắt đầu";
 "Force unmount" = "Buộc ngắt kết nối";
 "About Ejectify" = "Giới thiệu Ejectify";
 "Check for Updates…" = "Kiểm tra bản cập nhật…";

@@ -19,6 +19,8 @@
 "Unmount when" = "إلغاء التحميل عند";
 "Display turned off" = "إيقاف تشغيل الشاشة";
 "System starts sleeping" = "بدء سكون النظام";
+"Screen is locked" = "قفل الشاشة";
+"Screensaver started" = "بدء شاشة التوقف";
 "Force unmount" = "فرض إلغاء التحميل";
 "About Ejectify" = "حول Ejectify";
 "Check for Updates…" = "التحقق من وجود تحديثات…";

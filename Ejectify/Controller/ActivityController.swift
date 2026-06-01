@@ -52,9 +52,12 @@ final class ActivityController {
     /// Tracks whether the lock screen is currently active.
     private var screenLocked = false
 
+    /// Tracks whether the screen saver is currently active.
+    private var screensaverActive = false
+
     /// Returns whether the system is considered ready for one mount pass.
     private var isReadyToMount: Bool {
-        systemAwake && displayAwake && sessionActive && !screenLocked
+        systemAwake && displayAwake && sessionActive && !screenLocked && !screensaverActive
     }
 
     /// Maximum number of seconds sleep may be deferred while unmounting.
@@ -75,6 +78,12 @@ final class ActivityController {
 
     /// Distributed notification posted when the screen lock is released.
     private static let screenUnlockedNotificationName = Notification.Name("com.apple.screenIsUnlocked")
+
+    /// Distributed notification posted when the screen saver starts.
+    private static let screensaverDidStartNotificationName = Notification.Name("com.apple.screensaver.didstart")
+
+    /// Distributed notification posted when the screen saver stops.
+    private static let screensaverDidStopNotificationName = Notification.Name("com.apple.screensaver.didstop")
 
     /// Initializes observers based on the current unmount trigger preference.
     init() {
@@ -108,13 +117,17 @@ final class ActivityController {
     /// Registers only the selected unmount trigger while remounting remains readiness-based.
     private func registerUnmountTriggerObserver() {
         switch Preference.unmountWhen {
-        case .screensStartedSleeping:
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.screensDidSleepNotification, object: nil)
         case .systemStartsSleeping:
             if !startSystemSleepPowerMonitoring() {
                 logger.warning("IOKit power monitoring unavailable; falling back to NSWorkspace.willSleepNotification")
                 NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.willSleepNotification, object: nil)
             }
+        case .screensStartedSleeping:
+            NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.screensDidSleepNotification, object: nil)
+        case .screenIsLocked:
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: Self.screenLockedNotificationName, object: nil)
+        case .screensaverStarted:
+            DistributedNotificationCenter.default.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: Self.screensaverDidStartNotificationName, object: nil)
         }
     }
 
@@ -135,7 +148,9 @@ final class ActivityController {
 
         let distributedReadinessNotifications = [
             Self.screenLockedNotificationName,
-            Self.screenUnlockedNotificationName
+            Self.screenUnlockedNotificationName,
+            Self.screensaverDidStartNotificationName,
+            Self.screensaverDidStopNotificationName
         ]
         for name in distributedReadinessNotifications {
             DistributedNotificationCenter.default.addObserver(self, selector: #selector(handleMountReadinessNotification(_:)), name: name, object: nil)
@@ -157,7 +172,8 @@ final class ActivityController {
         systemAwake: Bool? = nil,
         displayAwake: Bool? = nil,
         sessionActive: Bool? = nil,
-        screenLocked: Bool? = nil
+        screenLocked: Bool? = nil,
+        screensaverActive: Bool? = nil
     ) {
         let wasReadyToMount = isReadyToMount
 
@@ -179,6 +195,11 @@ final class ActivityController {
         if let screenLocked {
             logger.info("\(screenLocked ? "Screen is locked" : "Screen is unlocked", privacy: .public)")
             self.screenLocked = screenLocked
+        }
+
+        if let screensaverActive {
+            logger.info("\(screensaverActive ? "Screensaver is active" : "Screensaver is inactive", privacy: .public)")
+            self.screensaverActive = screensaverActive
         }
 
         let isNowReadyToMount = self.isReadyToMount
@@ -272,6 +293,10 @@ final class ActivityController {
             updateMountReadinessState(screenLocked: true)
         case Self.screenUnlockedNotificationName:
             updateMountReadinessState(screenLocked: false)
+        case Self.screensaverDidStartNotificationName:
+            updateMountReadinessState(screensaverActive: true)
+        case Self.screensaverDidStopNotificationName:
+            updateMountReadinessState(screensaverActive: false)
         default:
             return
         }

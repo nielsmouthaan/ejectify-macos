@@ -19,6 +19,8 @@
 "Unmount when" = "Κατάργηση προσάρτησης όταν";
 "Display turned off" = "Η οθόνη απενεργοποιείται";
 "System starts sleeping" = "Το σύστημα αρχίζει να τίθεται σε ύπνο";
+"Screen is locked" = "Η οθόνη κλειδώνει";
+"Screensaver started" = "Ξεκινά η προφύλαξη οθόνης";
 "Force unmount" = "Εξαναγκασμένη κατάργηση προσάρτησης";
 "About Ejectify" = "Σχετικά με το Ejectify";
 "Check for Updates…" = "Έλεγχος για ενημερώσεις…";

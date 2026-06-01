@@ -19,6 +19,8 @@
 "Unmount when" = "Otpusti kada";
 "Display turned off" = "Zaslon se isključi";
 "System starts sleeping" = "Sustav počinje spavati";
+"Screen is locked" = "Zaslon se zaključa";
+"Screensaver started" = "Čuvar zaslona se pokrene";
 "Force unmount" = "Prisilno otpuštanje";
 "About Ejectify" = "O aplikaciji Ejectify";
 "Check for Updates…" = "Provjeri ima li ažuriranja…";

@@ -19,6 +19,8 @@
 "Unmount when" = "Deaktiver når";
 "Display turned off" = "Skjermen slås av";
 "System starts sleeping" = "Systemet begynner å gå i dvale";
+"Screen is locked" = "Skjermen låses";
+"Screensaver started" = "Skjermspareren starter";
 "Force unmount" = "Tving deaktivering";
 "About Ejectify" = "Om Ejectify";
 "Check for Updates…" = "Se etter oppdateringer…";

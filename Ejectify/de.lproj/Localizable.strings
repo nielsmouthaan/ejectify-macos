@@ -19,6 +19,8 @@
 "Unmount when" = "Deaktivieren, wenn";
 "Display turned off" = "Display ausgeschaltet wird";
 "System starts sleeping" = "System in den Ruhezustand wechselt";
+"Screen is locked" = "Bildschirm gesperrt wird";
+"Screensaver started" = "Bildschirmschoner startet";
 "Force unmount" = "Deaktivieren erzwingen";
 "About Ejectify" = "Über Ejectify";
 "Check for Updates…" = "Nach Updates suchen…";

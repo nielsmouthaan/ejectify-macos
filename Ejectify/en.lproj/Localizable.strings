@@ -19,6 +19,8 @@
 "Unmount when" = "Unmount when";
 "Display turned off" = "Display turned off";
 "System starts sleeping" = "System starts sleeping";
+"Screen is locked" = "Screen is locked";
+"Screensaver started" = "Screensaver started";
 "Force unmount" = "Force unmount";
 "About Ejectify" = "About Ejectify";
 "Check for Updates…" = "Check for Updates…";

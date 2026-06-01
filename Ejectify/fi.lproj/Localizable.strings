@@ -19,6 +19,8 @@
 "Unmount when" = "Poista näkyvistä kun";
 "Display turned off" = "Näyttö sammuu";
 "System starts sleeping" = "Järjestelmä alkaa mennä nukkumaan";
+"Screen is locked" = "Näyttö lukitaan";
+"Screensaver started" = "Näytönsäästäjä käynnistyy";
 "Force unmount" = "Pakota poistaminen näkyvistä";
 "About Ejectify" = "Tietoja Ejectifysta";
 "Check for Updates…" = "Tarkista päivitykset…";

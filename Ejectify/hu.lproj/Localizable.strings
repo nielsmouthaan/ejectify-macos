@@ -19,6 +19,8 @@
 "Unmount when" = "Lecsatolás amikor";
 "Display turned off" = "A kijelző kikapcsol";
 "System starts sleeping" = "A rendszer alvó módba kezd lépni";
+"Screen is locked" = "A képernyő zárolódik";
+"Screensaver started" = "A képernyővédő elindul";
 "Force unmount" = "Lecsatolás kényszerítése";
 "About Ejectify" = "Az Ejectify névjegye";
 "Check for Updates…" = "Frissítések keresése…";

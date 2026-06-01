@@ -19,6 +19,8 @@
 "Unmount when" = "נתק כאשר";
 "Display turned off" = "הצג נכבה";
 "System starts sleeping" = "המערכת מתחילה להירדם";
+"Screen is locked" = "המסך ננעל";
+"Screensaver started" = "שומר המסך מתחיל";
 "Force unmount" = "כפה ניתוק";
 "About Ejectify" = "אודות Ejectify";
 "Check for Updates…" = "בדוק אם יש עדכונים…";

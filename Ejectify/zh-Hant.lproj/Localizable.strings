@@ -19,6 +19,8 @@
 "Unmount when" = "卸載時機";
 "Display turned off" = "顯示器關閉";
 "System starts sleeping" = "系統開始進入睡眠";
+"Screen is locked" = "螢幕已鎖定";
+"Screensaver started" = "螢幕保護程式已啟動";
 "Force unmount" = "強制卸載";
 "About Ejectify" = "關於 Ejectify";
 "Check for Updates…" = "檢查更新…";

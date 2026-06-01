@@ -19,6 +19,8 @@
 "Unmount when" = "Desmontar cuando";
 "Display turned off" = "La pantalla se apaga";
 "System starts sleeping" = "El sistema entra en reposo";
+"Screen is locked" = "La pantalla está bloqueada";
+"Screensaver started" = "El protector de pantalla se inicie";
 "Force unmount" = "Forzar desmontaje";
 "About Ejectify" = "Acerca de Ejectify";
 "Check for Updates…" = "Buscar actualizaciones…";

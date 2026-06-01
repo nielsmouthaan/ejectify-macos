@@ -19,6 +19,8 @@
 "Unmount when" = "Gør passiv når";
 "Display turned off" = "Skærmen slukkes";
 "System starts sleeping" = "Systemet går i dvale";
+"Screen is locked" = "Skærmen låses";
+"Screensaver started" = "Skærmskåneren starter";
 "Force unmount" = "Tving passivering";
 "About Ejectify" = "Om Ejectify";
 "Check for Updates…" = "Søg efter opdateringer…";

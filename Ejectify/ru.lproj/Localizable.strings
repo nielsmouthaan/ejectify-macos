@@ -19,6 +19,8 @@
 "Unmount when" = "Отключать, когда";
 "Display turned off" = "Дисплей выключается";
 "System starts sleeping" = "Система переходит в режим сна";
+"Screen is locked" = "Экран заблокирован";
+"Screensaver started" = "Запущен скринсейвер";
 "Force unmount" = "Принудительно отключать";
 "About Ejectify" = "О Ejectify";
 "Check for Updates…" = "Проверить обновления…";

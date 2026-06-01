@@ -19,6 +19,8 @@
 "Unmount when" = "अनमाउंट करें जब";
 "Display turned off" = "डिस्प्ले बंद हो जाए";
 "System starts sleeping" = "सिस्टम स्लीप होना शुरू करे";
+"Screen is locked" = "स्क्रीन लॉक होता है";
+"Screensaver started" = "स्क्रीनसेवर शुरू होता है";
 "Force unmount" = "जबरन अनमाउंट करें";
 "About Ejectify" = "Ejectify के बारे में";
 "Check for Updates…" = "अपडेट जांचें…";

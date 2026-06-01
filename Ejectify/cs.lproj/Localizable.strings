@@ -19,6 +19,8 @@
 "Unmount when" = "Odpojit když";
 "Display turned off" = "Displej se vypne";
 "System starts sleeping" = "Systém začne uspávat";
+"Screen is locked" = "Obrazovka se uzamkne";
+"Screensaver started" = "Spustí se spořič obrazovky";
 "Force unmount" = "Vynutit odpojení";
 "About Ejectify" = "O aplikaci Ejectify";
 "Check for Updates…" = "Zkontrolovat aktualizace…";

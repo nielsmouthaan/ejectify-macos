@@ -19,6 +19,8 @@
 "Unmount when" = "Ta bort när";
 "Display turned off" = "Skärmen stängs av";
 "System starts sleeping" = "Systemet går i vila";
+"Screen is locked" = "Skärmen låses";
+"Screensaver started" = "Skärmsläckaren startar";
 "Force unmount" = "Tvinga borttagning";
 "About Ejectify" = "Om Ejectify";
 "Check for Updates…" = "Sök efter uppdateringar…";

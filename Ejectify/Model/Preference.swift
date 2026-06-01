@@ -17,16 +17,22 @@ enum Preference {
 
     /// Defines which system event triggers automatic unmounting.
     enum UnmountWhen: String {
-        case screensStartedSleeping = "screensStartedSleeping"
         case systemStartsSleeping = "systemStartsSleeping"
+        case screensStartedSleeping = "screensStartedSleeping"
+        case screenIsLocked = "screenIsLocked"
+        case screensaverStarted = "screensaverStarted"
 
-        /// Creates a trigger value from persisted defaults, mapping legacy values to supported behavior.
+        /// Creates a trigger value from persisted defaults, including restored Ejectify 1 trigger values.
         init(persistedRawValue: String?) {
             switch persistedRawValue {
-            case Self.screensStartedSleeping.rawValue:
-                self = .screensStartedSleeping
             case Self.systemStartsSleeping.rawValue:
                 self = .systemStartsSleeping
+            case Self.screensStartedSleeping.rawValue:
+                self = .screensStartedSleeping
+            case Self.screenIsLocked.rawValue:
+                self = .screenIsLocked
+            case Self.screensaverStarted.rawValue:
+                self = .screensaverStarted
             default:
                 self = .systemStartsSleeping
             }

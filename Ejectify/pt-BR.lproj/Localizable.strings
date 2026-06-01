@@ -19,6 +19,8 @@
 "Unmount when" = "Ejetar quando";
 "Display turned off" = "A tela for desligada";
 "System starts sleeping" = "O sistema começar a entrar em repouso";
+"Screen is locked" = "A tela for bloqueada";
+"Screensaver started" = "O protetor de tela iniciar";
 "Force unmount" = "Forçar ejeção";
 "About Ejectify" = "Sobre o Ejectify";
 "Check for Updates…" = "Buscar atualizações…";

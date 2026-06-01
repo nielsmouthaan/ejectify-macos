@@ -19,6 +19,8 @@
 "Unmount when" = "Відмонтовувати коли";
 "Display turned off" = "Дисплей вимикається";
 "System starts sleeping" = "Система починає засинати";
+"Screen is locked" = "Екран блокується";
+"Screensaver started" = "Вмикається заставка";
 "Force unmount" = "Примусово відмонтувати";
 "About Ejectify" = "Про Ejectify";
 "Check for Updates…" = "Перевірити наявність оновлень…";

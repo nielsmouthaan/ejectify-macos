@@ -19,6 +19,8 @@
 "Unmount when" = "Lepas saat";
 "Display turned off" = "Layar dimatikan";
 "System starts sleeping" = "Sistem mulai tidur";
+"Screen is locked" = "Layar dikunci";
+"Screensaver started" = "Penghemat layar dimulai";
 "Force unmount" = "Paksa lepas";
 "About Ejectify" = "Mengenai Ejectify";
 "Check for Updates…" = "Periksa Pembaruan…";

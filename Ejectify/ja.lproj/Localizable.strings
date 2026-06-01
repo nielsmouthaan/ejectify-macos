@@ -19,6 +19,8 @@
 "Unmount when" = "マウント解除するタイミング";
 "Display turned off" = "ディスプレイがオフになったとき";
 "System starts sleeping" = "システムがスリープし始めたとき";
+"Screen is locked" = "画面をロックしたとき";
+"Screensaver started" = "スクリーンセーバーを起動したとき";
 "Force unmount" = "強制的にマウント解除";
 "About Ejectify" = "Ejectify について";
 "Check for Updates…" = "アップデートを確認…";

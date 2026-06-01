@@ -19,6 +19,8 @@
 "Unmount when" = "Demontează când";
 "Display turned off" = "Ecranul se stinge";
 "System starts sleeping" = "Sistemul începe să intre în repaus";
+"Screen is locked" = "Ecranul se blochează";
+"Screensaver started" = "Pornește economizorul de ecran";
 "Force unmount" = "Forțează demontarea";
 "About Ejectify" = "Despre Ejectify";
 "Check for Updates…" = "Caută actualizări…";

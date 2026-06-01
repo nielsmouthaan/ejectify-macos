@@ -19,6 +19,8 @@
 "Unmount when" = "Bağlantısını kesme zamanı";
 "Display turned off" = "Ekran kapandığında";
 "System starts sleeping" = "Sistem uykuya geçtiğinde";
+"Screen is locked" = "Ekran kilitlendiğinde";
+"Screensaver started" = "Ekran koruyucu başladığında";
 "Force unmount" = "Bağlantıyı kesmeye zorla";
 "About Ejectify" = "Ejectify Hakkında";
 "Check for Updates…" = "Güncellemeleri Denetle…";
