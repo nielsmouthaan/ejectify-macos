@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.3
+
+- Restored automatic unmount triggers for when the screen is locked or the screen saver starts.
+- Expanded and refined localizations for the restored trigger labels.
+
 ## 2.0.2
 
 - Cleared stale remount candidates when managed volumes remount outside Ejectify's own mount flow, preventing redundant remount attempts and improving resolved-disk logging.
