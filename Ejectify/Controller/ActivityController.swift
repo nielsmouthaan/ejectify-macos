@@ -363,9 +363,15 @@ final class ActivityController {
                 }
 
                 guard DiskArbitrationVolumeOperator.canResolveDisk(volumeUUID: volume.id, volumeName: volume.name, bsdName: volume.bsdName) else {
-                    self.logger.info("Skipping mount retry because disk is no longer available for \(volume.logLabel, privacy: .public)")
-                    self.removeRemountCandidate(withID: volumeID)
-                    return
+                    guard await self.sleepBeforeNextMountRetry(
+                        for: volume,
+                        attemptIndex: &attemptIndex,
+                        retryReason: "disk is not available",
+                        exhaustedReason: "Mount retry limit reached because disk never became available"
+                    ) else {
+                        return
+                    }
+                    continue
                 }
 
                 let result: (success: Bool, message: String?, status: DAReturn?) = await withCheckedContinuation { continuation in
@@ -389,29 +395,59 @@ final class ActivityController {
                     self.logger.error("Mount failed for \(volume.logLabel, privacy: .public)")
                 }
 
+                if result.status == Int32(kDAReturnNotFound) {
+                    guard await self.sleepBeforeNextMountRetry(
+                        for: volume,
+                        attemptIndex: &attemptIndex,
+                        retryReason: "disk is not available",
+                        exhaustedReason: "Mount retry limit reached because disk never became available"
+                    ) else {
+                        return
+                    }
+                    continue
+                }
+
                 guard result.status?.shouldRetryAutomaticRemount ?? true else {
                     self.logger.info("Mount retry skipped due to non-retryable status for \(volume.logLabel, privacy: .public)")
                     self.removeRemountCandidate(withID: volumeID)
                     return
                 }
 
-                guard attemptIndex < Self.remountRetryDelays.count else {
-                    self.logger.info("Mount retry limit reached for \(volume.logLabel, privacy: .public)")
-                    self.removeRemountCandidate(withID: volumeID)
-                    return
-                }
-
-                let retryNumber = attemptIndex + 1
-                let retryDelay = Self.remountRetryDelays[attemptIndex]
-                attemptIndex += 1
-                logger.info("Scheduling mount retry \(retryNumber, privacy: .public)/\(Self.remountRetryDelays.count, privacy: .public) for \(volume.logLabel, privacy: .public)")
-
-                do {
-                    try await Task.sleep(for: retryDelay)
-                } catch {
+                guard await self.sleepBeforeNextMountRetry(
+                    for: volume,
+                    attemptIndex: &attemptIndex,
+                    retryReason: "mount failed",
+                    exhaustedReason: "Mount retry limit reached"
+                ) else {
                     return
                 }
             }
+        }
+    }
+
+    /// Sleeps until the next remount retry or removes the candidate when the retry budget is exhausted.
+    private func sleepBeforeNextMountRetry(
+        for volume: Volume,
+        attemptIndex: inout Int,
+        retryReason: String,
+        exhaustedReason: String
+    ) async -> Bool {
+        guard attemptIndex < Self.remountRetryDelays.count else {
+            logger.info("\(exhaustedReason, privacy: .public) for \(volume.logLabel, privacy: .public)")
+            removeRemountCandidate(withID: volume.id)
+            return false
+        }
+
+        let retryNumber = attemptIndex + 1
+        let retryDelay = Self.remountRetryDelays[attemptIndex]
+        attemptIndex += 1
+        logger.info("Scheduling mount retry \(retryNumber, privacy: .public)/\(Self.remountRetryDelays.count, privacy: .public) for \(volume.logLabel, privacy: .public): \(retryReason, privacy: .public)")
+
+        do {
+            try await Task.sleep(for: retryDelay)
+            return !Task.isCancelled
+        } catch {
+            return false
         }
     }
 
