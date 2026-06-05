@@ -1,4 +1,5 @@
 "Unmount all" = "Odpojit vše";
+"Eject all" = "Eject all";
 "Internal" = "Interní";
 "External" = "Externí";
 "Disk Images" = "Obrazy disků";
@@ -17,11 +18,13 @@
 "Later" = "Později";
 "Restart" = "Restartovat";
 "Unmount when" = "Odpojit když";
+"Eject when" = "Eject when";
 "Display turned off" = "Displej se vypne";
 "System starts sleeping" = "Systém začne uspávat";
 "Screen is locked" = "Obrazovka se uzamkne";
 "Screensaver started" = "Spustí se spořič obrazovky";
 "Force unmount" = "Vynutit odpojení";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "O aplikaci Ejectify";
 "Check for Updates…" = "Zkontrolovat aktualizace…";
 "Quit Ejectify" = "Ukončit Ejectify";

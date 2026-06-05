@@ -147,8 +147,9 @@ final class StatusBarMenu: NSMenu {
         let isHotKeyRegistered = MainActor.assumeIsolated {
             AppDelegate.shared.isUnmountAllHotKeyRegistered
         }
+        let actionTitle = Preference.ejectInsteadOfUnmount ? String(localized: "Eject all") : String(localized: "Unmount all")
         let unmountAllItem = NSMenuItem(
-            title: String(localized: "Unmount all"),
+            title: actionTitle,
             action: #selector(unmountAllClicked(menuItem:)),
             keyEquivalent: isHotKeyRegistered ? "u" : ""
         )
@@ -195,13 +196,20 @@ final class StatusBarMenu: NSMenu {
         launchAtLoginItem.state = Preference.launchAtLogin ? .on : .off
         addItem(launchAtLoginItem)
 
-        let unmountWhenItem = NSMenuItem(title: String(localized: "Unmount when"), action: nil, keyEquivalent: "")
+        let unmountWhenTitle = Preference.ejectInsteadOfUnmount ? String(localized: "Eject when") : String(localized: "Unmount when")
+        let unmountWhenItem = NSMenuItem(title: unmountWhenTitle, action: nil, keyEquivalent: "")
         unmountWhenItem.submenu = buildUnmountWhenMenu()
         addItem(unmountWhenItem)
+
+        let ejectInsteadOfUnmountItem = NSMenuItem(title: String(localized: "Eject instead of unmount"), action: #selector(ejectInsteadOfUnmountClicked(menuItem:)), keyEquivalent: "")
+        ejectInsteadOfUnmountItem.target = self
+        ejectInsteadOfUnmountItem.state = Preference.ejectInsteadOfUnmount ? .on : .off
+        addItem(ejectInsteadOfUnmountItem)
 
         let forceUnmountItem = NSMenuItem(title: String(localized: "Force unmount"), action: #selector(forceUnmountClicked(menuItem:)), keyEquivalent: "")
         forceUnmountItem.target = self
         forceUnmountItem.state = Preference.forceUnmount ? .on : .off
+        forceUnmountItem.isEnabled = !Preference.ejectInsteadOfUnmount
         addItem(forceUnmountItem)
 
         let elevatedPermissionsItem = NSMenuItem(title: String(localized: "Use elevated permissions"), action: #selector(elevatedPermissionsClicked(menuItem:)), keyEquivalent: "")
@@ -249,9 +257,9 @@ final class StatusBarMenu: NSMenu {
         return false
     }
 
-    /// Builds the submenu for selecting the unmount trigger condition.
+    /// Builds the submenu for selecting the disk-operation trigger condition.
     private func buildUnmountWhenMenu() -> NSMenu {
-        let unmountWhenMenu = NSMenu(title: String(localized: "Unmount when"))
+        let unmountWhenMenu = NSMenu(title: Preference.ejectInsteadOfUnmount ? String(localized: "Eject when") : String(localized: "Unmount when"))
         unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "System starts sleeping"), unmountWhen: .systemStartsSleeping))
         unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "Display turned off"), unmountWhen: .screensStartedSleeping))
         unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "Screen is locked"), unmountWhen: .screenIsLocked))
@@ -286,7 +294,7 @@ final class StatusBarMenu: NSMenu {
         addItem(quitItem)
     }
 
-    /// Unmounts all currently enabled volumes from the menu action.
+    /// Runs the configured all-volumes action from the menu.
     @objc private func unmountAllClicked(menuItem _: NSMenuItem) {
         MainActor.assumeIsolated {
             AppDelegate.shared.performManualUnmountAll()
@@ -300,7 +308,7 @@ final class StatusBarMenu: NSMenu {
         }
         let newEnabledValue = toggledValue(for: menuItem.state)
         volume.enabled = newEnabledValue
-        logger.info("Volume auto-unmount toggled: \(volume.logLabel, privacy: .public) enabled=\(newEnabledValue, privacy: .public)")
+        logger.info("Volume automatic handling toggled: \(volume.logLabel, privacy: .public) enabled=\(newEnabledValue, privacy: .public)")
         updateMenu()
     }
 
@@ -310,7 +318,7 @@ final class StatusBarMenu: NSMenu {
         updateMenu()
     }
 
-    /// Toggles privileged helper registration for elevated mount and unmount attempts.
+    /// Toggles privileged helper registration for elevated disk operation attempts.
     @MainActor
     @objc private func elevatedPermissionsClicked(menuItem: NSMenuItem) {
         let shouldEnable = toggledValue(for: menuItem.state)
@@ -344,7 +352,7 @@ final class StatusBarMenu: NSMenu {
         updateMenu()
     }
 
-    /// Updates the selected unmount trigger preference.
+    /// Updates the selected disk-operation trigger preference.
     @objc private func unmountWhenChanged(menuItem: NSMenuItem) {
         guard let unmountWhen = menuItem.representedObject as? Preference.UnmountWhen else {
             return
@@ -356,6 +364,12 @@ final class StatusBarMenu: NSMenu {
     /// Toggles force-unmount preference from the menu.
     @objc private func forceUnmountClicked(menuItem: NSMenuItem) {
         Preference.forceUnmount = toggledValue(for: menuItem.state)
+        updateMenu()
+    }
+
+    /// Toggles whole-disk eject mode from the menu.
+    @objc private func ejectInsteadOfUnmountClicked(menuItem: NSMenuItem) {
+        Preference.ejectInsteadOfUnmount = toggledValue(for: menuItem.state)
         updateMenu()
     }
 

@@ -9,11 +9,11 @@ import AppKit
 import OSLog
 @preconcurrency import DiskArbitration
 
-/// Responds to sleep/lock/display events by unmounting and remounting enabled volumes.
+/// Responds to sleep/lock/display events by unmounting or ejecting enabled volumes, and remounting when applicable.
 @MainActor
 final class ActivityController {
 
-    /// Logger used for mount/unmount and readiness transition diagnostics.
+    /// Logger used for disk operation and readiness transition diagnostics.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "ActivityController")
 
     /// Volumes still pending automatic remount after a successful automatic unmount.
@@ -22,23 +22,29 @@ final class ActivityController {
     /// Volume UUIDs currently processing an unmount request.
     private var inFlightUnmounts: Set<UUID> = []
 
+    /// Whole-disk BSD names currently processing an eject request.
+    private var inFlightEjects: Set<String> = []
+
     /// Pending mount tasks keyed by volume UUID.
     private var pendingMountTasks: [UUID: Task<Void, Never>] = [:]
 
     /// Pending completion handlers for each in-flight unmount keyed by volume UUID.
     private var pendingUnmountCompletions: [UUID: [(Bool) -> Void]] = [:]
 
+    /// Pending completion handlers for each in-flight eject keyed by whole-disk BSD name.
+    private var pendingEjectCompletions: [String: [(Bool) -> Void]] = [:]
+
     /// Handles IOKit system sleep callbacks used to temporarily delay system sleep.
     private var systemSleepPowerObserver: SystemSleepPowerObserver?
 
-    /// Pending system-sleep token currently held while unmount requests run.
+    /// Pending system-sleep token currently held while disk operation requests run.
     private var pendingSystemSleepToken: Int?
 
     /// Timeout task that enforces the maximum system sleep delay.
     private var pendingSystemSleepTimeoutTask: Task<Void, Never>?
 
-    /// Unmount task started for the pending system sleep token.
-    private var pendingSystemSleepUnmountTask: Task<Void, Never>?
+    /// Disk-operation task started for the pending system sleep token.
+    private var pendingSystemSleepDiskOperationTask: Task<Void, Never>?
 
     /// Tracks whether the machine is currently awake enough to permit remounting.
     private var systemAwake = true
@@ -60,10 +66,10 @@ final class ActivityController {
         systemAwake && displayAwake && sessionActive && !screenLocked && !screensaverActive
     }
 
-    /// Maximum number of seconds sleep may be deferred while unmounting.
+    /// Maximum number of seconds sleep may be deferred while disk operations run.
     private static let maximumSystemSleepDelaySeconds = 10
 
-    /// Hard cap for delaying system sleep while waiting for unmount completion.
+    /// Hard cap for delaying system sleep while waiting for disk operation completion.
     private static let maximumSystemSleepDelay: Duration = .seconds(maximumSystemSleepDelaySeconds)
 
     /// Delays used for automatic remount retries after a failed attempt.
@@ -85,7 +91,7 @@ final class ActivityController {
     /// Distributed notification posted when the screen saver stops.
     private static let screensaverDidStopNotificationName = Notification.Name("com.apple.screensaver.didstop")
 
-    /// Initializes observers based on the current unmount trigger preference.
+    /// Initializes observers based on the current disk-operation trigger preference.
     init() {
         startMonitoring()
     }
@@ -103,10 +109,22 @@ final class ActivityController {
         logger.info("Monitoring configured for trigger: \(Preference.unmountWhen.rawValue, privacy: .public)")
     }
 
-    /// Unmounts all currently enabled volumes and tracks attempted unmounts for remount attempts.
+    /// Handles all currently enabled volumes using the configured automatic disk operation.
     @objc func unmountVolumes(notification: Notification) {
-        logger.info("Unmount trigger received: \(notification.name.rawValue, privacy: .public)")
+        logger.info("Disk operation trigger received: \(notification.name.rawValue, privacy: .public)")
         let enabledVolumes = Volume.mountedVolumes().filter(\.enabled)
+
+        guard !Preference.ejectInsteadOfUnmount else {
+            let representatives = Volume.uniqueWholeDiskRepresentatives(from: enabledVolumes)
+            clearRemountStateForEjectMode()
+            logger.info("Eject mode enabled: ejecting \(representatives.count, privacy: .public) whole disk(s) for \(enabledVolumes.count, privacy: .public) enabled volume(s)")
+
+            for volume in representatives {
+                requestEject(for: volume) { _ in }
+            }
+            return
+        }
+
         mergeRemountCandidates(with: enabledVolumes, reason: "Unmount trigger received")
 
         for volume in enabledVolumes {
@@ -114,7 +132,19 @@ final class ActivityController {
         }
     }
 
-    /// Registers only the selected unmount trigger while remounting remains readiness-based.
+    /// Clears pending automatic remount state because whole-disk eject mode cannot reliably remount devices.
+    func clearRemountStateForEjectMode() {
+        let candidateCount = remountCandidates.count
+        cancelAllPendingMountTasks(reason: "Eject mode enabled")
+        remountCandidates.removeAll()
+
+        guard candidateCount > 0 else {
+            return
+        }
+        logger.info("Cleared \(candidateCount, privacy: .public) remount candidate(s) because eject mode is enabled")
+    }
+
+    /// Registers only the selected disk-operation trigger while remounting remains readiness-based.
     private func registerUnmountTriggerObserver() {
         switch Preference.unmountWhen {
         case .systemStartsSleeping:
@@ -219,6 +249,12 @@ final class ActivityController {
 
     /// Triggers one fire-and-forget mount pass for all remount candidates.
     private func triggerMountPass() {
+        guard !Preference.ejectInsteadOfUnmount else {
+            logger.info("Mount pass skipped: eject mode is enabled")
+            clearRemountStateForEjectMode()
+            return
+        }
+
         guard !self.remountCandidates.isEmpty else {
             logger.info("Mount pass skipped: no remount candidates")
             return
@@ -434,7 +470,7 @@ final class ActivityController {
         systemSleepPowerObserver = nil
     }
 
-    /// Delays system sleep while unmounting and automatically releases sleep after success or timeout.
+    /// Delays system sleep while handling disks and automatically releases sleep after success or timeout.
     private func beginSystemSleepDelay(token: Int) {
         if let pendingToken = pendingSystemSleepToken {
             if pendingToken == token {
@@ -449,7 +485,7 @@ final class ActivityController {
 
         pendingSystemSleepToken = token
         updateMountReadinessState(systemAwake: false)
-        logger.info("System will sleep received; delaying sleep for up to \(Self.maximumSystemSleepDelaySeconds, privacy: .public) seconds to unmount enabled volumes")
+        logger.info("System will sleep received; delaying sleep for up to \(Self.maximumSystemSleepDelaySeconds, privacy: .public) seconds to handle enabled volumes")
 
         pendingSystemSleepTimeoutTask?.cancel()
         pendingSystemSleepTimeoutTask = Task { @MainActor [weak self] in
@@ -469,19 +505,19 @@ final class ActivityController {
             allowSystemSleepIfNeeded(for: token, reason: "\(Self.maximumSystemSleepDelaySeconds)-second timeout reached")
         }
 
-        pendingSystemSleepUnmountTask?.cancel()
-        pendingSystemSleepUnmountTask = Task { @MainActor [weak self] in
+        pendingSystemSleepDiskOperationTask?.cancel()
+        pendingSystemSleepDiskOperationTask = Task { @MainActor [weak self] in
             guard let self else {
                 return
             }
 
-            let batchResult = await unmountEnabledVolumesAndWait()
+            let batchResult = await handleEnabledVolumesAndWait()
             guard pendingSystemSleepToken == token else {
-                logger.info("Ignoring unmount completion for stale system sleep token \(token, privacy: .public)")
+                logger.info("Ignoring disk operation completion for stale system sleep token \(token, privacy: .public)")
                 return
             }
-            logger.info("System sleep unmount batch finished: \(batchResult.succeededCount, privacy: .public)/\(batchResult.requestedCount, privacy: .public) succeeded")
-            allowSystemSleepIfNeeded(for: token, reason: "unmount batch completed")
+            logger.info("System sleep disk operation batch finished: \(batchResult.succeededCount, privacy: .public)/\(batchResult.requestedCount, privacy: .public) succeeded")
+            allowSystemSleepIfNeeded(for: token, reason: "disk operation batch completed")
         }
     }
 
@@ -504,35 +540,53 @@ final class ActivityController {
         systemSleepPowerObserver?.allowPowerChange(for: token)
     }
 
-    /// Cancels and clears pending timeout/unmount tasks for an active system-sleep delay.
+    /// Cancels and clears pending timeout/disk-operation tasks for an active system-sleep delay.
     private func cancelPendingSystemSleepTasks() {
         pendingSystemSleepTimeoutTask?.cancel()
         pendingSystemSleepTimeoutTask = nil
-        pendingSystemSleepUnmountTask?.cancel()
-        pendingSystemSleepUnmountTask = nil
+        pendingSystemSleepDiskOperationTask?.cancel()
+        pendingSystemSleepDiskOperationTask = nil
     }
 
-    /// Represents the completion summary for one unmount batch.
-    private struct UnmountBatchResult {
+    /// Represents the completion summary for one disk-operation batch.
+    private struct DiskOperationBatchResult {
 
-        /// Number of enabled volumes included in the batch request.
+        /// Number of disk operation requests included in the batch.
         let requestedCount: Int
 
-        /// Number of volume unmount requests that reported success.
+        /// Number of disk operation requests that reported success.
         let succeededCount: Int
     }
 
-    /// Unmounts all enabled volumes and waits for every callback to complete.
-    private func unmountEnabledVolumesAndWait() async -> UnmountBatchResult {
+    /// Handles all enabled volumes and waits for every callback to complete.
+    private func handleEnabledVolumesAndWait() async -> DiskOperationBatchResult {
         let enabledVolumes = Volume.mountedVolumes().filter { $0.enabled }
+
+        guard !Preference.ejectInsteadOfUnmount else {
+            clearRemountStateForEjectMode()
+            let representatives = Volume.uniqueWholeDiskRepresentatives(from: enabledVolumes)
+            logger.info("Starting system sleep eject batch: \(representatives.count, privacy: .public) whole disk(s) for \(enabledVolumes.count, privacy: .public) enabled volume(s)")
+
+            return await performDiskOperationBatch(volumes: representatives) { volume, completion in
+                self.requestEject(for: volume, completion: completion)
+            }
+        }
+
         mergeRemountCandidates(with: enabledVolumes, reason: "Starting new system sleep unmount batch")
 
-        guard !enabledVolumes.isEmpty else {
-            return UnmountBatchResult(requestedCount: 0, succeededCount: 0)
+        return await performDiskOperationBatch(volumes: enabledVolumes) { volume, completion in
+            self.requestUnmount(for: volume, completion: completion)
+        }
+    }
+
+    /// Performs one asynchronous disk operation per volume and summarizes callback results.
+    private func performDiskOperationBatch(volumes: [Volume], operation: (Volume, @escaping (Bool) -> Void) -> Void) async -> DiskOperationBatchResult {
+        guard !volumes.isEmpty else {
+            return DiskOperationBatchResult(requestedCount: 0, succeededCount: 0)
         }
 
         return await withCheckedContinuation { continuation in
-            var pendingCallbacks = enabledVolumes.count
+            var pendingCallbacks = volumes.count
             var succeededCount = 0
             var didResume = false
 
@@ -541,11 +595,11 @@ final class ActivityController {
                     return
                 }
                 didResume = true
-                continuation.resume(returning: UnmountBatchResult(requestedCount: enabledVolumes.count, succeededCount: succeededCount))
+                continuation.resume(returning: DiskOperationBatchResult(requestedCount: volumes.count, succeededCount: succeededCount))
             }
 
-            for volume in enabledVolumes {
-                requestUnmount(for: volume) { success in
+            for volume in volumes {
+                operation(volume) { success in
                     if success {
                         succeededCount += 1
                     }
@@ -555,6 +609,32 @@ final class ActivityController {
             }
 
             completeIfNeeded()
+        }
+    }
+
+    /// Enqueues a routed eject request for one whole disk and tracks in-flight state.
+    private func requestEject(for volume: Volume, completion: @escaping (Bool) -> Void) {
+        let wholeDiskBSDName = volume.wholeDiskBSDName
+        pendingEjectCompletions[wholeDiskBSDName, default: []].append(completion)
+
+        guard !inFlightEjects.contains(wholeDiskBSDName) else {
+            logger.info("Eject request joined existing in-flight operation for whole disk \(wholeDiskBSDName, privacy: .public)")
+            return
+        }
+
+        inFlightEjects.insert(wholeDiskBSDName)
+        logger.info("Eject request scheduled for whole disk \(wholeDiskBSDName, privacy: .public) using \(volume.logLabel, privacy: .public)")
+        VolumeOperationRouter.shared.eject(volumeUUID: volume.id as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { [weak self] success in
+            Task { @MainActor [weak self] in
+                guard let self else {
+                    completion(success)
+                    return
+                }
+
+                self.inFlightEjects.remove(wholeDiskBSDName)
+                let completions = self.pendingEjectCompletions.removeValue(forKey: wholeDiskBSDName) ?? []
+                completions.forEach { $0(success) }
+            }
         }
     }
 

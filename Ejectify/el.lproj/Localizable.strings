@@ -1,4 +1,5 @@
 "Unmount all" = "Κατάργηση προσάρτησης όλων";
+"Eject all" = "Eject all";
 "Internal" = "Εσωτερικοί";
 "External" = "Εξωτερικοί";
 "Disk Images" = "Είδωλα δίσκων";
@@ -17,11 +18,13 @@
 "Later" = "Αργότερα";
 "Restart" = "Επανεκκίνηση";
 "Unmount when" = "Κατάργηση προσάρτησης όταν";
+"Eject when" = "Eject when";
 "Display turned off" = "Η οθόνη απενεργοποιείται";
 "System starts sleeping" = "Το σύστημα αρχίζει να τίθεται σε ύπνο";
 "Screen is locked" = "Η οθόνη κλειδώνει";
 "Screensaver started" = "Ξεκινά η προφύλαξη οθόνης";
 "Force unmount" = "Εξαναγκασμένη κατάργηση προσάρτησης";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Σχετικά με το Ejectify";
 "Check for Updates…" = "Έλεγχος για ενημερώσεις…";
 "Quit Ejectify" = "Έξοδος από το Ejectify";

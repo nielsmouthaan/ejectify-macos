@@ -1,4 +1,5 @@
 "Unmount all" = "Deaktiver alle";
+"Eject all" = "Eject all";
 "Internal" = "Interne";
 "External" = "Eksterne";
 "Disk Images" = "Diskfiler";
@@ -17,11 +18,13 @@
 "Later" = "Senere";
 "Restart" = "Start på nytt";
 "Unmount when" = "Deaktiver når";
+"Eject when" = "Eject when";
 "Display turned off" = "Skjermen slås av";
 "System starts sleeping" = "Systemet begynner å gå i dvale";
 "Screen is locked" = "Skjermen låses";
 "Screensaver started" = "Skjermspareren starter";
 "Force unmount" = "Tving deaktivering";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Om Ejectify";
 "Check for Updates…" = "Se etter oppdateringer…";
 "Quit Ejectify" = "Avslutt Ejectify";

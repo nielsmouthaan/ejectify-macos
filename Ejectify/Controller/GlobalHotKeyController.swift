@@ -9,13 +9,13 @@ import Carbon
 import Foundation
 import OSLog
 
-/// Registers and handles the app-wide keyboard shortcut for manual unmount-all.
+/// Registers and handles the app-wide keyboard shortcut for the manual all-volumes action.
 final class GlobalHotKeyController {
 
     /// Carbon signature used to identify Ejectify's hotkey events.
     private static let hotKeySignature: OSType = 0x456A484B // ASCII for "EjHK" (Ejectify hotkey)
 
-    /// Carbon identifier used to distinguish the unmount-all hotkey from other hotkeys.
+    /// Carbon identifier used to distinguish the all-volumes action hotkey from other hotkeys.
     private static let hotKeyID: UInt32 = 1
 
     /// Event specification describing the hotkey-pressed callback this controller listens for.
@@ -107,13 +107,13 @@ final class GlobalHotKeyController {
 
         guard status == noErr, let hotKeyRef else {
             isRegistered = false
-            logger.error("Failed to register global unmount-all hotkey (Control-Command-U): status=\(status, privacy: .public)")
+            logger.error("Failed to register global all-volumes action hotkey (Control-Command-U): status=\(status, privacy: .public)")
             return
         }
 
         eventHotKeyRef = hotKeyRef
         isRegistered = true
-        logger.info("Registered global unmount-all hotkey: Control-Command-U")
+        logger.info("Registered global all-volumes action hotkey: Control-Command-U")
     }
 
     /// Unregisters the Carbon hotkey if it is currently active.
@@ -125,9 +125,9 @@ final class GlobalHotKeyController {
 
         let status = UnregisterEventHotKey(eventHotKeyRef)
         if status == noErr {
-            logger.info("Unregistered global unmount-all hotkey")
+            logger.info("Unregistered global all-volumes action hotkey")
         } else {
-            logger.error("Failed to unregister global unmount-all hotkey: status=\(status, privacy: .public)")
+            logger.error("Failed to unregister global all-volumes action hotkey: status=\(status, privacy: .public)")
         }
 
         self.eventHotKeyRef = nil
@@ -148,7 +148,7 @@ final class GlobalHotKeyController {
         self.eventHandlerRef = nil
     }
 
-    /// Handles an incoming Carbon hotkey event and dispatches the shared unmount action.
+    /// Handles an incoming Carbon hotkey event and dispatches the shared all-volumes action.
     private func handleHotKeyPressed(_ eventRef: EventRef) {
         var hotKeyID = EventHotKeyID()
         let status = GetEventParameter(
@@ -170,7 +170,7 @@ final class GlobalHotKeyController {
             return
         }
 
-        logger.info("Global unmount-all hotkey pressed")
+        logger.info("Global all-volumes action hotkey pressed")
         Task { @MainActor [onUnmountAll] in
             onUnmountAll()
         }

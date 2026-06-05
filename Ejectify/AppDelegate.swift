@@ -22,10 +22,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Owns the menu bar status item and its menu lifecycle.
     var statusBar: StatusBar?
 
-    /// Owns event observation and mount/unmount orchestration.
+    /// Owns event observation and disk-operation orchestration.
     var activityController: ActivityController?
 
-    /// Owns global hotkey registration and dispatch for manual unmount-all.
+    /// Owns global hotkey registration and dispatch for the manual all-volumes action.
     private var globalHotKeyController: GlobalHotKeyController?
 
     /// Owns Sparkle updater lifecycle and manual update actions.
@@ -34,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Owns the onboarding window lifecycle while guidance is presented.
     private var onboardingWindowController: OnboardingWindowController?
 
-    /// Returns whether the global unmount-all hotkey is currently registered.
+    /// Returns whether the global all-volumes action hotkey is currently registered.
     var isUnmountAllHotKeyRegistered: Bool {
         globalHotKeyController?.isRegistered ?? false
     }
@@ -70,9 +70,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateController?.checkForUpdates()
     }
 
-    /// Unmounts all enabled volumes in response to a user-initiated action.
+    /// Handles all enabled volumes in response to a user-initiated action.
     func performManualUnmountAll() {
         let enabledVolumes = Volume.mountedVolumes().filter(\.enabled)
+
+        guard !Preference.ejectInsteadOfUnmount else {
+            activityController?.clearRemountStateForEjectMode()
+            let representatives = Volume.uniqueWholeDiskRepresentatives(from: enabledVolumes)
+            logger.info("Manual eject-all triggered: \(representatives.count, privacy: .public) whole disk(s) for \(enabledVolumes.count, privacy: .public) enabled volume(s)")
+
+            for volume in representatives {
+                VolumeOperationRouter.shared.eject(
+                    volumeUUID: volume.id as NSUUID,
+                    volumeName: volume.name,
+                    bsdName: volume.bsdName
+                ) { _ in }
+            }
+
+            statusBar?.refreshMenu()
+            return
+        }
+
         logger.info("Manual unmount-all triggered: \(enabledVolumes.count, privacy: .public) enabled volumes")
 
         for volume in enabledVolumes {

@@ -1,4 +1,5 @@
 "Unmount all" = "सभी को अनमाउंट करें";
+"Eject all" = "Eject all";
 "Internal" = "आंतरिक";
 "External" = "बाहरी";
 "Disk Images" = "डिस्क इमेज";
@@ -17,11 +18,13 @@
 "Later" = "बाद में";
 "Restart" = "पुनरारंभ";
 "Unmount when" = "अनमाउंट करें जब";
+"Eject when" = "Eject when";
 "Display turned off" = "डिस्प्ले बंद हो जाए";
 "System starts sleeping" = "सिस्टम स्लीप होना शुरू करे";
 "Screen is locked" = "स्क्रीन लॉक होता है";
 "Screensaver started" = "स्क्रीनसेवर शुरू होता है";
 "Force unmount" = "जबरन अनमाउंट करें";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Ejectify के बारे में";
 "Check for Updates…" = "अपडेट जांचें…";
 "Quit Ejectify" = "Ejectify बंद करें";

@@ -18,7 +18,7 @@ extension Notification.Name {
 /// Routes volume operations to the priviledged helper when available, with local fallback.
 final class VolumeOperationRouter: @unchecked Sendable {
 
-    /// Describes where mount/unmount requests are currently executed.
+    /// Describes where disk operation requests are currently executed.
     enum ExecutionMode: String {
         case local
         case priviledgedHelper
@@ -106,7 +106,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Logger used for routing mode and operation outcomes.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "VolumeOperationRouter")
 
-    /// Queue used for local mount/unmount operations.
+    /// Queue used for local disk operations.
     private let localOperationQueue = DispatchQueue(
         label: "nl.nielsmouthaan.Ejectify.LocalDiskOperation",
         qos: .userInitiated,
@@ -140,12 +140,12 @@ final class VolumeOperationRouter: @unchecked Sendable {
         PrivilegedHelperLifecycleManager.shared.isDaemonEnabled
     }
 
-    /// Returns the active execution mode for mount and unmount routing.
+    /// Returns the active execution mode for disk operation routing.
     var executionMode: ExecutionMode {
         withStateLock { executionModeStorage }
     }
 
-    /// Returns whether mount and unmount requests are currently routed through the privileged helper.
+    /// Returns whether disk operation requests are currently routed through the privileged helper.
     var isUsingPrivilegedHelper: Bool {
         executionMode == .priviledgedHelper
     }
@@ -168,7 +168,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         return ": \(message)"
     }
 
-    /// Logs a mount/unmount outcome with a consistent format used by priviledged helper and local execution paths.
+    /// Logs a disk operation outcome with a consistent format used by priviledged helper and local execution paths.
     private nonisolated static func logOperationResult(
         logger: Logger,
         source: String,
@@ -402,7 +402,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
             if success {
                 self.setExecutionMode(.priviledgedHelper, reason: "startup priviledged helper ping succeeded")
-                self.logger.info("Priviledged helper is available and will be used for mount and unmount operations")
+                self.logger.info("Priviledged helper is available and will be used for disk operations")
             } else {
                 let details = message ?? "No additional details"
                 self.logger.warning("Priviledged helper startup ping failed: \(details, privacy: .public)")
@@ -479,6 +479,21 @@ final class VolumeOperationRouter: @unchecked Sendable {
             }
         ) { proxy, reply in
             proxy.unmount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, force: force, withReply: reply)
+        }
+    }
+
+    /// Requests a whole-disk eject for the provided volume metadata, routed by the active execution mode.
+    func eject(volumeUUID: NSUUID, volumeName: String, bsdName: String, completion: @escaping (Bool) -> Void) {
+        routeOperation(
+            operation: .eject,
+            volumeUUID: volumeUUID,
+            volumeName: volumeName,
+            bsdName: bsdName,
+            completion: { success, _, _ in
+                completion(success)
+            }
+        ) { proxy, reply in
+            proxy.eject(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, withReply: reply)
         }
     }
 
@@ -564,7 +579,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
-    /// Routes mount/unmount requests to priviledged helper or local execution based on current mode.
+    /// Routes disk operation requests to priviledged helper or local execution based on current mode.
     private func routeOperation(
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeUUID: NSUUID,
@@ -678,7 +693,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
-    /// Executes mount/unmount in the app process when priviledged helper routing is unavailable.
+    /// Executes a disk operation in the app process when priviledged helper routing is unavailable.
     private func performLocalDiskOperation(
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeUUID: NSUUID,

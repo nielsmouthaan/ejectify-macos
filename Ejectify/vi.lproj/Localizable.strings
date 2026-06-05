@@ -1,4 +1,5 @@
 "Unmount all" = "Ngắt kết nối tất cả";
+"Eject all" = "Eject all";
 "Internal" = "Bên trong";
 "External" = "Bên ngoài";
 "Disk Images" = "Ảnh đĩa";
@@ -17,11 +18,13 @@
 "Later" = "Để sau";
 "Restart" = "Khởi động lại";
 "Unmount when" = "Ngắt kết nối khi";
+"Eject when" = "Eject when";
 "Display turned off" = "Màn hình tắt";
 "System starts sleeping" = "Hệ thống bắt đầu ngủ";
 "Screen is locked" = "Màn hình bị khóa";
 "Screensaver started" = "Trình bảo vệ màn hình bắt đầu";
 "Force unmount" = "Buộc ngắt kết nối";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Giới thiệu Ejectify";
 "Check for Updates…" = "Kiểm tra bản cập nhật…";
 "Quit Ejectify" = "Thoát Ejectify";

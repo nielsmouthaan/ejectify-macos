@@ -8,7 +8,7 @@
 import Foundation
 import OSLog
 
-/// Implements privileged XPC endpoints for mount/unmount and notification muting operations.
+/// Implements privileged XPC endpoints for disk operations and notification muting.
 final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
 
     /// Stores XPC reply closures so they can safely cross sendable dispatch boundaries.
@@ -26,7 +26,7 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     /// Logger used for privileged helper operation diagnostics.
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify.PrivilegedHelper", category: "PrivilegedDiskService")
 
-    /// Queue used to execute mount/unmount requests concurrently.
+    /// Queue used to execute disk operation requests concurrently.
     private let operationQueue = DispatchQueue(
         label: "nl.nielsmouthaan.Ejectify.PrivilegedHelper.DiskOperation",
         qos: .userInitiated,
@@ -46,6 +46,11 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     /// Performs a privileged unmount for the provided volume metadata.
     func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
         perform(operation: .unmount(force: force), volumeUUID: volumeUUID as UUID, volumeName: volumeName, bsdName: bsdName, reply: reply)
+    }
+
+    /// Performs a privileged whole-disk eject for the provided volume metadata.
+    func eject(volumeUUID: NSUUID, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
+        perform(operation: .eject, volumeUUID: volumeUUID as UUID, volumeName: volumeName, bsdName: bsdName, reply: reply)
     }
 
     /// Updates Disk Arbitration eject-notification muting through `defaults`.

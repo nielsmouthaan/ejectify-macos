@@ -1,4 +1,5 @@
 "Unmount all" = "Tümünün bağlantısını kes";
+"Eject all" = "Eject all";
 "Internal" = "Dahili";
 "External" = "Harici";
 "Disk Images" = "Disk Görüntüleri";
@@ -17,11 +18,13 @@
 "Later" = "Daha sonra";
 "Restart" = "Yeniden başlat";
 "Unmount when" = "Bağlantısını kesme zamanı";
+"Eject when" = "Eject when";
 "Display turned off" = "Ekran kapandığında";
 "System starts sleeping" = "Sistem uykuya geçtiğinde";
 "Screen is locked" = "Ekran kilitlendiğinde";
 "Screensaver started" = "Ekran koruyucu başladığında";
 "Force unmount" = "Bağlantıyı kesmeye zorla";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Ejectify Hakkında";
 "Check for Updates…" = "Güncellemeleri Denetle…";
 "Quit Ejectify" = "Ejectify’dan Çık";

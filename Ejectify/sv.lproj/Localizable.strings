@@ -1,4 +1,5 @@
 "Unmount all" = "Ta bort alla";
+"Eject all" = "Eject all";
 "Internal" = "Interna";
 "External" = "Externa";
 "Disk Images" = "Skivavbilder";
@@ -17,11 +18,13 @@
 "Later" = "Senare";
 "Restart" = "Starta om";
 "Unmount when" = "Ta bort när";
+"Eject when" = "Eject when";
 "Display turned off" = "Skärmen stängs av";
 "System starts sleeping" = "Systemet går i vila";
 "Screen is locked" = "Skärmen låses";
 "Screensaver started" = "Skärmsläckaren startar";
 "Force unmount" = "Tvinga borttagning";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Om Ejectify";
 "Check for Updates…" = "Sök efter uppdateringar…";
 "Quit Ejectify" = "Avsluta Ejectify";

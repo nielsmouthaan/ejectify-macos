@@ -1,4 +1,5 @@
 "Unmount all" = "Összes lecsatolása";
+"Eject all" = "Eject all";
 "Internal" = "Belső";
 "External" = "Külső";
 "Disk Images" = "Lemezképek";
@@ -17,11 +18,13 @@
 "Later" = "Később";
 "Restart" = "Újraindítás";
 "Unmount when" = "Lecsatolás amikor";
+"Eject when" = "Eject when";
 "Display turned off" = "A kijelző kikapcsol";
 "System starts sleeping" = "A rendszer alvó módba kezd lépni";
 "Screen is locked" = "A képernyő zárolódik";
 "Screensaver started" = "A képernyővédő elindul";
 "Force unmount" = "Lecsatolás kényszerítése";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Az Ejectify névjegye";
 "Check for Updates…" = "Frissítések keresése…";
 "Quit Ejectify" = "Kilépés az Ejectifyból";

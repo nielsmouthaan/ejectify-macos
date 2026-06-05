@@ -19,6 +19,9 @@ import Foundation
     /// Unmounts a volume identified by UUID with a BSD-name resolve hint.
     func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void)
 
+    /// Ejects the parent whole disk for a volume identified by UUID with a BSD-name resolve hint.
+    func eject(volumeUUID: NSUUID, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?, Int32) -> Void)
+
     /// Enables or disables macOS "Disk Not Ejected Properly" notifications.
     func setEjectNotificationsMuted(muted: Bool, withReply reply: @escaping (Bool, String?) -> Void)
 

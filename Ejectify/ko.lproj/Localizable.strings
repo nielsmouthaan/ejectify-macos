@@ -1,4 +1,5 @@
 "Unmount all" = "모두 마운트 해제";
+"Eject all" = "Eject all";
 "Internal" = "내장";
 "External" = "외장";
 "Disk Images" = "디스크 이미지";
@@ -17,11 +18,13 @@
 "Later" = "나중에";
 "Restart" = "재시동";
 "Unmount when" = "다음 시점에 마운트 해제";
+"Eject when" = "Eject when";
 "Display turned off" = "디스플레이가 꺼질 때";
 "System starts sleeping" = "시스템이 잠자기 시작할 때";
 "Screen is locked" = "화면이 잠길 때";
 "Screensaver started" = "화면 보호기가 시작될 때";
 "Force unmount" = "강제 마운트 해제";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Ejectify 정보";
 "Check for Updates…" = "업데이트 확인…";
 "Quit Ejectify" = "Ejectify 종료";

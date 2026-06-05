@@ -1,4 +1,5 @@
 "Unmount all" = "Lepas semua";
+"Eject all" = "Eject all";
 "Internal" = "Internal";
 "External" = "Eksternal";
 "Disk Images" = "Image Disk";
@@ -17,11 +18,13 @@
 "Later" = "Nanti";
 "Restart" = "Mulai ulang";
 "Unmount when" = "Lepas saat";
+"Eject when" = "Eject when";
 "Display turned off" = "Layar dimatikan";
 "System starts sleeping" = "Sistem mulai tidur";
 "Screen is locked" = "Layar dikunci";
 "Screensaver started" = "Penghemat layar dimulai";
 "Force unmount" = "Paksa lepas";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Mengenai Ejectify";
 "Check for Updates…" = "Periksa Pembaruan…";
 "Quit Ejectify" = "Keluar dari Ejectify";

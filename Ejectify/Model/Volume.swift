@@ -48,6 +48,9 @@ final class Volume {
     /// BSD disk identifier associated with this volume (for example `disk6s2`).
     let bsdName: String
 
+    /// Parent whole-disk BSD identifier used for full-device eject requests.
+    let wholeDiskBSDName: String
+
     /// Category used for grouping volumes in the status-bar menu.
     let category: Category
 
@@ -76,11 +79,12 @@ final class Volume {
     }
 
     /// Creates a managed volume model from resolved Disk Arbitration metadata.
-    init(id: UUID, name: String, url: URL, bsdName: String, category: Category) {
+    init(id: UUID, name: String, url: URL, bsdName: String, wholeDiskBSDName: String, category: Category) {
         self.id = id
         self.name = name
         self.url = url
         self.bsdName = bsdName
+        self.wholeDiskBSDName = wholeDiskBSDName
         self.category = category
     }
 
@@ -121,7 +125,7 @@ final class Volume {
             return nil
         }
 
-        // Require a BSD disk identifier for fast resolve attempts during mount/unmount operations.
+        // Require a BSD disk identifier for fast resolve attempts during disk operations.
         guard let bsdName = diskInfo[kDADiskDescriptionMediaBSDNameKey] as? String else {
             return nil
         }
@@ -142,7 +146,36 @@ final class Volume {
             return nil
         }
 
-        return Volume(id: volumeUUID, name: name, url: url, bsdName: bsdName, category: category)
+        let wholeDiskBSDName = Self.wholeDiskBSDName(for: disk, fallbackBSDName: bsdName)
+
+        return Volume(id: volumeUUID, name: name, url: url, bsdName: bsdName, wholeDiskBSDName: wholeDiskBSDName, category: category)
+    }
+
+    /// Returns one representative volume per parent whole disk, preserving the input order.
+    static func uniqueWholeDiskRepresentatives(from volumes: [Volume]) -> [Volume] {
+        var seenWholeDiskBSDNames: Set<String> = []
+        var representatives: [Volume] = []
+
+        for volume in volumes {
+            guard seenWholeDiskBSDNames.insert(volume.wholeDiskBSDName).inserted else {
+                continue
+            }
+            representatives.append(volume)
+        }
+
+        return representatives
+    }
+
+    /// Resolves the parent whole-disk BSD identifier for a Disk Arbitration disk.
+    private static func wholeDiskBSDName(for disk: DADisk, fallbackBSDName: String) -> String {
+        guard let wholeDisk = DADiskCopyWholeDisk(disk),
+              let wholeDiskInfo = DADiskCopyDescription(wholeDisk) as? [NSString: Any],
+              let wholeDiskBSDName = wholeDiskInfo[kDADiskDescriptionMediaBSDNameKey] as? String,
+              !wholeDiskBSDName.isEmpty else {
+            return fallbackBSDName
+        }
+
+        return wholeDiskBSDName
     }
 
 }

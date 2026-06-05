@@ -75,6 +75,25 @@ enum Preference {
         }
     }
 
+    /// Controls whether automatic and manual disk handling ejects whole disks instead of unmounting volumes.
+    static var ejectInsteadOfUnmount: Bool {
+        get {
+            return UserDefaults.standard.bool(forKey: "preference.ejectInsteadOfUnmount")
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "preference.ejectInsteadOfUnmount")
+            logger.info("Preference changed: ejectInsteadOfUnmount=\(newValue, privacy: .public)")
+
+            guard newValue else {
+                return
+            }
+
+            Task { @MainActor in
+                AppDelegate.shared.activityController?.clearRemountStateForEjectMode()
+            }
+        }
+    }
+
     /// Tracks whether the one-time onboarding window has already been shown.
     static var hasSeenOnboarding: Bool {
         get {

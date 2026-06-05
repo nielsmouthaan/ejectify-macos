@@ -1,4 +1,5 @@
 "Unmount all" = "全部卸載";
+"Eject all" = "Eject all";
 "Internal" = "內建";
 "External" = "外接";
 "Disk Images" = "磁碟映像檔";
@@ -17,11 +18,13 @@
 "Later" = "稍後";
 "Restart" = "重新啟動";
 "Unmount when" = "卸載時機";
+"Eject when" = "Eject when";
 "Display turned off" = "顯示器關閉";
 "System starts sleeping" = "系統開始進入睡眠";
 "Screen is locked" = "螢幕已鎖定";
 "Screensaver started" = "螢幕保護程式已啟動";
 "Force unmount" = "強制卸載";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "關於 Ejectify";
 "Check for Updates…" = "檢查更新…";
 "Quit Ejectify" = "結束 Ejectify";

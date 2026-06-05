@@ -9,7 +9,7 @@ import Foundation
 import OSLog
 @preconcurrency import DiskArbitration
 
-/// Performs mount and unmount requests via Disk Arbitration for a volume UUID.
+/// Performs mount, unmount, and eject requests via Disk Arbitration for a volume UUID.
 enum DiskArbitrationVolumeOperator {
 
     /// Creates configured Disk Arbitration sessions for shared app/helper usage.
@@ -54,10 +54,11 @@ enum DiskArbitrationVolumeOperator {
         }
     }
 
-    /// Represents the supported mount-state operations routed through Disk Arbitration.
+    /// Represents the supported disk operations routed through Disk Arbitration.
     enum Operation {
         case mount
         case unmount(force: Bool)
+        case eject
 
         /// Human-readable operation name used in logs and error messages.
         var operationName: String {
@@ -66,6 +67,8 @@ enum DiskArbitrationVolumeOperator {
                 return "mount"
             case .unmount(let force):
                 return force ? "forced unmount" : "unmount"
+            case .eject:
+                return "eject"
             }
         }
     }
@@ -102,10 +105,10 @@ enum DiskArbitrationVolumeOperator {
         qos: .userInitiated
     )
 
-    /// Shared Disk Arbitration session for mount/unmount operations.
+    /// Shared Disk Arbitration session for disk operations.
     nonisolated(unsafe) private static let diskArbitrationSession: DASession? = DiskArbitrationSessionFactory.makeSession(dispatchQueue: callbackQueue)
 
-    /// Executes a Disk Arbitration mount/unmount operation and waits for callback completion, using the BSD name as a fast-path resolve hint before UUID scanning.
+    /// Executes a Disk Arbitration operation and waits for callback completion, using the BSD name as a fast-path resolve hint before UUID scanning.
     static func perform(
         volumeUUID: UUID,
         volumeName: String,
@@ -142,6 +145,21 @@ enum DiskArbitrationVolumeOperator {
                 callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter)
                 callbackState.semaphore.signal()
             }, callbackContext)
+        case .eject:
+            guard let wholeDisk = resolveWholeDisk(for: disk, fallbackName: volumeName, fallbackUUID: volumeUUID, fallbackBSDName: bsdName) else {
+                Unmanaged<CallbackState>.fromOpaque(callbackContext).release()
+                return OperationResult(success: false, message: "Whole disk for requested volume not found", status: Int32(kDAReturnNotFound))
+            }
+
+            DADiskEject(wholeDisk, DADiskEjectOptions(kDADiskEjectOptionDefault), { _, dissenter, context in
+                guard let context else {
+                    return
+                }
+
+                let callbackState = Unmanaged<CallbackState>.fromOpaque(context).takeRetainedValue()
+                callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter)
+                callbackState.semaphore.signal()
+            }, callbackContext)
         case .unmount(let force):
             let option = force ? kDADiskUnmountOptionForce : kDADiskUnmountOptionDefault
             DADiskUnmount(disk, DADiskUnmountOptions(option), { _, dissenter, context in
@@ -161,6 +179,43 @@ enum DiskArbitrationVolumeOperator {
         }
 
         return callbackState.result
+    }
+
+    /// Resolves and logs the parent whole disk used for full-device eject requests.
+    private static func resolveWholeDisk(
+        for disk: DADisk,
+        fallbackName: String,
+        fallbackUUID: UUID,
+        fallbackBSDName: String
+    ) -> DADisk? {
+        let selectedLabel = resolvedVolumeLabel(
+            for: disk,
+            fallbackName: fallbackName,
+            fallbackUUID: fallbackUUID,
+            fallbackBSDName: fallbackBSDName
+        )
+
+        guard let wholeDisk = DADiskCopyWholeDisk(disk) else {
+            logger.error("Whole disk resolve failed for \(selectedLabel, privacy: .public)")
+            return nil
+        }
+
+        guard let wholeDiskInfo = DADiskCopyDescription(wholeDisk) as? [NSString: Any] else {
+            logger.info("Whole disk resolved for \(selectedLabel, privacy: .public) without description metadata")
+            return wholeDisk
+        }
+
+        let wholeDiskBSDName = (wholeDiskInfo[kDADiskDescriptionMediaBSDNameKey] as? String) ?? "unknown"
+        let isWhole = (wholeDiskInfo[kDADiskDescriptionMediaWholeKey] as? Bool) ?? false
+        let isEjectable = (wholeDiskInfo[kDADiskDescriptionMediaEjectableKey] as? Bool) ?? false
+        let isRemovable = (wholeDiskInfo[kDADiskDescriptionMediaRemovableKey] as? Bool) ?? false
+        let isInternal = (wholeDiskInfo[kDADiskDescriptionDeviceInternalKey] as? Bool) ?? false
+
+        logger.info(
+            "Whole disk resolved for \(selectedLabel, privacy: .public): BSD=\(wholeDiskBSDName, privacy: .public), whole=\(isWhole, privacy: .public), ejectable=\(isEjectable, privacy: .public), removable=\(isRemovable, privacy: .public), internal=\(isInternal, privacy: .public)"
+        )
+
+        return wholeDisk
     }
 
     /// Returns whether the requested volume is currently resolvable via Disk Arbitration.

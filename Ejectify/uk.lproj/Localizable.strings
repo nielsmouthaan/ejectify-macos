@@ -1,4 +1,5 @@
 "Unmount all" = "Відмонтувати все";
+"Eject all" = "Eject all";
 "Internal" = "Внутрішні";
 "External" = "Зовнішні";
 "Disk Images" = "Образи дисків";
@@ -17,11 +18,13 @@
 "Later" = "Пізніше";
 "Restart" = "Перезавантажити";
 "Unmount when" = "Відмонтовувати коли";
+"Eject when" = "Eject when";
 "Display turned off" = "Дисплей вимикається";
 "System starts sleeping" = "Система починає засинати";
 "Screen is locked" = "Екран блокується";
 "Screensaver started" = "Вмикається заставка";
 "Force unmount" = "Примусово відмонтувати";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Про Ejectify";
 "Check for Updates…" = "Перевірити наявність оновлень…";
 "Quit Ejectify" = "Вийти з Ejectify";

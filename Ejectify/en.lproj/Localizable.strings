@@ -1,4 +1,5 @@
 "Unmount all" = "Unmount all";
+"Eject all" = "Eject all";
 "Internal" = "Internal";
 "External" = "External";
 "Disk Images" = "Disk Images";
@@ -17,11 +18,13 @@
 "Later" = "Later";
 "Restart" = "Restart";
 "Unmount when" = "Unmount when";
+"Eject when" = "Eject when";
 "Display turned off" = "Display turned off";
 "System starts sleeping" = "System starts sleeping";
 "Screen is locked" = "Screen is locked";
 "Screensaver started" = "Screensaver started";
 "Force unmount" = "Force unmount";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "About Ejectify";
 "Check for Updates…" = "Check for Updates…";
 "Quit Ejectify" = "Quit Ejectify";

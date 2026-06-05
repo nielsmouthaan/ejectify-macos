@@ -1,4 +1,5 @@
 "Unmount all" = "Demontează tot";
+"Eject all" = "Eject all";
 "Internal" = "Interne";
 "External" = "Externe";
 "Disk Images" = "Imagini de disc";
@@ -17,11 +18,13 @@
 "Later" = "Mai târziu";
 "Restart" = "Repornește";
 "Unmount when" = "Demontează când";
+"Eject when" = "Eject when";
 "Display turned off" = "Ecranul se stinge";
 "System starts sleeping" = "Sistemul începe să intre în repaus";
 "Screen is locked" = "Ecranul se blochează";
 "Screensaver started" = "Pornește economizorul de ecran";
 "Force unmount" = "Forțează demontarea";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Despre Ejectify";
 "Check for Updates…" = "Caută actualizări…";
 "Quit Ejectify" = "Închide Ejectify";

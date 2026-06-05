@@ -1,4 +1,5 @@
 "Unmount all" = "Deactiveer alles";
+"Eject all" = "Eject all";
 "Internal" = "Intern";
 "External" = "Extern";
 "Disk Images" = "Schijfkopieën";
@@ -17,11 +18,13 @@
 "Later" = "Later";
 "Restart" = "Herstart";
 "Unmount when" = "Deactiveren wanneer";
+"Eject when" = "Eject when";
 "Display turned off" = "Beeldscherm wordt uitgeschakeld";
 "System starts sleeping" = "Systeem in sluimerstand gaat";
 "Screen is locked" = "Scherm is vergrendeld";
 "Screensaver started" = "Screensaver is gestart";
 "Force unmount" = "Forceer deactivatie";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Over Ejectify";
 "Check for Updates…" = "Controleer op updates…";
 "Quit Ejectify" = "Stop Ejectify";

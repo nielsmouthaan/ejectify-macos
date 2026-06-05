@@ -1,4 +1,5 @@
 "Unmount all" = "Desmontar todo";
+"Eject all" = "Eject all";
 "Internal" = "Interno";
 "External" = "Externo";
 "Disk Images" = "Imágenes de disco";
@@ -17,11 +18,13 @@
 "Later" = "Más tarde";
 "Restart" = "Reiniciar";
 "Unmount when" = "Desmontar cuando";
+"Eject when" = "Eject when";
 "Display turned off" = "La pantalla se apaga";
 "System starts sleeping" = "El sistema entra en reposo";
 "Screen is locked" = "La pantalla está bloqueada";
 "Screensaver started" = "El protector de pantalla se inicie";
 "Force unmount" = "Forzar desmontaje";
+"Eject instead of unmount" = "Eject instead of unmount";
 "About Ejectify" = "Acerca de Ejectify";
 "Check for Updates…" = "Buscar actualizaciones…";
 "Quit Ejectify" = "Salir de Ejectify";
