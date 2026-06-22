@@ -23,6 +23,10 @@
 "Screensaver started" = "O protetor de ecrã iniciar";
 "Force unmount" = "Forçar desmontagem";
 "About Ejectify" = "Acerca do Ejectify";
+"Save Diagnostics Report…" = "Guardar relatório de diagnóstico…";
+"Save Diagnostics Report" = "Guardar relatório de diagnóstico";
+"Save the diagnostics report to the chosen location." = "Guarde o relatório de diagnóstico na localização escolhida.";
+"Could not save diagnostics report." = "Não foi possível guardar o relatório de diagnóstico.";
 "Check for Updates…" = "Procurar atualizações…";
 "Quit Ejectify" = "Sair do Ejectify";
 "No more %@ notifications" = "Sem mais notificações de %@";

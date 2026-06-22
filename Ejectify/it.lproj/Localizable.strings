@@ -23,6 +23,10 @@
 "Screensaver started" = "si avvia il salvaschermo";
 "Force unmount" = "Forza disattivazione";
 "About Ejectify" = "Informazioni su Ejectify";
+"Save Diagnostics Report…" = "Salva report diagnostico…";
+"Save Diagnostics Report" = "Salva report diagnostico";
+"Save the diagnostics report to the chosen location." = "Salva il report diagnostico nella posizione scelta.";
+"Could not save diagnostics report." = "Non è stato possibile salvare il report diagnostico.";
 "Check for Updates…" = "Verifica aggiornamenti…";
 "Quit Ejectify" = "Esci da Ejectify";
 "No more %@ notifications" = "Niente più notifiche %@";

@@ -23,6 +23,10 @@
 "Screensaver started" = "Skærmskåneren starter";
 "Force unmount" = "Tving passivering";
 "About Ejectify" = "Om Ejectify";
+"Save Diagnostics Report…" = "Gem diagnosticeringsrapport…";
+"Save Diagnostics Report" = "Gem diagnosticeringsrapport";
+"Save the diagnostics report to the chosen location." = "Gem diagnosticeringsrapporten på den valgte placering.";
+"Could not save diagnostics report." = "Kunne ikke gemme diagnosticeringsrapporten.";
 "Check for Updates…" = "Søg efter opdateringer…";
 "Quit Ejectify" = "Afslut Ejectify";
 "No more %@ notifications" = "Ingen flere %@-notifikationer";

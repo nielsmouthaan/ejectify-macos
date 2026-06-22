@@ -23,6 +23,10 @@
 "Screensaver started" = "Вмикається заставка";
 "Force unmount" = "Примусово відмонтувати";
 "About Ejectify" = "Про Ejectify";
+"Save Diagnostics Report…" = "Зберегти діагностичний звіт…";
+"Save Diagnostics Report" = "Зберегти діагностичний звіт";
+"Save the diagnostics report to the chosen location." = "Збережіть діагностичний звіт у вибраному місці.";
+"Could not save diagnostics report." = "Не вдалося зберегти діагностичний звіт.";
 "Check for Updates…" = "Перевірити наявність оновлень…";
 "Quit Ejectify" = "Вийти з Ejectify";
 "No more %@ notifications" = "Більше ніяких сповіщень %@";

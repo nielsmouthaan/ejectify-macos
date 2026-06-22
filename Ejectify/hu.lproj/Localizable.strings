@@ -23,6 +23,10 @@
 "Screensaver started" = "A képernyővédő elindul";
 "Force unmount" = "Lecsatolás kényszerítése";
 "About Ejectify" = "Az Ejectify névjegye";
+"Save Diagnostics Report…" = "Diagnosztikai jelentés mentése…";
+"Save Diagnostics Report" = "Diagnosztikai jelentés mentése";
+"Save the diagnostics report to the chosen location." = "Mentse a diagnosztikai jelentést a kiválasztott helyre.";
+"Could not save diagnostics report." = "Nem sikerült menteni a diagnosztikai jelentést.";
 "Check for Updates…" = "Frissítések keresése…";
 "Quit Ejectify" = "Kilépés az Ejectifyból";
 "No more %@ notifications" = "Ne jelenjenek meg többé %@ értesítések";

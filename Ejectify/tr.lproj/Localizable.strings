@@ -23,6 +23,10 @@
 "Screensaver started" = "Ekran koruyucu başladığında";
 "Force unmount" = "Bağlantıyı kesmeye zorla";
 "About Ejectify" = "Ejectify Hakkında";
+"Save Diagnostics Report…" = "Tanılama Raporunu Kaydet…";
+"Save Diagnostics Report" = "Tanılama Raporunu Kaydet";
+"Save the diagnostics report to the chosen location." = "Tanılama raporunu seçilen konuma kaydet.";
+"Could not save diagnostics report." = "Tanılama raporu kaydedilemedi.";
 "Check for Updates…" = "Güncellemeleri Denetle…";
 "Quit Ejectify" = "Ejectify’dan Çık";
 "No more %@ notifications" = "Artık %@ bildirimi yok";

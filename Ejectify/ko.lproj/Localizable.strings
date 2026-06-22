@@ -23,6 +23,10 @@
 "Screensaver started" = "화면 보호기가 시작될 때";
 "Force unmount" = "강제 마운트 해제";
 "About Ejectify" = "Ejectify 정보";
+"Save Diagnostics Report…" = "진단 보고서 저장…";
+"Save Diagnostics Report" = "진단 보고서 저장";
+"Save the diagnostics report to the chosen location." = "선택한 위치에 진단 보고서를 저장합니다.";
+"Could not save diagnostics report." = "진단 보고서를 저장할 수 없습니다.";
 "Check for Updates…" = "업데이트 확인…";
 "Quit Ejectify" = "Ejectify 종료";
 "No more %@ notifications" = "더 이상 %@ 알림 표시 안 함";

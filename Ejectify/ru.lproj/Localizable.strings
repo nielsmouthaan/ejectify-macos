@@ -23,6 +23,10 @@
 "Screensaver started" = "Запущен скринсейвер";
 "Force unmount" = "Принудительно отключать";
 "About Ejectify" = "О Ejectify";
+"Save Diagnostics Report…" = "Сохранить диагностический отчет…";
+"Save Diagnostics Report" = "Сохранить диагностический отчет";
+"Save the diagnostics report to the chosen location." = "Сохраните диагностический отчет в выбранном месте.";
+"Could not save diagnostics report." = "Не удалось сохранить диагностический отчет.";
 "Check for Updates…" = "Проверить обновления…";
 "Quit Ejectify" = "Выйти из Ejectify";
 "No more %@ notifications" = "Больше никаких уведомлений %@";

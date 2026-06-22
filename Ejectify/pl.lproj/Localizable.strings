@@ -23,6 +23,10 @@
 "Screensaver started" = "Wygaszacz ekranu się uruchamia";
 "Force unmount" = "Wymuś odmontowanie";
 "About Ejectify" = "O Ejectify";
+"Save Diagnostics Report…" = "Zachowaj raport diagnostyczny…";
+"Save Diagnostics Report" = "Zachowaj raport diagnostyczny";
+"Save the diagnostics report to the chosen location." = "Zachowaj raport diagnostyczny w wybranym miejscu.";
+"Could not save diagnostics report." = "Nie można było zachować raportu diagnostycznego.";
 "Check for Updates…" = "Sprawdź uaktualnienia…";
 "Quit Ejectify" = "Zakończ Ejectify";
 "No more %@ notifications" = "Koniec z powiadomieniami %@";

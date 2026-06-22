@@ -23,6 +23,10 @@
 "Screensaver started" = "Penghemat layar dimulai";
 "Force unmount" = "Paksa lepas";
 "About Ejectify" = "Mengenai Ejectify";
+"Save Diagnostics Report…" = "Simpan Laporan Diagnostik…";
+"Save Diagnostics Report" = "Simpan Laporan Diagnostik";
+"Save the diagnostics report to the chosen location." = "Simpan laporan diagnostik ke lokasi yang dipilih.";
+"Could not save diagnostics report." = "Tidak dapat menyimpan laporan diagnostik.";
 "Check for Updates…" = "Periksa Pembaruan…";
 "Quit Ejectify" = "Keluar dari Ejectify";
 "No more %@ notifications" = "Tidak ada lagi notifikasi %@";

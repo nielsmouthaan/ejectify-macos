@@ -23,6 +23,10 @@
 "Screensaver started" = "Näytönsäästäjä käynnistyy";
 "Force unmount" = "Pakota poistaminen näkyvistä";
 "About Ejectify" = "Tietoja Ejectifysta";
+"Save Diagnostics Report…" = "Tallenna diagnostiikkaraportti…";
+"Save Diagnostics Report" = "Tallenna diagnostiikkaraportti";
+"Save the diagnostics report to the chosen location." = "Tallenna diagnostiikkaraportti valittuun sijaintiin.";
+"Could not save diagnostics report." = "Diagnostiikkaraporttia ei voitu tallentaa.";
 "Check for Updates…" = "Tarkista päivitykset…";
 "Quit Ejectify" = "Lopeta Ejectify";
 "No more %@ notifications" = "Ei enää %@-ilmoituksia";

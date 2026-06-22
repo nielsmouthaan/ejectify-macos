@@ -23,6 +23,10 @@
 "Screensaver started" = "Spustí se spořič obrazovky";
 "Force unmount" = "Vynutit odpojení";
 "About Ejectify" = "O aplikaci Ejectify";
+"Save Diagnostics Report…" = "Uložit diagnostickou zprávu…";
+"Save Diagnostics Report" = "Uložit diagnostickou zprávu";
+"Save the diagnostics report to the chosen location." = "Uložte diagnostickou zprávu do vybraného umístění.";
+"Could not save diagnostics report." = "Diagnostickou zprávu se nepodařilo uložit.";
 "Check for Updates…" = "Zkontrolovat aktualizace…";
 "Quit Ejectify" = "Ukončit Ejectify";
 "No more %@ notifications" = "Už žádná oznámení %@";

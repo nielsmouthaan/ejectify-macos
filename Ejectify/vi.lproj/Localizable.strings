@@ -23,6 +23,10 @@
 "Screensaver started" = "Trình bảo vệ màn hình bắt đầu";
 "Force unmount" = "Buộc ngắt kết nối";
 "About Ejectify" = "Giới thiệu Ejectify";
+"Save Diagnostics Report…" = "Lưu báo cáo chẩn đoán…";
+"Save Diagnostics Report" = "Lưu báo cáo chẩn đoán";
+"Save the diagnostics report to the chosen location." = "Lưu báo cáo chẩn đoán vào vị trí đã chọn.";
+"Could not save diagnostics report." = "Không thể lưu báo cáo chẩn đoán.";
 "Check for Updates…" = "Kiểm tra bản cập nhật…";
 "Quit Ejectify" = "Thoát Ejectify";
 "No more %@ notifications" = "Không còn thông báo %@";

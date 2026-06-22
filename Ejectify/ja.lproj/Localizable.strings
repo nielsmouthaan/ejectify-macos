@@ -23,6 +23,10 @@
 "Screensaver started" = "スクリーンセーバーを起動したとき";
 "Force unmount" = "強制的にマウント解除";
 "About Ejectify" = "Ejectify について";
+"Save Diagnostics Report…" = "診断レポートを保存…";
+"Save Diagnostics Report" = "診断レポートを保存";
+"Save the diagnostics report to the chosen location." = "診断レポートを選択した場所に保存します。";
+"Could not save diagnostics report." = "診断レポートを保存できませんでした。";
 "Check for Updates…" = "アップデートを確認…";
 "Quit Ejectify" = "Ejectify を終了";
 "No more %@ notifications" = "%@通知はもう表示されません";

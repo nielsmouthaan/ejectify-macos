@@ -23,6 +23,10 @@
 "Screensaver started" = "Pornește economizorul de ecran";
 "Force unmount" = "Forțează demontarea";
 "About Ejectify" = "Despre Ejectify";
+"Save Diagnostics Report…" = "Salvează raportul de diagnosticare…";
+"Save Diagnostics Report" = "Salvează raportul de diagnosticare";
+"Save the diagnostics report to the chosen location." = "Salvează raportul de diagnosticare în locația aleasă.";
+"Could not save diagnostics report." = "Nu s-a putut salva raportul de diagnosticare.";
 "Check for Updates…" = "Caută actualizări…";
 "Quit Ejectify" = "Închide Ejectify";
 "No more %@ notifications" = "Fără alte notificări %@";

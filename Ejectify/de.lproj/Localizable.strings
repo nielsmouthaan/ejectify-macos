@@ -23,6 +23,10 @@
 "Screensaver started" = "Bildschirmschoner startet";
 "Force unmount" = "Deaktivieren erzwingen";
 "About Ejectify" = "Über Ejectify";
+"Save Diagnostics Report…" = "Diagnosebericht sichern…";
+"Save Diagnostics Report" = "Diagnosebericht sichern";
+"Save the diagnostics report to the chosen location." = "Sichere den Diagnosebericht am gewählten Ort.";
+"Could not save diagnostics report." = "Diagnosebericht konnte nicht gesichert werden.";
 "Check for Updates…" = "Nach Updates suchen…";
 "Quit Ejectify" = "Ejectify beenden";
 "No more %@ notifications" = "Keine %@-Meldungen mehr";

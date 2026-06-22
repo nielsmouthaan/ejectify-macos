@@ -23,6 +23,10 @@
 "Screensaver started" = "Čuvar zaslona se pokrene";
 "Force unmount" = "Prisilno otpuštanje";
 "About Ejectify" = "O aplikaciji Ejectify";
+"Save Diagnostics Report…" = "Spremi dijagnostičko izvješće…";
+"Save Diagnostics Report" = "Spremi dijagnostičko izvješće";
+"Save the diagnostics report to the chosen location." = "Spremi dijagnostičko izvješće na odabranu lokaciju.";
+"Could not save diagnostics report." = "Nije moguće spremiti dijagnostičko izvješće.";
 "Check for Updates…" = "Provjeri ima li ažuriranja…";
 "Quit Ejectify" = "Zatvori Ejectify";
 "No more %@ notifications" = "Nema više %@ obavijesti";

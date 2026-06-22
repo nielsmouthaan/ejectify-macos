@@ -23,6 +23,10 @@
 "Screensaver started" = "Skärmsläckaren startar";
 "Force unmount" = "Tvinga borttagning";
 "About Ejectify" = "Om Ejectify";
+"Save Diagnostics Report…" = "Spara diagnostikrapport…";
+"Save Diagnostics Report" = "Spara diagnostikrapport";
+"Save the diagnostics report to the chosen location." = "Spara diagnostikrapporten på den valda platsen.";
+"Could not save diagnostics report." = "Kunde inte spara diagnostikrapporten.";
 "Check for Updates…" = "Sök efter uppdateringar…";
 "Quit Ejectify" = "Avsluta Ejectify";
 "No more %@ notifications" = "Inga fler %@-notiser";

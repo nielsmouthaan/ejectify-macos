@@ -23,6 +23,10 @@
 "Screensaver started" = "स्क्रीनसेवर शुरू होता है";
 "Force unmount" = "जबरन अनमाउंट करें";
 "About Ejectify" = "Ejectify के बारे में";
+"Save Diagnostics Report…" = "डायग्नोस्टिक्स रिपोर्ट सहेजें…";
+"Save Diagnostics Report" = "डायग्नोस्टिक्स रिपोर्ट सहेजें";
+"Save the diagnostics report to the chosen location." = "चुने गए स्थान पर डायग्नोस्टिक्स रिपोर्ट सहेजें।";
+"Could not save diagnostics report." = "डायग्नोस्टिक्स रिपोर्ट सहेजी नहीं जा सकी।";
 "Check for Updates…" = "अपडेट जांचें…";
 "Quit Ejectify" = "Ejectify बंद करें";
 "No more %@ notifications" = "अब %@ सूचनाएं नहीं";

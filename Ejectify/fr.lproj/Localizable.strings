@@ -23,6 +23,10 @@
 "Screensaver started" = "L'économiseur d'écran démarre";
 "Force unmount" = "Forcer le démontage";
 "About Ejectify" = "À propos d’Ejectify";
+"Save Diagnostics Report…" = "Enregistrer le rapport de diagnostic…";
+"Save Diagnostics Report" = "Enregistrer le rapport de diagnostic";
+"Save the diagnostics report to the chosen location." = "Enregistrez le rapport de diagnostic à l’emplacement choisi.";
+"Could not save diagnostics report." = "Impossible d’enregistrer le rapport de diagnostic.";
 "Check for Updates…" = "Rechercher des mises à jour…";
 "Quit Ejectify" = "Quitter Ejectify";
 "No more %@ notifications" = "Plus de notifications %@";

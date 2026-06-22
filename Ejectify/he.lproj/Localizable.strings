@@ -23,6 +23,10 @@
 "Screensaver started" = "שומר המסך מתחיל";
 "Force unmount" = "כפה ניתוק";
 "About Ejectify" = "אודות Ejectify";
+"Save Diagnostics Report…" = "שמירת דוח אבחון…";
+"Save Diagnostics Report" = "שמירת דוח אבחון";
+"Save the diagnostics report to the chosen location." = "שמור את דוח האבחון במיקום שנבחר.";
+"Could not save diagnostics report." = "לא ניתן היה לשמור את דוח האבחון.";
 "Check for Updates…" = "בדוק אם יש עדכונים…";
 "Quit Ejectify" = "צא מ-Ejectify";
 "No more %@ notifications" = "לא עוד התראות %@";

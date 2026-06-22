@@ -23,6 +23,10 @@
 "Screensaver started" = "螢幕保護程式已啟動";
 "Force unmount" = "強制卸載";
 "About Ejectify" = "關於 Ejectify";
+"Save Diagnostics Report…" = "儲存診斷報告…";
+"Save Diagnostics Report" = "儲存診斷報告";
+"Save the diagnostics report to the chosen location." = "將診斷報告儲存到所選位置。";
+"Could not save diagnostics report." = "無法儲存診斷報告。";
 "Check for Updates…" = "檢查更新…";
 "Quit Ejectify" = "結束 Ejectify";
 "No more %@ notifications" = "不再顯示 %@ 通知";

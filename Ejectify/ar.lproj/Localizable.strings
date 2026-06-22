@@ -23,6 +23,10 @@
 "Screensaver started" = "بدء شاشة التوقف";
 "Force unmount" = "فرض إلغاء التحميل";
 "About Ejectify" = "حول Ejectify";
+"Save Diagnostics Report…" = "حفظ تقرير التشخيص…";
+"Save Diagnostics Report" = "حفظ تقرير التشخيص";
+"Save the diagnostics report to the chosen location." = "احفظ تقرير التشخيص في الموقع المختار.";
+"Could not save diagnostics report." = "تعذر حفظ تقرير التشخيص.";
 "Check for Updates…" = "التحقق من وجود تحديثات…";
 "Quit Ejectify" = "إنهاء Ejectify";
 "No more %@ notifications" = "لا مزيد من إشعارات %@";

@@ -23,6 +23,10 @@
 "Screensaver started" = "โปรแกรมรักษาหน้าจอเริ่มทำงาน";
 "Force unmount" = "บังคับเลิกเมานต์";
 "About Ejectify" = "เกี่ยวกับ Ejectify";
+"Save Diagnostics Report…" = "บันทึกรายงานการวินิจฉัย…";
+"Save Diagnostics Report" = "บันทึกรายงานการวินิจฉัย";
+"Save the diagnostics report to the chosen location." = "บันทึกรายงานการวินิจฉัยไปยังตำแหน่งที่เลือก";
+"Could not save diagnostics report." = "ไม่สามารถบันทึกรายงานการวินิจฉัยได้";
 "Check for Updates…" = "ตรวจสอบการอัปเดต…";
 "Quit Ejectify" = "ออกจาก Ejectify";
 "No more %@ notifications" = "ไม่มีการแจ้งเตือน %@ อีก";

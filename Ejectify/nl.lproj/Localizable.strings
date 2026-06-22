@@ -23,6 +23,10 @@
 "Screensaver started" = "Screensaver is gestart";
 "Force unmount" = "Forceer deactivatie";
 "About Ejectify" = "Over Ejectify";
+"Save Diagnostics Report…" = "Bewaar diagnoserapport…";
+"Save Diagnostics Report" = "Bewaar diagnoserapport";
+"Save the diagnostics report to the chosen location." = "Bewaar het diagnoserapport op de gekozen locatie.";
+"Could not save diagnostics report." = "Kon diagnoserapport niet bewaren.";
 "Check for Updates…" = "Controleer op updates…";
 "Quit Ejectify" = "Stop Ejectify";
 "No more %@ notifications" = "Geen %@-meldingen meer";

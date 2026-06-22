@@ -23,6 +23,10 @@
 "Screensaver started" = "Ξεκινά η προφύλαξη οθόνης";
 "Force unmount" = "Εξαναγκασμένη κατάργηση προσάρτησης";
 "About Ejectify" = "Σχετικά με το Ejectify";
+"Save Diagnostics Report…" = "Αποθήκευση αναφοράς διαγνωστικών…";
+"Save Diagnostics Report" = "Αποθήκευση αναφοράς διαγνωστικών";
+"Save the diagnostics report to the chosen location." = "Αποθηκεύστε την αναφορά διαγνωστικών στην επιλεγμένη τοποθεσία.";
+"Could not save diagnostics report." = "Δεν ήταν δυνατή η αποθήκευση της αναφοράς διαγνωστικών.";
 "Check for Updates…" = "Έλεγχος για ενημερώσεις…";
 "Quit Ejectify" = "Έξοδος από το Ejectify";
 "No more %@ notifications" = "Τέλος οι ειδοποιήσεις %@";
