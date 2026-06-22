@@ -12,6 +12,8 @@
 		B82E12D32570FF0F004547C7 /* Preference.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82E12D22570FF0F004547C7 /* Preference.swift */; };
 		B82E12D825710006004547C7 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = B82E12D725710006004547C7 /* LaunchAtLogin */; };
 		D2A100A32F9B100100A0C001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = D2A100A52F9B100100A0C001 /* Sparkle */; };
+		D4A100A12FB0000100D0A001 /* DiagnosticsReportController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A100A22FB0000100D0A001 /* DiagnosticsReportController.swift */; };
+		D4A100A32FB0000100D0A001 /* Diagnostics in Frameworks */ = {isa = PBXBuildFile; productRef = D4A100A52FB0000100D0A001 /* Diagnostics */; };
 		B89F412525AC9D7200E0B8C1 /* DADisk+DiskImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89F412425AC9D7200E0B8C1 /* DADisk+DiskImage.swift */; };
 		B89F412B25AC9FD800E0B8C1 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B89F412D25AC9FD800E0B8C1 /* Localizable.strings */; };
 		B8AF59E92569569A003481A8 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8AF59E82569569A003481A8 /* AppDelegate.swift */; };
@@ -125,6 +127,7 @@
 		B8DFADB4256CF511009E9296 /* StatusBarMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusBarMenu.swift; sourceTree = "<group>"; };
 		B8DFADB9256D0565009E9296 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
 		D3F100A22FA2000100B0E001 /* GlobalHotKeyController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyController.swift; sourceTree = "<group>"; };
+		D4A100A22FB0000100D0A001 /* DiagnosticsReportController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsReportController.swift; sourceTree = "<group>"; };
 		D2A100A22F9B100100A0C001 /* UpdateController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateController.swift; sourceTree = "<group>"; };
 		C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedDiskServiceProtocol.swift; sourceTree = "<group>"; };
 		C0A100000000000000000012 /* VolumeOperationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeOperationRouter.swift; sourceTree = "<group>"; };
@@ -152,6 +155,7 @@
 			files = (
 				B82E12D825710006004547C7 /* LaunchAtLogin in Frameworks */,
 				D2A100A32F9B100100A0C001 /* Sparkle in Frameworks */,
+				D4A100A32FB0000100D0A001 /* Diagnostics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -215,6 +219,7 @@
 			isa = PBXGroup;
 			children = (
 				B8DFADB9256D0565009E9296 /* ActivityController.swift */,
+				D4A100A22FB0000100D0A001 /* DiagnosticsReportController.swift */,
 				D3F100A22FA2000100B0E001 /* GlobalHotKeyController.swift */,
 				D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */,
 				D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */,
@@ -290,6 +295,7 @@
 			packageProductDependencies = (
 				B82E12D725710006004547C7 /* LaunchAtLogin */,
 				D2A100A52F9B100100A0C001 /* Sparkle */,
+				D4A100A52FB0000100D0A001 /* Diagnostics */,
 			);
 			productName = Ejectify;
 			productReference = B8AF59E52569569A003481A8 /* Ejectify.app */;
@@ -373,6 +379,7 @@
 			packageReferences = (
 				B82E12D625710006004547C7 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */,
 				D2A100A42F9B100100A0C001 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				D4A100A42FB0000100D0A001 /* XCRemoteSwiftPackageReference "Diagnostics" */,
 			);
 			productRefGroup = B8AF59E62569569A003481A8 /* Products */;
 			projectDirPath = "";
@@ -437,6 +444,7 @@
 				D1E700A52F8A000100C0D001 /* OnboardingWindowController.swift in Sources */,
 				D1E700AD2F8A000100C0D001 /* OnboardingApprovalMonitor.swift in Sources */,
 				D1E700AB2F8A000100C0D001 /* StopNotificationView.swift in Sources */,
+				D4A100A12FB0000100D0A001 /* DiagnosticsReportController.swift in Sources */,
 				B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */,
 				D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */,
 				B82E12D32570FF0F004547C7 /* Preference.swift in Sources */,
@@ -779,6 +787,14 @@
 				minimumVersion = 2.6.0;
 			};
 		};
+		D4A100A42FB0000100D0A001 /* XCRemoteSwiftPackageReference "Diagnostics" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AvdLee/Diagnostics";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -791,6 +807,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D2A100A42F9B100100A0C001 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
+		};
+		D4A100A52FB0000100D0A001 /* Diagnostics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D4A100A42FB0000100D0A001 /* XCRemoteSwiftPackageReference "Diagnostics" */;
+			productName = Diagnostics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

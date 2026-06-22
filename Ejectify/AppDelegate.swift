@@ -31,6 +31,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Owns Sparkle updater lifecycle and manual update actions.
     private var updateController: UpdateController?
 
+    /// Owns diagnostics report generation and export UI.
+    private let diagnosticsReportController = DiagnosticsReportController()
+
     /// Owns the onboarding window lifecycle while guidance is presented.
     private var onboardingWindowController: OnboardingWindowController?
 
@@ -68,6 +71,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Starts a user-initiated Sparkle update check.
     func checkForUpdates() {
         updateController?.checkForUpdates()
+    }
+
+    /// Starts a user-initiated diagnostics report save flow.
+    func saveDiagnosticsReport() {
+        diagnosticsReportController.saveDiagnosticsReport()
     }
 
     /// Unmounts all enabled volumes in response to a user-initiated action.

@@ -277,6 +277,10 @@ final class StatusBarMenu: NSMenu {
         helpItem.target = self
         addItem(helpItem)
 
+        let saveDiagnosticsReportItem = NSMenuItem(title: String(localized: "Save Diagnostics Report…"), action: #selector(saveDiagnosticsReportClicked), keyEquivalent: "")
+        saveDiagnosticsReportItem.target = self
+        addItem(saveDiagnosticsReportItem)
+
         let checkForUpdatesItem = NSMenuItem(title: String(localized: "Check for Updates…"), action: #selector(checkForUpdatesClicked), keyEquivalent: "")
         checkForUpdatesItem.target = self
         addItem(checkForUpdatesItem)
@@ -385,6 +389,12 @@ final class StatusBarMenu: NSMenu {
     /// Opens the Ejectify Help Center website.
     @objc private func helpClicked() {
         NSWorkspace.shared.open(helpURL)
+    }
+
+    /// Starts the diagnostics report save flow from the status menu.
+    @MainActor
+    @objc private func saveDiagnosticsReportClicked() {
+        AppDelegate.shared.saveDiagnosticsReport()
     }
 
     /// Starts a manual Sparkle update check from the status menu.

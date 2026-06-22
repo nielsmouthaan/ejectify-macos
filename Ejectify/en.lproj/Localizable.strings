@@ -23,6 +23,10 @@
 "Screensaver started" = "Screensaver started";
 "Force unmount" = "Force unmount";
 "About Ejectify" = "About Ejectify";
+"Save Diagnostics Report…" = "Save Diagnostics Report…";
+"Save Diagnostics Report" = "Save Diagnostics Report";
+"Save the diagnostics report to the chosen location." = "Save the diagnostics report to the chosen location.";
+"Could not save diagnostics report." = "Could not save diagnostics report.";
 "Check for Updates…" = "Check for Updates…";
 "Quit Ejectify" = "Quit Ejectify";
 "No more %@ notifications" = "No more %@ notifications";

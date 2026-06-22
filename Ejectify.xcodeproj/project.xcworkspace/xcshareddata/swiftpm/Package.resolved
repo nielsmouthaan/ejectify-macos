@@ -1,6 +1,24 @@
 {
-  "originHash" : "aaeaba8d5a625888bb4c73bfd80f4cdaea8895109f5a71204f77aa8ce93172b9",
+  "originHash" : "470f6076d38b8717f53486605188241a31af32b06b4c5c30e6d2d804dc9b3132",
   "pins" : [
+    {
+      "identity" : "diagnostics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AvdLee/Diagnostics",
+      "state" : {
+        "revision" : "109837f009a54e6caf6f37733d9f00f145acc1bb",
+        "version" : "6.0.1"
+      }
+    },
+    {
+      "identity" : "exceptioncatcher",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sindresorhus/ExceptionCatcher",
+      "state" : {
+        "revision" : "9e57a89e7ed5e11cbc04fbaa5f1397448f91bb73",
+        "version" : "2.2.0"
+      }
+    },
     {
       "identity" : "launchatlogin",
       "kind" : "remoteSourceControl",
