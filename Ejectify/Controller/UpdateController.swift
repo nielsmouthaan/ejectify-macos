@@ -14,7 +14,10 @@ import Sparkle
 final class UpdateController {
 
     /// Logger used for updater startup and manual check diagnostics.
-    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: UpdateController.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: UpdateController.self)
+    )
 
     /// Sparkle controller owning updater state and standard update UI.
     private let updaterController: SPUStandardUpdaterController

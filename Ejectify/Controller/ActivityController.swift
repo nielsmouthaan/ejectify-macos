@@ -14,7 +14,10 @@ import OSLog
 final class ActivityController {
 
     /// Logger used for mount/unmount and readiness transition diagnostics.
-    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: ActivityController.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: ActivityController.self)
+    )
 
     /// Volumes still pending automatic remount after a successful automatic unmount.
     private var remountCandidates: [Volume] = []

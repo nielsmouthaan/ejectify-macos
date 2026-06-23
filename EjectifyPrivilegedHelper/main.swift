@@ -9,7 +9,7 @@ import Foundation
 import OSLog
 
 /// Accepts helper XPC connections and exports a single privileged volume-operation service instance.
-final class PrivilegedHelperListenerDelegate: NSObject, NSXPCListenerDelegate {
+private final class PrivilegedHelperListenerDelegate: NSObject, NSXPCListenerDelegate {
 
     /// Exported XPC service handling privileged volume operations.
     private let service = PrivilegedDiskService()
@@ -27,7 +27,10 @@ final class PrivilegedHelperListenerDelegate: NSObject, NSXPCListenerDelegate {
 private enum PrivilegedHelperMain {
 
     /// Logger used during helper daemon bootstrap.
-    private static let logger = Logger(subsystem: LoggingConfiguration.privilegedHelperSubsystem, category: String(describing: Self.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: PrivilegedHelperMain.self)
+    )
 
     /// Starts the XPC listener and enters the helper run loop.
     static func run() {

@@ -94,7 +94,10 @@ enum DiskArbitrationVolumeOperator {
     }
 
     /// Logger shared by all disk operation paths.
-    private static let logger = Logger(subsystem: LoggingConfiguration.currentSubsystem, category: String(describing: Self.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: DiskArbitrationVolumeOperator.self)
+    )
 
     /// Shared callback queue used by the shared Disk Arbitration session.
     private static let callbackQueue = DispatchQueue(

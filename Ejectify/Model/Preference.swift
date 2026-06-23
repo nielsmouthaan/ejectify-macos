@@ -13,7 +13,10 @@ import OSLog
 enum Preference {
 
     /// Logger used for preference mutation diagnostics.
-    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: Self.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: Preference.self)
+    )
 
     /// Defines which system event triggers automatic unmounting.
     enum UnmountWhen: String {

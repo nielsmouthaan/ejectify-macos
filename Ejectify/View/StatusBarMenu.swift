@@ -13,7 +13,10 @@ import OSLog
 final class StatusBarMenu: NSMenu {
 
     /// Logger used for menu-driven actions and volume notifications.
-    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: StatusBarMenu.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: StatusBarMenu.self)
+    )
 
     /// Destination URL used by the Help action.
     private let helpURL = URL(string: "https://ejectify.app/help")!

@@ -16,7 +16,10 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
     static let shared = PrivilegedHelperLifecycleManager()
 
     /// Logger used for daemon registration lifecycle diagnostics.
-    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: PrivilegedHelperLifecycleManager.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: PrivilegedHelperLifecycleManager.self)
+    )
 
     /// Lazily created ServiceManagement daemon handle for status and registration calls.
     private var daemonService: SMAppService {

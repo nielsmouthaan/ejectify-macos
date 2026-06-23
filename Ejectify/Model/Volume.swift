@@ -25,7 +25,10 @@ final class Volume {
     }
 
     /// Logger used for volume discovery and eligibility diagnostics.
-    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: Volume.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: Volume.self)
+    )
 
     /// Shared Disk Arbitration session retained for the lifetime of the app so asynchronous callbacks are delivered reliably.
     nonisolated(unsafe) private static let diskArbitrationSession: DASession? = {

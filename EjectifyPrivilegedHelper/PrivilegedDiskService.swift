@@ -24,7 +24,10 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     }
 
     /// Logger used for privileged helper operation diagnostics.
-    private static let logger = Logger(subsystem: LoggingConfiguration.privilegedHelperSubsystem, category: String(describing: PrivilegedDiskService.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: PrivilegedDiskService.self)
+    )
 
     /// Queue used to execute mount/unmount requests concurrently.
     private let operationQueue = DispatchQueue(

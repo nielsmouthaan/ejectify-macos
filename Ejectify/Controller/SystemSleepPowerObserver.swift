@@ -3,6 +3,7 @@
 //  Ejectify
 //
 
+import Foundation
 import IOKit
 import IOKit.pwr_mgt
 import OSLog
@@ -14,7 +15,10 @@ final class SystemSleepPowerObserver {
     private let onSystemWillSleep: @MainActor (Int) -> Void
 
     /// Logger used for power notification registration and lifecycle diagnostics.
-    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: SystemSleepPowerObserver.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: SystemSleepPowerObserver.self)
+    )
 
     /// IOKit root power connection used to acknowledge sleep transitions.
     private var rootPort: io_connect_t = 0

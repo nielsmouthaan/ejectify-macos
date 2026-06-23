@@ -14,7 +14,10 @@ import OSLog
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Logger used for app lifecycle events and shared menu actions.
-    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: AppDelegate.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: AppDelegate.self)
+    )
 
     /// Shared delegate instance exposed for app-wide coordination.
     static let shared = NSApplication.shared.delegate as! AppDelegate

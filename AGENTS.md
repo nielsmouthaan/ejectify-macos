@@ -20,17 +20,21 @@ Ejectify is a macOS menu bar utility that helps users avoid “Disk Not Ejected 
 - Use [XcodeBuildMCP's CLI](https://github.com/getsentry/XcodeBuildMCP/blob/main/docs/CLI.md) (`xcodebuildmcp`) for building, testing and running the project. Use "Ejectify" as scheme and "./Ejectify.xcodeproj" as project path.
 - When notarizing Ejectify, use the `ejectify-notary` notarytool keychain profile, for example `./release/release.sh --notary-profile ejectify-notary`.
 
+### File organization instructions
+
+- Keep the existing simple structure unless there is a clear reason to change it.
+- Keep app code in `Ejectify` and privileged-helper-only code in `EjectifyPrivilegedHelper`.
+- Place files in the folder that best owns the behavior: `Controller`, `Model`, `View`, `Helper`, or `Extension`.
+- Put shared app/helper code in a shared app folder only when both targets compile it.
+- Prefer precise type names such as `Router`, `Operator`, `Formatter`, `Observer`, or `Configuration`; avoid vague names unless they clearly fit.
+- Prefer one primary Swift type per file. Small tightly coupled private helper types may stay in the same file.
+- Keep resources and configuration files with the target that owns them.
+
 ### Logging instructions
 
 - Define `Logger` instances as `private static let logger` properties on the type that uses them.
-- Use a shared subsystem or bundle identifier constant for logger subsystems and derive logger categories from the declaring type, preferring `String(describing: Self.self)` when valid for the declaration context.
-- Do not create logger instances inside functions or closures.
+- Use `Bundle.main.bundleIdentifier!` for logger subsystems and derive logger categories from the concrete declaring type using the form `String(describing: ConcreteType.self)`.
+- Keep command-line helper target Info.plists embedded in the binary so `Bundle.main.bundleIdentifier!` is available at runtime.
 - Use direct `os.Logger` interpolation and put values directly in logger calls instead of prebuilding full log messages as regular strings.
 - Do not specify interpolation privacy unless explicitly requested or required for clearly sensitive values such as credentials, secrets, tokens, or personal identifiers.
-- Use `logger.log` for important production breadcrumbs that help diagnose user-visible behavior, lifecycle transitions, configuration changes, and operation requests or results.
-- Use `logger.info` for supplemental diagnostic detail that is useful during troubleshooting but not essential as a production breadcrumb.
-- Use `logger.debug` or `logger.trace` only for development-only detail that should not normally be collected.
-- Use `logger.warning` for unexpected but recoverable degraded behavior, fallback paths, or conditions that may require attention but do not directly fail the requested operation.
-- Use `logger.error` for failed operations, failed system or API calls, and user-requested actions that cannot be completed.
-- Use `logger.fault` only for likely bugs, violated invariants, or impossible states that require immediate developer attention.
-- Avoid `logger.notice` and `logger.critical` unless the project explicitly opts into those aliases.
+- Use consistent log levels: `log` for important production breadcrumbs, `info` for extra diagnostic detail, `debug` for development-only detail, `warning` for recoverable degraded behavior, `error` for failed operations, and `fault` for likely bugs or violated invariants. Avoid `trace`, `notice`, and `critical` unless the project explicitly opts into those aliases.

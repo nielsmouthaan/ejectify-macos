@@ -104,7 +104,10 @@ final class VolumeOperationRouter: @unchecked Sendable {
     }
 
     /// Logger used for routing mode and operation outcomes.
-    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: VolumeOperationRouter.self))
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: String(describing: VolumeOperationRouter.self)
+    )
 
     /// Queue used for local mount/unmount operations.
     private let localOperationQueue = DispatchQueue(
