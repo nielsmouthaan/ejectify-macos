@@ -189,6 +189,12 @@ private enum EjectifyDiagnosticsReportFactory {
             MountedVolumesReporter(volumes: snapshot.volumes),
             UnifiedLogsReporter(collection: ejectifyLogCollection)
         ]
+        let launchdLogCollection = UnifiedLogCollector.collect(kind: .launchdServiceManagement(startDate: logStartDate))
+        reporters.append(
+            UnifiedLogsReporter(
+                collection: launchdLogCollection
+            )
+        )
 
         let diskArbitrationLogCollection: UnifiedLogCollection
         if let firstEjectifyLogDate = ejectifyLogCollection.firstEntryDate {
@@ -347,6 +353,7 @@ private enum UnifiedLogCollector {
     /// Defines which unified-log subset to collect.
     enum Kind: Sendable {
         case ejectify(startDate: Date)
+        case launchdServiceManagement(startDate: Date)
         case diskArbitration(filterTerms: [String], startDate: Date)
     }
 
@@ -509,6 +516,8 @@ private extension UnifiedLogCollector.Kind {
         switch self {
         case .ejectify:
             return "Ejectify Logs"
+        case .launchdServiceManagement:
+            return "Launchd and ServiceManagement Logs"
         case .diskArbitration:
             return "Disk Arbitration Logs"
         }
@@ -523,6 +532,8 @@ private extension UnifiedLogCollector.Kind {
                 LoggingConfiguration.subsystem,
                 PrivilegedHelperConfiguration.machServiceName
             )
+        case .launchdServiceManagement:
+            return launchdServiceManagementPredicate()
         case .diskArbitration(let filterTerms, _):
             return diskArbitrationPredicate(filterTerms: filterTerms)
         }
@@ -531,7 +542,7 @@ private extension UnifiedLogCollector.Kind {
     /// Start position for unified-log enumeration.
     func startPosition(in store: OSLogStore) -> OSLogPosition? {
         switch self {
-        case .ejectify(let startDate), .diskArbitration(_, let startDate):
+        case .ejectify(let startDate), .launchdServiceManagement(let startDate), .diskArbitration(_, let startDate):
             return store.position(date: startDate)
         }
     }
@@ -541,10 +552,47 @@ private extension UnifiedLogCollector.Kind {
         switch self {
         case .ejectify:
             return "No matching Ejectify log entries were found in the last 24 hours."
+        case .launchdServiceManagement(let startDate):
+            let startDateText = DiagnosticsDateFormatter.string(from: startDate)
+            return "No matching error-or-fault Ejectify-related launchd or ServiceManagement log entries were found from \(startDateText) to now."
         case .diskArbitration(_, let startDate):
             let startDateText = DiagnosticsDateFormatter.string(from: startDate)
-            return "No matching Disk Arbitration log entries were found from \(startDateText) to now."
+            return "No matching error-or-fault Disk Arbitration log entries were found from \(startDateText) to now."
         }
+    }
+
+    /// Ejectify identifiers used to keep launchd and ServiceManagement logs specific to this app.
+    private var ejectifyLaunchdTerms: [String] {
+        [
+            "nl.nielsmouthaan.Ejectify",
+            PrivilegedHelperConfiguration.machServiceName,
+            "nl.nielsmouthaan.Ejectify-LaunchAtLoginHelper",
+            "EjectifyPrivilegedHelper"
+        ]
+    }
+
+    /// Builds a launchd and ServiceManagement predicate that requires both relevant system sources and Ejectify identifiers.
+    private func launchdServiceManagementPredicate() -> NSPredicate {
+        let messagePredicates = Array(repeating: "eventMessage CONTAINS[c] %@", count: ejectifyLaunchdTerms.count)
+            .joined(separator: " OR ")
+        let sourcePredicate = """
+        process == %@ OR process == %@ OR subsystem CONTAINS[c] %@ OR subsystem CONTAINS[c] %@ OR subsystem CONTAINS[c] %@
+        """
+        let format = "(\(warningOrHigherPredicate)) AND (\(sourcePredicate)) AND (\(messagePredicates))"
+        let arguments = ([
+            "launchd",
+            "smd",
+            "com.apple.xpc",
+            "ServiceManagement",
+            "BackgroundTaskManagement"
+        ] + ejectifyLaunchdTerms) as [Any]
+
+        return NSPredicate(format: format, argumentArray: arguments)
+    }
+
+    /// Unified-log predicate fragment for warnings and more severe entries represented by OSLogStore.
+    private var warningOrHigherPredicate: String {
+        "messageType == error OR messageType == fault"
     }
 
     /// Broad Disk Arbitration terms that are relevant to Ejectify's mount and unmount behavior.
@@ -557,7 +605,7 @@ private extension UnifiedLogCollector.Kind {
         let searchTerms = diskArbitrationActionTerms + filterTerms.filter { !$0.isEmpty }
         let messagePredicates = Array(repeating: "eventMessage CONTAINS[c] %@", count: searchTerms.count)
             .joined(separator: " OR ")
-        let format = "subsystem == %@ AND (\(messagePredicates))"
+        let format = "(\(warningOrHigherPredicate)) AND subsystem == %@ AND (\(messagePredicates))"
         let arguments = (["com.apple.DiskArbitration.diskarbitrationd"] + searchTerms) as [Any]
 
         return NSPredicate(format: format, argumentArray: arguments)
