@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.4
+
+- Added the ability to export a diagnostics report for troubleshooting.
+- Aligned menu item capitalization to match Apple system style.
+
 ## 2.0.3
 
 - Restored automatic unmount triggers for when the screen is locked or the screen saver starts.
