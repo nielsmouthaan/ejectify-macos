@@ -23,24 +23,29 @@ final class PrivilegedHelperListenerDelegate: NSObject, NSXPCListenerDelegate {
     }
 }
 
-/// Logger used during helper daemon bootstrap.
-let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify.PrivilegedHelper", category: "PrivilegedHelperMain")
+/// Runs privileged helper daemon bootstrap.
+private enum PrivilegedHelperMain {
 
-/// Listener delegate that exports the privileged volume-operation service object.
-let delegate = PrivilegedHelperListenerDelegate()
+    /// Logger used during helper daemon bootstrap.
+    private static let logger = Logger(subsystem: LoggingConfiguration.privilegedHelperSubsystem, category: String(describing: Self.self))
 
-/// Mach service listener receiving app connections.
-let listener = NSXPCListener(machServiceName: PrivilegedHelperConfiguration.machServiceName)
-listener.delegate = delegate
-listener.resume()
+    /// Starts the XPC listener and enters the helper run loop.
+    static func run() {
+        let delegate = PrivilegedHelperListenerDelegate()
+        let listener = NSXPCListener(machServiceName: PrivilegedHelperConfiguration.machServiceName)
+        listener.delegate = delegate
+        listener.resume()
+        notifyHelperStarted()
+        Self.logger.log("Privileged helper daemon started")
+        RunLoop.current.run()
+    }
 
-/// Posts a Darwin notification that the helper daemon has started.
-func notifyHelperStarted() {
-    let center = CFNotificationCenterGetDarwinNotifyCenter()
-    let name = CFNotificationName(PrivilegedHelperConfiguration.helperStartedNotificationName as CFString)
-    CFNotificationCenterPostNotification(center, name, nil, nil, true)
+    /// Posts a Darwin notification that the helper daemon has started.
+    private static func notifyHelperStarted() {
+        let center = CFNotificationCenterGetDarwinNotifyCenter()
+        let name = CFNotificationName(PrivilegedHelperConfiguration.helperStartedNotificationName as CFString)
+        CFNotificationCenterPostNotification(center, name, nil, nil, true)
+    }
 }
 
-notifyHelperStarted()
-logger.info("Privileged helper daemon started")
-RunLoop.current.run()
+PrivilegedHelperMain.run()

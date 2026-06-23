@@ -94,7 +94,7 @@ enum DiskArbitrationVolumeOperator {
     }
 
     /// Logger shared by all disk operation paths.
-    private static let logger = Logger(subsystem: "nl.nielsmouthaan.Ejectify", category: "DiskArbitrationVolumeOperator")
+    private static let logger = Logger(subsystem: LoggingConfiguration.currentSubsystem, category: String(describing: Self.self))
 
     /// Shared callback queue used by the shared Disk Arbitration session.
     private static let callbackQueue = DispatchQueue(
@@ -202,7 +202,7 @@ enum DiskArbitrationVolumeOperator {
                     fallbackUUID: volumeUUID,
                     fallbackBSDName: bsdName
                 )
-                logger.info("Disk resolved for \(resolvedVolumeLabel, privacy: .public) based on BSD name")
+                Self.logger.info("Disk resolved for \(resolvedVolumeLabel) based on BSD name")
                 return disk
             }
         }
@@ -214,12 +214,12 @@ enum DiskArbitrationVolumeOperator {
                 fallbackUUID: volumeUUID,
                 fallbackBSDName: bsdName
             )
-            logger.info("Disk resolved for \(resolvedVolumeLabel, privacy: .public) by scanning devices")
+            Self.logger.info("Disk resolved for \(resolvedVolumeLabel) by scanning devices")
             return disk
         }
 
         if logFailures {
-            logger.error("Disk resolve failed for \(requestedVolumeLabel, privacy: .public)")
+            Self.logger.error("Disk resolve failed for \(requestedVolumeLabel)")
         }
         return nil
     }

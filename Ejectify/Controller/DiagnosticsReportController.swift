@@ -520,8 +520,8 @@ private extension UnifiedLogCollector.Kind {
         case .ejectify:
             return NSPredicate(
                 format: "subsystem == %@ OR subsystem == %@",
-                "nl.nielsmouthaan.Ejectify",
-                "nl.nielsmouthaan.Ejectify.PrivilegedHelper"
+                LoggingConfiguration.appSubsystem,
+                LoggingConfiguration.privilegedHelperSubsystem
             )
         case .diskArbitration(let filterTerms, _):
             return diskArbitrationPredicate(filterTerms: filterTerms)

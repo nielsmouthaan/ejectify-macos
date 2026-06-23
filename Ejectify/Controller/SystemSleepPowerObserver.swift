@@ -14,7 +14,7 @@ final class SystemSleepPowerObserver {
     private let onSystemWillSleep: @MainActor (Int) -> Void
 
     /// Logger used for power notification registration and lifecycle diagnostics.
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "SystemSleepPowerObserver")
+    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: SystemSleepPowerObserver.self))
 
     /// IOKit root power connection used to acknowledge sleep transitions.
     private var rootPort: io_connect_t = 0
@@ -48,12 +48,12 @@ final class SystemSleepPowerObserver {
         let refCon = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
         let localRootPort = IORegisterForSystemPower(refCon, &localNotificationPort, Self.powerCallback, &localNotifierObject)
         guard localRootPort != 0, let localNotificationPort else {
-            logger.error("Failed to register for system power notifications")
+            Self.logger.error("Failed to register for system power notifications")
             return false
         }
 
         guard let runLoopSource = IONotificationPortGetRunLoopSource(localNotificationPort)?.takeUnretainedValue() else {
-            logger.error("Failed to attach system power callback run loop source")
+            Self.logger.error("Failed to attach system power callback run loop source")
             if localNotifierObject != 0 {
                 IOObjectRelease(localNotifierObject)
             }
@@ -67,7 +67,7 @@ final class SystemSleepPowerObserver {
         self.notificationPort = localNotificationPort
         self.notifierObject = localNotifierObject
         self.runLoopSource = runLoopSource
-        logger.info("System power monitoring enabled")
+        Self.logger.log("System power monitoring enabled")
         return true
     }
 

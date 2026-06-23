@@ -28,3 +28,23 @@ enum PrivilegedHelperConfiguration {
     /// In-app notification sent when router state changes and UI should refresh.
     static let operationRouterDidChangeNotificationName = "nl.nielsmouthaan.Ejectify.VolumeOperationRouter.didChange"
 }
+
+/// Shared subsystem identifiers used for unified logging.
+enum LoggingConfiguration {
+
+    /// Main app logging subsystem.
+    static let appSubsystem = "nl.nielsmouthaan.Ejectify"
+
+    /// Privileged helper logging subsystem.
+    static let privilegedHelperSubsystem = "nl.nielsmouthaan.Ejectify.PrivilegedHelper"
+
+#if EJECTIFY_PRIVILEGED_HELPER
+
+    /// Logging subsystem for shared code compiled into the privileged helper target.
+    static let currentSubsystem = privilegedHelperSubsystem
+#else
+
+    /// Logging subsystem for shared code compiled into the app target.
+    static let currentSubsystem = appSubsystem
+#endif
+}

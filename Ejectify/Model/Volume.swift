@@ -25,12 +25,12 @@ final class Volume {
     }
 
     /// Logger used for volume discovery and eligibility diagnostics.
-    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "Volume")
+    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: Volume.self))
 
     /// Shared Disk Arbitration session retained for the lifetime of the app so asynchronous callbacks are delivered reliably.
     nonisolated(unsafe) private static let diskArbitrationSession: DASession? = {
         guard let session = DiskArbitrationVolumeOperator.DiskArbitrationSessionFactory.makeSession(dispatchQueue: DispatchQueue.main) else {
-            logger.error("Failed to create Disk Arbitration session")
+            Volume.logger.error("Failed to create Disk Arbitration session")
             return nil
         }
         return session
@@ -87,7 +87,7 @@ final class Volume {
     /// Returns currently mounted volumes that Ejectify can manage.
     static func mountedVolumes() -> [Volume] {
         guard let mountedVolumeURLs = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys:nil, options: []) else {
-            logger.warning("Failed to enumerate mounted volumes from FileManager")
+            Self.logger.warning("Failed to enumerate mounted volumes from FileManager")
             return []
         }
 

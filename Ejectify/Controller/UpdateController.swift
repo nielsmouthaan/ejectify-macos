@@ -14,7 +14,7 @@ import Sparkle
 final class UpdateController {
 
     /// Logger used for updater startup and manual check diagnostics.
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify", category: "UpdateController")
+    private static let logger = Logger(subsystem: LoggingConfiguration.appSubsystem, category: String(describing: UpdateController.self))
 
     /// Sparkle controller owning updater state and standard update UI.
     private let updaterController: SPUStandardUpdaterController
@@ -29,7 +29,7 @@ final class UpdateController {
         do {
             try updaterController.updater.start()
         } catch {
-            logger.error("Failed to start Sparkle updater: \(error.localizedDescription, privacy: .public)")
+            Self.logger.error("Failed to start Sparkle updater: \(error.localizedDescription)")
         }
     }
 

@@ -24,7 +24,7 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     }
 
     /// Logger used for privileged helper operation diagnostics.
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "nl.nielsmouthaan.Ejectify.PrivilegedHelper", category: "PrivilegedDiskService")
+    private static let logger = Logger(subsystem: LoggingConfiguration.privilegedHelperSubsystem, category: String(describing: PrivilegedDiskService.self))
 
     /// Queue used to execute mount/unmount requests concurrently.
     private let operationQueue = DispatchQueue(
@@ -61,13 +61,13 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
             return
         }
 
-        logger.info("Disk Arbitration eject notifications muted=\(muted, privacy: .public)")
+        Self.logger.log("Disk Arbitration eject notifications muted=\(muted)")
         reply(true, nil)
     }
 
     /// Terminates the helper process on app request.
     func requestTermination(withReply _: @escaping (Bool, String?) -> Void) {
-        logger.info("Received helper termination request from app")
+        Self.logger.log("Received helper termination request from app")
         exit(EXIT_SUCCESS)
     }
 
@@ -81,10 +81,10 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     ) {
         let replyBox = ReplyBox(reply: reply)
         let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID, bsdName: bsdName)
-        logger.info("Privileged helper \(operation.operationName, privacy: .public) queued for \(volumeLabel, privacy: .public)")
+        Self.logger.log("Privileged helper \(operation.operationName) queued for \(volumeLabel)")
 
-        operationQueue.async { [logger] in
-            logger.info("Privileged helper \(operation.operationName, privacy: .public) started for \(volumeLabel, privacy: .public)")
+        operationQueue.async {
+            Self.logger.info("Privileged helper \(operation.operationName) started for \(volumeLabel)")
             let result = DiskArbitrationVolumeOperator.perform(
                 volumeUUID: volumeUUID,
                 volumeName: volumeName,
@@ -92,17 +92,18 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
                 operation: operation
             )
 
-            let messageSuffix: String
-            if let message = result.message, !message.isEmpty {
-                messageSuffix = ": \(message)"
-            } else {
-                messageSuffix = ""
-            }
-
             if result.success {
-                logger.info("Privileged helper \(operation.operationName, privacy: .public) finished for \(volumeLabel, privacy: .public)\(messageSuffix, privacy: .public)")
+                if let message = result.message, !message.isEmpty {
+                    Self.logger.log("Privileged helper \(operation.operationName) finished for \(volumeLabel): \(message)")
+                } else {
+                    Self.logger.log("Privileged helper \(operation.operationName) finished for \(volumeLabel)")
+                }
             } else {
-                logger.error("Privileged helper \(operation.operationName, privacy: .public) failed for \(volumeLabel, privacy: .public)\(messageSuffix, privacy: .public)")
+                if let message = result.message, !message.isEmpty {
+                    Self.logger.error("Privileged helper \(operation.operationName) failed for \(volumeLabel): \(message)")
+                } else {
+                    Self.logger.error("Privileged helper \(operation.operationName) failed for \(volumeLabel)")
+                }
             }
 
             replyBox.reply(result.success, result.message, result.status ?? 0)
