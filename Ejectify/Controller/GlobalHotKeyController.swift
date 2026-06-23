@@ -84,7 +84,7 @@ final class GlobalHotKeyController {
         )
 
         guard status == noErr, let eventHandlerRef else {
-            Self.logger.error("Failed to install global hotkey event handler: status=\(status)")
+            Self.logger.error("Failed to install global hotkey event handler: status=\(status, privacy: .public)")
             return
         }
 
@@ -110,7 +110,7 @@ final class GlobalHotKeyController {
 
         guard status == noErr, let hotKeyRef else {
             isRegistered = false
-            Self.logger.error("Failed to register global unmount-all hotkey (Control-Command-U): status=\(status)")
+            Self.logger.error("Failed to register global unmount-all hotkey (Control-Command-U): status=\(status, privacy: .public)")
             return
         }
 
@@ -130,7 +130,7 @@ final class GlobalHotKeyController {
         if status == noErr {
             Self.logger.log("Unregistered global unmount-all hotkey")
         } else {
-            Self.logger.error("Failed to unregister global unmount-all hotkey: status=\(status)")
+            Self.logger.error("Failed to unregister global unmount-all hotkey: status=\(status, privacy: .public)")
         }
 
         self.eventHotKeyRef = nil
@@ -145,7 +145,7 @@ final class GlobalHotKeyController {
 
         let status = RemoveEventHandler(eventHandlerRef)
         if status != noErr {
-            Self.logger.error("Failed to remove global hotkey event handler: status=\(status)")
+            Self.logger.error("Failed to remove global hotkey event handler: status=\(status, privacy: .public)")
         }
 
         self.eventHandlerRef = nil
@@ -165,7 +165,7 @@ final class GlobalHotKeyController {
         )
 
         guard status == noErr else {
-            Self.logger.error("Failed to read global hotkey event payload: status=\(status)")
+            Self.logger.error("Failed to read global hotkey event payload: status=\(status, privacy: .public)")
             return
         }
 

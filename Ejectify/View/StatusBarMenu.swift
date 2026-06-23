@@ -78,7 +78,7 @@ final class StatusBarMenu: NSMenu {
     /// Handles mount notifications and logs mount metadata provided by NSWorkspace.
     @objc private func volumeDidMount(notification: Notification) {
         if let volume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
-            Self.logger.log("Volume did mount: \(volume.logLabel)")
+            Self.logger.log("Volume did mount: \(volume.logLabel, privacy: .public)")
         }
         refreshVolumesMenu()
     }
@@ -86,7 +86,7 @@ final class StatusBarMenu: NSMenu {
     /// Handles unmount notifications and logs unmount metadata provided by NSWorkspace.
     @objc private func volumeDidUnmount(notification: Notification) {
         if let volume = cachedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
-            Self.logger.log("Volume did unmount: \(volume.logLabel)")
+            Self.logger.log("Volume did unmount: \(volume.logLabel, privacy: .public)")
         }
         refreshVolumesMenu()
     }
@@ -96,7 +96,7 @@ final class StatusBarMenu: NSMenu {
         if let volume = cachedVolume(from: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey) {
             let newVolumeName = notification.userInfo?[NSWorkspace.localizedVolumeNameUserInfoKey] as? String ?? ""
             let newVolumeLabel = VolumeLogLabelFormatter.label(name: newVolumeName, uuid: volume.id, bsdName: volume.bsdName)
-            Self.logger.log("Volume did rename: \(volume.logLabel) -> \(newVolumeLabel)")
+            Self.logger.log("Volume did rename: \(volume.logLabel, privacy: .public) -> \(newVolumeLabel, privacy: .public)")
         }
         refreshVolumesMenu()
     }
@@ -307,7 +307,7 @@ final class StatusBarMenu: NSMenu {
         }
         let newEnabledValue = toggledValue(for: menuItem.state)
         volume.enabled = newEnabledValue
-        Self.logger.log("Volume auto-unmount toggled: \(volume.logLabel) enabled=\(newEnabledValue)")
+        Self.logger.log("Volume auto-unmount toggled: \(volume.logLabel, privacy: .public) enabled=\(newEnabledValue, privacy: .public)")
         updateMenu()
     }
 
@@ -456,7 +456,7 @@ final class StatusBarMenu: NSMenu {
             )
         }
         guard targetCreateStatus == noErr else {
-            Self.logger.error("Failed to create restart target descriptor: status=\(targetCreateStatus)")
+            Self.logger.error("Failed to create restart target descriptor: status=\(targetCreateStatus, privacy: .public)")
             return
         }
         defer {
@@ -473,7 +473,7 @@ final class StatusBarMenu: NSMenu {
             &restartEvent
         )
         guard eventCreateStatus == noErr else {
-            Self.logger.error("Failed to create restart Apple Event: status=\(eventCreateStatus)")
+            Self.logger.error("Failed to create restart Apple Event: status=\(eventCreateStatus, privacy: .public)")
             return
         }
         defer {
@@ -492,7 +492,7 @@ final class StatusBarMenu: NSMenu {
             kAEDefaultTimeout
         )
         guard sendStatus == noErr else {
-            Self.logger.error("Failed to send restart Apple Event: status=\(sendStatus)")
+            Self.logger.error("Failed to send restart Apple Event: status=\(sendStatus, privacy: .public)")
             return
         }
     }

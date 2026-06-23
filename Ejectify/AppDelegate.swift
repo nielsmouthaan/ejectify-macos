@@ -84,7 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Unmounts all enabled volumes in response to a user-initiated action.
     func performManualUnmountAll() {
         let enabledVolumes = Volume.mountedVolumes().filter(\.enabled)
-        Self.logger.log("Manual unmount-all triggered: \(enabledVolumes.count) enabled volumes")
+        Self.logger.log("Manual unmount-all triggered: \(enabledVolumes.count, privacy: .public) enabled volumes")
 
         for volume in enabledVolumes {
             VolumeOperationRouter.shared.unmount(

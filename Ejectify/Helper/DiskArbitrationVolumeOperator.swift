@@ -205,7 +205,7 @@ enum DiskArbitrationVolumeOperator {
                     fallbackUUID: volumeUUID,
                     fallbackBSDName: bsdName
                 )
-                Self.logger.info("Disk resolved for \(resolvedVolumeLabel) based on BSD name")
+                Self.logger.info("Disk resolved for \(resolvedVolumeLabel, privacy: .public) based on BSD name")
                 return disk
             }
         }
@@ -217,12 +217,12 @@ enum DiskArbitrationVolumeOperator {
                 fallbackUUID: volumeUUID,
                 fallbackBSDName: bsdName
             )
-            Self.logger.info("Disk resolved for \(resolvedVolumeLabel) by scanning devices")
+            Self.logger.info("Disk resolved for \(resolvedVolumeLabel, privacy: .public) by scanning devices")
             return disk
         }
 
         if logFailures {
-            Self.logger.error("Disk resolve failed for \(requestedVolumeLabel)")
+            Self.logger.error("Disk resolve failed for \(requestedVolumeLabel, privacy: .public)")
         }
         return nil
     }

@@ -49,7 +49,7 @@ enum Preference {
         }
         set {
             LaunchAtLogin.isEnabled = newValue
-            Self.logger.log("Preference changed: launchAtLogin=\(newValue)")
+            Self.logger.log("Preference changed: launchAtLogin=\(newValue, privacy: .public)")
         }
     }
 
@@ -60,7 +60,7 @@ enum Preference {
         }
         set {
             UserDefaults.standard.set(newValue.rawValue, forKey: "preference.unmountWhen")
-            Self.logger.log("Preference changed: unmountWhen=\(newValue.rawValue)")
+            Self.logger.log("Preference changed: unmountWhen=\(newValue.rawValue, privacy: .public)")
             Task { @MainActor in
                 AppDelegate.shared.activityController?.startMonitoring()
             }
@@ -74,7 +74,7 @@ enum Preference {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: "preference.forceUnmount")
-            Self.logger.log("Preference changed: forceUnmount=\(newValue)")
+            Self.logger.log("Preference changed: forceUnmount=\(newValue, privacy: .public)")
         }
     }
 
@@ -85,7 +85,7 @@ enum Preference {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: "preference.hasSeenOnboarding")
-            Self.logger.info("Preference changed: hasSeenOnboarding=\(newValue)")
+            Self.logger.info("Preference changed: hasSeenOnboarding=\(newValue, privacy: .public)")
         }
     }
 }

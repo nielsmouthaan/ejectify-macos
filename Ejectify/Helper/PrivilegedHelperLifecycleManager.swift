@@ -44,19 +44,19 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
             switch daemonService.status {
             case .notRegistered:
                 try daemonService.register()
-                Self.logger.log("Privileged helper daemon was not registered. Registration attempted; current status: \(daemonService.status.statusDescription)")
+                Self.logger.log("Privileged helper daemon was not registered. Registration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
             case .enabled:
                 Self.logger.info("Privileged helper daemon already registered and enabled")
             case .requiresApproval:
                 Self.logger.warning("Privileged helper daemon requires approval")
             case .notFound:
                 try daemonService.register()
-                Self.logger.log("Privileged helper daemon service was not found. Registration attempted; current status: \(daemonService.status.statusDescription)")
+                Self.logger.log("Privileged helper daemon service was not found. Registration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
             @unknown default:
-                Self.logger.warning("Privileged helper daemon reported an unexpected status: \(daemonService.status.statusDescription)")
+                Self.logger.warning("Privileged helper daemon reported an unexpected status: \(daemonService.status.statusDescription, privacy: .public)")
             }
         } catch {
-            Self.logger.error("Privileged helper daemon registration failed: \(error)")
+            Self.logger.error("Privileged helper daemon registration failed: \(error.localizedDescription, privacy: .public)")
         }
 
         return isDaemonEnabled
@@ -70,16 +70,16 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
             switch daemonService.status {
             case .enabled, .requiresApproval:
                 try daemonService.unregister()
-                Self.logger.log("Privileged helper daemon unregistration attempted; current status: \(daemonService.status.statusDescription)")
+                Self.logger.log("Privileged helper daemon unregistration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
             case .notRegistered:
                 Self.logger.info("Privileged helper daemon already unregistered")
             case .notFound:
                 Self.logger.warning("Privileged helper daemon was not found while attempting unregistration")
             @unknown default:
-                Self.logger.warning("Privileged helper daemon reported an unexpected status while unregistering: \(daemonService.status.statusDescription)")
+                Self.logger.warning("Privileged helper daemon reported an unexpected status while unregistering: \(daemonService.status.statusDescription, privacy: .public)")
             }
         } catch {
-            Self.logger.error("Privileged helper daemon unregistration failed: \(error)")
+            Self.logger.error("Privileged helper daemon unregistration failed: \(error.localizedDescription, privacy: .public)")
         }
 
         return !isDaemonEnabled

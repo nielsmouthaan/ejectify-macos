@@ -64,7 +64,7 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
             return
         }
 
-        Self.logger.log("Disk Arbitration eject notifications muted=\(muted)")
+        Self.logger.log("Disk Arbitration eject notifications muted=\(muted, privacy: .public)")
         reply(true, nil)
     }
 
@@ -84,10 +84,10 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     ) {
         let replyBox = ReplyBox(reply: reply)
         let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID, bsdName: bsdName)
-        Self.logger.log("Privileged helper \(operation.operationName) queued for \(volumeLabel)")
+        Self.logger.log("Privileged helper \(operation.operationName, privacy: .public) queued for \(volumeLabel, privacy: .public)")
 
         operationQueue.async {
-            Self.logger.info("Privileged helper \(operation.operationName) started for \(volumeLabel)")
+            Self.logger.info("Privileged helper \(operation.operationName, privacy: .public) started for \(volumeLabel, privacy: .public)")
             let result = DiskArbitrationVolumeOperator.perform(
                 volumeUUID: volumeUUID,
                 volumeName: volumeName,
@@ -97,15 +97,15 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
 
             if result.success {
                 if let message = result.message, !message.isEmpty {
-                    Self.logger.log("Privileged helper \(operation.operationName) finished for \(volumeLabel): \(message)")
+                    Self.logger.log("Privileged helper \(operation.operationName, privacy: .public) finished for \(volumeLabel, privacy: .public): \(message, privacy: .public)")
                 } else {
-                    Self.logger.log("Privileged helper \(operation.operationName) finished for \(volumeLabel)")
+                    Self.logger.log("Privileged helper \(operation.operationName, privacy: .public) finished for \(volumeLabel, privacy: .public)")
                 }
             } else {
                 if let message = result.message, !message.isEmpty {
-                    Self.logger.error("Privileged helper \(operation.operationName) failed for \(volumeLabel): \(message)")
+                    Self.logger.error("Privileged helper \(operation.operationName, privacy: .public) failed for \(volumeLabel, privacy: .public): \(message, privacy: .public)")
                 } else {
-                    Self.logger.error("Privileged helper \(operation.operationName) failed for \(volumeLabel)")
+                    Self.logger.error("Privileged helper \(operation.operationName, privacy: .public) failed for \(volumeLabel, privacy: .public)")
                 }
             }
 

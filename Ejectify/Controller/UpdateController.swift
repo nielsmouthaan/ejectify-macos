@@ -32,7 +32,7 @@ final class UpdateController {
         do {
             try updaterController.updater.start()
         } catch {
-            Self.logger.error("Failed to start Sparkle updater: \(error.localizedDescription)")
+            Self.logger.error("Failed to start Sparkle updater: \(error.localizedDescription, privacy: .public)")
         }
     }
 
