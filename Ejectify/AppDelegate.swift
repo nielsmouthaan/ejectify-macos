@@ -15,7 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Logger used for app lifecycle events and shared menu actions.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: AppDelegate.self)
     )
 

@@ -25,7 +25,7 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
 
     /// Logger used for privileged helper operation diagnostics.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: PrivilegedDiskService.self)
     )
 

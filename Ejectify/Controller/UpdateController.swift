@@ -15,7 +15,7 @@ final class UpdateController {
 
     /// Logger used for updater startup and manual check diagnostics.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: UpdateController.self)
     )
 

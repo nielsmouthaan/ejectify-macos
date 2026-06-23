@@ -38,6 +38,8 @@
 		C0A100000000000000000062 /* VolumeLogLabelFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */; };
 		C0A100000000000000000064 /* PrivilegedHelperConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */; };
 		C0A100000000000000000065 /* PrivilegedHelperConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */; };
+		C0A100000000000000000071 /* LoggingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000073 /* LoggingConfiguration.swift */; };
+		C0A100000000000000000072 /* LoggingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000073 /* LoggingConfiguration.swift */; };
 		D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */; };
 		D1E700A42F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */; };
 		D1E700A52F8A000100C0D001 /* OnboardingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */; };
@@ -139,6 +141,7 @@
 		C0A100000000000000000054 /* SMAppService+StatusDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SMAppService+StatusDescription.swift"; sourceTree = "<group>"; };
 		C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeLogLabelFormatter.swift; sourceTree = "<group>"; };
 		C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperConfiguration.swift; sourceTree = "<group>"; };
+		C0A100000000000000000073 /* LoggingConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggingConfiguration.swift; sourceTree = "<group>"; };
 		D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSleepPowerObserver.swift; sourceTree = "<group>"; };
 		D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperLifecycleManager.swift; sourceTree = "<group>"; };
 		D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindowController.swift; sourceTree = "<group>"; };
@@ -253,6 +256,7 @@
 			isa = PBXGroup;
 			children = (
 				C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */,
+				C0A100000000000000000073 /* LoggingConfiguration.swift */,
 				C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */,
 				D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */,
 				C0A100000000000000000012 /* VolumeOperationRouter.swift */,
@@ -430,6 +434,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0A100000000000000000061 /* VolumeLogLabelFormatter.swift in Sources */,
+				C0A100000000000000000071 /* LoggingConfiguration.swift in Sources */,
 				C0A100000000000000000051 /* DiskArbitrationVolumeOperator.swift in Sources */,
 				A1B2C3D425C0AA1100ABC001 /* DAReturn+StatusDescription.swift in Sources */,
 				C0A100000000000000000064 /* PrivilegedHelperConfiguration.swift in Sources */,
@@ -461,6 +466,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0A100000000000000000062 /* VolumeLogLabelFormatter.swift in Sources */,
+				C0A100000000000000000072 /* LoggingConfiguration.swift in Sources */,
 				C0A100000000000000000052 /* DiskArbitrationVolumeOperator.swift in Sources */,
 				A1B2C3D525C0AA1100ABC001 /* DAReturn+StatusDescription.swift in Sources */,
 				C0A100000000000000000065 /* PrivilegedHelperConfiguration.swift in Sources */,
@@ -708,7 +714,6 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -726,7 +731,6 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;

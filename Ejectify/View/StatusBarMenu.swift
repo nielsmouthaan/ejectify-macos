@@ -14,7 +14,7 @@ final class StatusBarMenu: NSMenu {
 
     /// Logger used for menu-driven actions and volume notifications.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: StatusBarMenu.self)
     )
 

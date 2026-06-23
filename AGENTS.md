@@ -33,8 +33,7 @@ Ejectify is a macOS menu bar utility that helps users avoid “Disk Not Ejected 
 ### Logging instructions
 
 - Define `Logger` instances as `private static let logger` properties on the type that uses them.
-- Use `Bundle.main.bundleIdentifier!` for logger subsystems and derive logger categories from the concrete declaring type using the form `String(describing: ConcreteType.self)`.
-- Keep command-line helper target Info.plists embedded in the binary so `Bundle.main.bundleIdentifier!` is available at runtime.
+- Use `LoggingConfiguration.subsystem` for logger subsystems and derive logger categories from the concrete declaring type using the form `String(describing: ConcreteType.self)`.
 - Use direct `os.Logger` interpolation and put values directly in logger calls instead of prebuilding full log messages as regular strings.
 - Do not specify interpolation privacy unless explicitly requested or required for clearly sensitive values such as credentials, secrets, tokens, or personal identifiers.
 - Use consistent log levels: `log` for important production breadcrumbs, `info` for extra diagnostic detail, `debug` for development-only detail, `warning` for recoverable degraded behavior, `error` for failed operations, and `fault` for likely bugs or violated invariants. Avoid `trace`, `notice`, and `critical` unless the project explicitly opts into those aliases.

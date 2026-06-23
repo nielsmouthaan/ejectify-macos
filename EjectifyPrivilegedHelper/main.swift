@@ -28,7 +28,7 @@ private enum PrivilegedHelperMain {
 
     /// Logger used during helper daemon bootstrap.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: PrivilegedHelperMain.self)
     )
 

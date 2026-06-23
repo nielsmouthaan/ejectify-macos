@@ -26,7 +26,7 @@ final class Volume {
 
     /// Logger used for volume discovery and eligibility diagnostics.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: Volume.self)
     )
 

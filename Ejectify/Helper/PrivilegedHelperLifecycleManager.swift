@@ -17,7 +17,7 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
 
     /// Logger used for daemon registration lifecycle diagnostics.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: PrivilegedHelperLifecycleManager.self)
     )
 

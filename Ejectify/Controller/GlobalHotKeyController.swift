@@ -37,7 +37,7 @@ final class GlobalHotKeyController {
 
     /// Logger used for registration and trigger diagnostics.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: GlobalHotKeyController.self)
     )
 

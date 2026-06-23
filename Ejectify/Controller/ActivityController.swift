@@ -15,7 +15,7 @@ final class ActivityController {
 
     /// Logger used for mount/unmount and readiness transition diagnostics.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: ActivityController.self)
     )
 

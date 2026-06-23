@@ -520,7 +520,7 @@ private extension UnifiedLogCollector.Kind {
         case .ejectify:
             return NSPredicate(
                 format: "subsystem == %@ OR subsystem == %@",
-                Bundle.main.bundleIdentifier!,
+                LoggingConfiguration.subsystem,
                 PrivilegedHelperConfiguration.machServiceName
             )
         case .diskArbitration(let filterTerms, _):

@@ -16,7 +16,7 @@ final class SystemSleepPowerObserver {
 
     /// Logger used for power notification registration and lifecycle diagnostics.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: SystemSleepPowerObserver.self)
     )
 

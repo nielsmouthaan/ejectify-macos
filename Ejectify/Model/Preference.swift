@@ -14,7 +14,7 @@ enum Preference {
 
     /// Logger used for preference mutation diagnostics.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: Preference.self)
     )
 

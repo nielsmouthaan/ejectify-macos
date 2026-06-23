@@ -95,7 +95,7 @@ enum DiskArbitrationVolumeOperator {
 
     /// Logger shared by all disk operation paths.
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier!,
+        subsystem: LoggingConfiguration.subsystem,
         category: String(describing: DiskArbitrationVolumeOperator.self)
     )
 
