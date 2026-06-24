@@ -280,7 +280,7 @@ final class StatusBarMenu: NSMenu {
         helpItem.target = self
         addItem(helpItem)
 
-        let saveDiagnosticsReportItem = NSMenuItem(title: String(localized: "Save Diagnostics Report…"), action: #selector(saveDiagnosticsReportClicked), keyEquivalent: "")
+        let saveDiagnosticsReportItem = NSMenuItem(title: String(localized: "Generate Diagnostics Report…"), action: #selector(saveDiagnosticsReportClicked), keyEquivalent: "")
         saveDiagnosticsReportItem.target = self
         addItem(saveDiagnosticsReportItem)
 

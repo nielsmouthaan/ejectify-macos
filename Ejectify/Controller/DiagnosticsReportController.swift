@@ -22,19 +22,8 @@ final class DiagnosticsReportController {
         }
 
         let snapshot = EjectifyDiagnosticsSnapshot.make()
-        Task.detached(priority: .userInitiated) { [snapshot, targetURL] in
-            do {
-                let report = await EjectifyDiagnosticsReportFactory.make(
-                    filename: targetURL.lastPathComponent,
-                    snapshot: snapshot
-                )
-                try report.data.write(to: targetURL, options: .atomic)
-                await Self.revealReport(at: targetURL)
-            } catch {
-                let failureDescription = error.localizedDescription
-                await Self.showSaveFailureAlert(failureDescription: failureDescription)
-            }
-        }
+        let progressAlert = DiagnosticsReportProgressAlert()
+        progressAlert.run(targetURL: targetURL, snapshot: snapshot)
     }
 
     /// Creates the save panel configured for HTML diagnostics reports.
@@ -44,23 +33,134 @@ final class DiagnosticsReportController {
         savePanel.canCreateDirectories = true
         savePanel.directoryURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first
         savePanel.nameFieldStringValue = "Ejectify-Diagnostics-Report.html"
-        savePanel.title = String(localized: "Save Diagnostics Report")
+        savePanel.title = String(localized: "Generate Diagnostics Report")
         savePanel.message = String(localized: "Save the diagnostics report to the chosen location.")
         return savePanel
     }
 
     /// Reveals a successfully saved diagnostics report in Finder.
-    private static func revealReport(at url: URL) {
+    fileprivate static func revealReport(at url: URL) {
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
+}
 
-    /// Shows a user-friendly alert when diagnostics report generation or writing fails.
-    private static func showSaveFailureAlert(failureDescription: String) {
-        let alert = NSAlert()
+/// Shows native progress UI while a diagnostics report is generated.
+@MainActor
+private final class DiagnosticsReportProgressAlert {
+
+    /// Current report generation state backing the alert button behavior.
+    private enum State {
+        case generating(Task<URL, Error>)
+        case generated(URL)
+        case failed
+    }
+
+    /// Native alert used as the progress window.
+    private let alert = NSAlert()
+
+    /// Indeterminate progress indicator for the unified-log collection work.
+    private let progressIndicator = NSProgressIndicator(
+        frame: NSRect(x: 0, y: 0, width: 240, height: 20)
+    )
+
+    /// Current operation state.
+    private var state: State?
+
+    /// Observes the detached generation task and updates the alert when it finishes.
+    private var completionObserver: Task<Void, Never>?
+
+    /// Generates the report while showing a native cancelable progress alert.
+    func run(targetURL: URL, snapshot: EjectifyDiagnosticsSnapshot) {
+        configureForProgress()
+
+        let generationTask = Task.detached(priority: .userInitiated) { [snapshot, targetURL] in
+            let report = try await EjectifyDiagnosticsReportFactory.make(
+                filename: targetURL.lastPathComponent,
+                snapshot: snapshot
+            )
+            try Task.checkCancellation()
+            try report.data.write(to: targetURL, options: .atomic)
+            try Task.checkCancellation()
+            return targetURL
+        }
+        state = .generating(generationTask)
+
+        completionObserver = Task { [weak self] in
+            do {
+                let reportURL = try await generationTask.value
+                guard !Task.isCancelled else {
+                    return
+                }
+
+                self?.markGenerated(at: reportURL)
+            } catch is CancellationError {
+                return
+            } catch {
+                guard !Task.isCancelled else {
+                    return
+                }
+
+                self?.markFailed(failureDescription: error.localizedDescription)
+            }
+        }
+
+        let response = alert.runModal()
+        completionObserver?.cancel()
+        handle(response: response)
+    }
+
+    /// Configures the alert for active report generation.
+    private func configureForProgress() {
+        alert.alertStyle = .informational
+        alert.messageText = String(localized: "Generating Diagnostics Report")
+        alert.informativeText = String(localized: "Ejectify is collecting relevant log events for the last 24 hours. This can take a while.")
+        alert.addButton(withTitle: String(localized: "Cancel"))
+
+        progressIndicator.style = .bar
+        progressIndicator.isIndeterminate = true
+        progressIndicator.isHidden = false
+        progressIndicator.usesThreadedAnimation = true
+        progressIndicator.startAnimation(nil)
+        alert.accessoryView = progressIndicator
+    }
+
+    /// Updates the alert after the report is written successfully.
+    private func markGenerated(at url: URL) {
+        state = .generated(url)
+        progressIndicator.stopAnimation(nil)
+        progressIndicator.isHidden = true
+        alert.accessoryView = nil
+        alert.messageText = String(localized: "Diagnostics Report Generated")
+        alert.informativeText = String(localized: "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder.")
+        alert.buttons.first?.title = String(localized: "Reveal in Finder")
+    }
+
+    /// Updates the alert when report generation or writing fails.
+    private func markFailed(failureDescription: String) {
+        state = .failed
+        progressIndicator.stopAnimation(nil)
+        progressIndicator.isHidden = true
+        alert.accessoryView = nil
         alert.alertStyle = .warning
         alert.messageText = String(localized: "Could not save diagnostics report.")
         alert.informativeText = failureDescription
-        alert.runModal()
+        alert.buttons.first?.title = String(localized: "OK")
+    }
+
+    /// Handles the alert button after the modal session closes.
+    private func handle(response: NSApplication.ModalResponse) {
+        guard response == .alertFirstButtonReturn else {
+            return
+        }
+
+        switch state {
+        case .generating(let generationTask):
+            generationTask.cancel()
+        case .generated(let url):
+            DiagnosticsReportController.revealReport(at: url)
+        case .failed, nil:
+            break
+        }
     }
 }
 
@@ -176,9 +276,9 @@ private struct EjectifyVolumeDiagnosticsSnapshot: Sendable {
 private enum EjectifyDiagnosticsReportFactory {
 
     /// Creates an HTML diagnostics report.
-    static func make(filename: String, snapshot: EjectifyDiagnosticsSnapshot) async -> DiagnosticsReport {
+    static func make(filename: String, snapshot: EjectifyDiagnosticsSnapshot) async throws -> DiagnosticsReport {
         let logStartDate = Date(timeIntervalSinceNow: -DiagnosticsLogLookback.duration)
-        let ejectifyLogCollection = UnifiedLogCollector.collect(kind: .ejectify(startDate: logStartDate))
+        let ejectifyLogCollection = try UnifiedLogCollector.collect(kind: .ejectify(startDate: logStartDate))
         var reporters: [DiagnosticsReporting] = [
             EjectifyDiagnosticsIntroReporter(
                 generatedAt: snapshot.generatedAt,
@@ -189,16 +289,19 @@ private enum EjectifyDiagnosticsReportFactory {
             MountedVolumesReporter(volumes: snapshot.volumes),
             UnifiedLogsReporter(collection: ejectifyLogCollection)
         ]
-        let launchdLogCollection = UnifiedLogCollector.collect(kind: .launchdServiceManagement(startDate: logStartDate))
+        try Task.checkCancellation()
+
+        let launchdLogCollection = try UnifiedLogCollector.collect(kind: .launchdServiceManagement(startDate: logStartDate))
         reporters.append(
             UnifiedLogsReporter(
                 collection: launchdLogCollection
             )
         )
+        try Task.checkCancellation()
 
         let diskArbitrationLogCollection: UnifiedLogCollection
         if let firstEjectifyLogDate = ejectifyLogCollection.firstEntryDate {
-            diskArbitrationLogCollection = UnifiedLogCollector.collect(
+            diskArbitrationLogCollection = try UnifiedLogCollector.collect(
                 kind: .diskArbitration(
                     filterTerms: diskArbitrationFilterTerms(from: snapshot),
                     startDate: max(logStartDate, firstEjectifyLogDate)
@@ -220,17 +323,20 @@ private enum EjectifyDiagnosticsReportFactory {
             )
         }
 
+        try Task.checkCancellation()
         reporters.append(
             UnifiedLogsReporter(
                 collection: diskArbitrationLogCollection
             )
         )
 
-        return await DiagnosticsReporter.create(
+        let report = await DiagnosticsReporter.create(
             filename: filename,
             using: reporters,
             reportTitle: "Ejectify Diagnostics Report"
         )
+        try Task.checkCancellation()
+        return report
     }
 
     /// Returns terms used to keep Disk Arbitration logs relevant to Ejectify and current volumes.
@@ -248,13 +354,13 @@ private enum EjectifyDiagnosticsReportFactory {
 private enum DiagnosticsLogLookback {
 
     /// Maximum age of unified-log entries included in the diagnostics report.
-    static let duration: TimeInterval = 60 * 60
+    static let duration: TimeInterval = 24 * 60 * 60
 
     /// Lowercase phrase used in explanatory report text.
-    static let description = "the last hour"
+    static let description = "the last 24 hours"
 
     /// Title-case phrase used in report chapter titles.
-    static let title = "Last Hour"
+    static let title = "Last 24 Hours"
 }
 
 /// Generates the introductory report chapter.
@@ -375,14 +481,16 @@ private enum UnifiedLogCollector {
     }
 
     /// Collects and formats unified log entries for a chapter.
-    static func collect(kind: Kind) -> UnifiedLogCollection {
+    static func collect(kind: Kind) throws -> UnifiedLogCollection {
         let title = kind.title
 
         do {
+            try Task.checkCancellation()
             let store = try OSLogStore(scope: .system)
             let entries = try store.getEntries(with: [], at: kind.startPosition(in: store), matching: kind.predicate)
             let dateFormatter = DiagnosticsDateFormatter.make()
-            let logOutput = formatEntries(entries, dateFormatter: dateFormatter)
+            let logOutput = try formatEntries(entries, dateFormatter: dateFormatter)
+            try Task.checkCancellation()
 
             guard let firstEntryDate = logOutput.firstEntryDate else {
                 return UnifiedLogCollection(
@@ -399,6 +507,8 @@ private enum UnifiedLogCollector {
                 firstEntryDate: firstEntryDate,
                 failureMessage: nil
             )
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             let message = "Unable to read \(title) from the unified log: \(error.localizedDescription)"
             return UnifiedLogCollection(
@@ -414,11 +524,13 @@ private enum UnifiedLogCollector {
     private static func formatEntries(
         _ entries: AnySequence<OSLogEntry>,
         dateFormatter: ISO8601DateFormatter
-    ) -> (lines: String, firstEntryDate: Date?) {
-        var lines = ""
+    ) throws -> (lines: String, firstEntryDate: Date?) {
+        var lines: [String] = []
         var firstEntryDate: Date?
 
         for entry in entries {
+            try Task.checkCancellation()
+
             guard let logEntry = entry as? OSLogEntryLog else {
                 continue
             }
@@ -427,14 +539,10 @@ private enum UnifiedLogCollector {
                 firstEntryDate = logEntry.date
             }
 
-            if !lines.isEmpty {
-                lines += "\n"
-            }
-
-            lines += format(entry: logEntry, dateFormatter: dateFormatter)
+            lines.append(format(entry: logEntry, dateFormatter: dateFormatter))
         }
 
-        return (lines, firstEntryDate)
+        return (lines.joined(separator: "\n"), firstEntryDate)
     }
 
     /// Formats a unified-log entry into one readable line.
