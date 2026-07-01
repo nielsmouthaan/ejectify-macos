@@ -7,6 +7,7 @@
 
 import AppKit
 import Diagnostics
+@preconcurrency import DiskArbitration
 import Foundation
 import OSLog
 import UniformTypeIdentifiers
@@ -197,10 +198,14 @@ private struct EjectifyDiagnosticsSnapshot: Sendable {
     /// Mounted volumes managed by Ejectify at snapshot time.
     let volumes: [EjectifyVolumeDiagnosticsSnapshot]
 
+    /// Raw mounted filesystem URLs and Disk Arbitration metadata before Ejectify eligibility filtering.
+    let mountedVolumeDiscovery: [MountedVolumeDiscoverySnapshot]
+
     /// Creates a snapshot from the current app state.
     @MainActor
     static func make() -> Self {
         let volumes = Volume.mountedVolumes().map(EjectifyVolumeDiagnosticsSnapshot.init(volume:))
+        let mountedVolumeDiscovery = MountedVolumeDiscoverySnapshot.makeAll()
         return Self(
             generatedAt: Date(),
             launchAtLogin: Preference.launchAtLogin,
@@ -211,7 +216,8 @@ private struct EjectifyDiagnosticsSnapshot: Sendable {
             isUsingPrivilegedHelper: VolumeOperationRouter.shared.isUsingPrivilegedHelper,
             areEjectNotificationsMuted: Self.areEjectNotificationsMuted(),
             isUnmountAllHotKeyRegistered: AppDelegate.shared.isUnmountAllHotKeyRegistered,
-            volumes: volumes
+            volumes: volumes,
+            mountedVolumeDiscovery: mountedVolumeDiscovery
         )
     }
 
@@ -240,11 +246,155 @@ private struct EjectifyDiagnosticsSnapshot: Sendable {
     }
 }
 
+/// Captures raw mounted volume metadata before Ejectify applies eligibility filters.
+private struct MountedVolumeDiscoverySnapshot: Sendable {
+
+    /// Mounted filesystem path reported by `FileManager`.
+    let mountPath: String
+
+    /// Disk Arbitration volume name, when available.
+    let volumeName: String
+
+    /// Disk Arbitration BSD disk identifier, when available.
+    let bsdName: String
+
+    /// Disk Arbitration volume kind, when available.
+    let volumeKind: String
+
+    /// Best available Disk Arbitration UUID, preferring the volume UUID over the media UUID.
+    let uuid: String
+
+    /// Disk Arbitration internal-device flag, when available.
+    let internalDevice: String
+
+    /// Disk Arbitration ejectable-media flag, when available.
+    let mediaEjectable: String
+
+    /// Disk Arbitration removable-media flag, when available.
+    let mediaRemovable: String
+
+    /// Creates raw discovery rows for every mounted filesystem URL reported by macOS.
+    static func makeAll() -> [Self] {
+        guard let mountedVolumeURLs = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: nil, options: []) else {
+            return []
+        }
+
+        let session = DiskArbitrationVolumeOperator.DiskArbitrationSessionFactory.makeSession(dispatchQueue: DispatchQueue.main)
+        return mountedVolumeURLs.map { Self(url: $0, session: session) }
+    }
+
+    /// Creates one raw discovery row for a mounted filesystem URL.
+    private init(url: URL, session: DASession?) {
+        mountPath = url.path
+
+        guard let session,
+              let disk = DADiskCreateFromVolumePath(kCFAllocatorDefault, session, url as CFURL) else {
+            volumeName = Self.unavailable
+            bsdName = Self.unavailable
+            volumeKind = Self.unavailable
+            uuid = Self.unavailable
+            internalDevice = Self.unavailable
+            mediaEjectable = Self.unavailable
+            mediaRemovable = Self.unavailable
+            return
+        }
+
+        guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
+            volumeName = Self.unavailable
+            bsdName = Self.unavailable
+            volumeKind = Self.unavailable
+            uuid = Self.unavailable
+            internalDevice = Self.unavailable
+            mediaEjectable = Self.unavailable
+            mediaRemovable = Self.unavailable
+            return
+        }
+
+        volumeName = Self.stringValue(for: kDADiskDescriptionVolumeNameKey, in: diskInfo)
+        bsdName = Self.stringValue(for: kDADiskDescriptionMediaBSDNameKey, in: diskInfo)
+        volumeKind = Self.stringValue(for: kDADiskDescriptionVolumeKindKey, in: diskInfo)
+        uuid = Self.bestAvailableUUID(in: diskInfo)
+        internalDevice = Self.boolValue(for: kDADiskDescriptionDeviceInternalKey, in: diskInfo)
+        mediaEjectable = Self.boolValue(for: kDADiskDescriptionMediaEjectableKey, in: diskInfo)
+        mediaRemovable = Self.boolValue(for: kDADiskDescriptionMediaRemovableKey, in: diskInfo)
+    }
+
+    /// Placeholder used when a Disk Arbitration value is absent.
+    private static let unavailable = "-"
+
+    /// Returns a printable string value for a Disk Arbitration description key.
+    private static func stringValue(for key: CFString, in diskInfo: [NSString: Any]) -> String {
+        guard let value = diskInfo[key] else {
+            return unavailable
+        }
+
+        if let stringValue = value as? String, !stringValue.isEmpty {
+            return stringValue
+        }
+
+        let description = String(describing: value)
+        return description.isEmpty ? unavailable : description
+    }
+
+    /// Returns a printable UUID value for a Disk Arbitration description key.
+    private static func uuidValue(for key: CFString, in diskInfo: [NSString: Any]) -> String {
+        guard let value = diskInfo[key] else {
+            return unavailable
+        }
+
+        if let uuid = value as? UUID {
+            return uuid.uuidString
+        }
+
+        if let uuidString = value as? String, !uuidString.isEmpty {
+            return uuidString
+        }
+
+        let rawCoreFoundationValue = value as CFTypeRef
+        if CFGetTypeID(rawCoreFoundationValue) == CFUUIDGetTypeID() {
+            let coreFoundationUUID = rawCoreFoundationValue as! CFUUID
+            return CFUUIDCreateString(kCFAllocatorDefault, coreFoundationUUID) as String
+        }
+
+        return stringValue(for: key, in: diskInfo)
+    }
+
+    /// Returns the same UUID value Ejectify uses when it can identify a volume through Disk Arbitration.
+    private static func bestAvailableUUID(in diskInfo: [NSString: Any]) -> String {
+        let volumeUUID = uuidValue(for: kDADiskDescriptionVolumeUUIDKey, in: diskInfo)
+        if volumeUUID != unavailable {
+            return volumeUUID
+        }
+
+        return uuidValue(for: kDADiskDescriptionMediaUUIDKey, in: diskInfo)
+    }
+
+    /// Returns a printable Boolean value for a Disk Arbitration description key.
+    private static func boolValue(for key: CFString, in diskInfo: [NSString: Any]) -> String {
+        guard let value = diskInfo[key] else {
+            return unavailable
+        }
+
+        if let boolValue = value as? Bool {
+            return boolValue.diagnosticsDescription
+        }
+
+        if let numberValue = value as? NSNumber {
+            return numberValue.boolValue.diagnosticsDescription
+        }
+
+        return stringValue(for: key, in: diskInfo)
+    }
+}
+
 /// Captures volume metadata in a sendable format for background report generation.
 private struct EjectifyVolumeDiagnosticsSnapshot: Sendable {
 
-    /// Stable volume UUID.
+    /// Ejectify volume identifier.
     let id: String
+
+    /// Disk Arbitration UUID used for resolution when available.
+    let diskUUID: String
 
     /// User-visible volume name.
     let name: String
@@ -263,7 +413,8 @@ private struct EjectifyVolumeDiagnosticsSnapshot: Sendable {
 
     /// Creates a diagnostics snapshot for a mounted volume.
     init(volume: Volume) {
-        id = volume.id.uuidString
+        id = volume.id
+        diskUUID = volume.diskUUID?.uuidString ?? "-"
         name = volume.name
         path = volume.url.path
         bsdName = volume.bsdName
@@ -286,7 +437,10 @@ private enum EjectifyDiagnosticsReportFactory {
             ),
             DiagnosticsReporter.DefaultReporter.appSystemMetadata.reporter,
             EjectifyStateReporter(snapshot: snapshot),
-            MountedVolumesReporter(volumes: snapshot.volumes),
+            VolumesReporter(
+                discoveredVolumes: snapshot.mountedVolumeDiscovery,
+                ejectifyVolumes: snapshot.volumes
+            ),
             UnifiedLogsReporter(collection: ejectifyLogCollection)
         ]
         try Task.checkCancellation()
@@ -341,12 +495,17 @@ private enum EjectifyDiagnosticsReportFactory {
 
     /// Returns terms used to keep Disk Arbitration logs relevant to Ejectify and current volumes.
     private static func diskArbitrationFilterTerms(from snapshot: EjectifyDiagnosticsSnapshot) -> [String] {
-        let volumeTerms = snapshot.volumes.flatMap { volume in
+        let ejectifyVolumeTerms = snapshot.volumes.flatMap { volume in
             [volume.name, volume.bsdName, volume.id]
         }
-        return (["Ejectify"] + volumeTerms)
+        let discoveredVolumeTerms = snapshot.mountedVolumeDiscovery.flatMap { volume in
+            [volume.volumeName, volume.bsdName, volume.uuid]
+        }
+        let unavailableTerms = Set(["-"])
+
+        return (["Ejectify"] + ejectifyVolumeTerms + discoveredVolumeTerms)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
+            .filter { !$0.isEmpty && !unavailableTerms.contains($0) }
     }
 }
 
@@ -407,33 +566,133 @@ private struct EjectifyStateReporter: DiagnosticsReporting {
     }
 }
 
-/// Generates a report chapter for mounted volumes.
-private struct MountedVolumesReporter: DiagnosticsReporting {
+/// Generates a combined report chapter for macOS-discovered and Ejectify-managed volumes.
+private struct VolumesReporter: DiagnosticsReporting {
 
-    /// Mounted volume snapshots to render.
-    let volumes: [EjectifyVolumeDiagnosticsSnapshot]
+    /// Mounted volume snapshots reported by macOS and Disk Arbitration.
+    let discoveredVolumes: [MountedVolumeDiscoverySnapshot]
+
+    /// Mounted volume snapshots managed by Ejectify.
+    let ejectifyVolumes: [EjectifyVolumeDiagnosticsSnapshot]
 
     /// Creates the report chapter.
     nonisolated(nonsending) func report() async -> DiagnosticsChapter {
-        guard !volumes.isEmpty else {
-            return DiagnosticsChapter(title: "Mounted Volumes", diagnostics: "<p>No managed volumes were mounted when the report was generated.</p>")
+        let rows = makeRows()
+        guard !rows.isEmpty else {
+            return DiagnosticsChapter(title: "Volumes", diagnostics: "<p>No mounted volumes were present when the report was generated.</p>")
         }
 
         let header = """
         <table>
-        <tr><th>Name</th><th>UUID</th><th>BSD Name</th><th>Path</th><th>Category</th><th>Enabled</th></tr>
+        <tr><th>Name</th><th>UUID</th><th>BSD</th><th>Kind</th><th>Internal</th><th>Ejectable</th><th>Removable</th><th>Supported</th><th>Enabled</th></tr>
         """
-        let body = volumes
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-            .map { volume in
+        let body = rows
+            .map { row in
                 """
-                <tr><td>\(DiagnosticsHTML.escape(volume.name))</td><td>\(DiagnosticsHTML.escape(volume.id))</td><td>\(DiagnosticsHTML.escape(volume.bsdName))</td><td>\(DiagnosticsHTML.escape(volume.path))</td><td>\(DiagnosticsHTML.escape(volume.category))</td><td>\(DiagnosticsHTML.escape(volume.enabled.diagnosticsDescription))</td></tr>
+                <tr><td>\(DiagnosticsHTML.escape(row.name))</td><td>\(DiagnosticsHTML.escape(row.uuid))</td><td>\(DiagnosticsHTML.escape(row.bsdName))</td><td>\(DiagnosticsHTML.escape(row.kind))</td><td>\(DiagnosticsHTML.escape(row.internalDevice))</td><td>\(DiagnosticsHTML.escape(row.ejectable))</td><td>\(DiagnosticsHTML.escape(row.removable))</td><td>\(DiagnosticsHTML.escape(row.presentedInEjectify))</td><td>\(DiagnosticsHTML.escape(row.activatedInEjectify))</td></tr>
                 """
             }
             .joined()
         let html = header + body + "</table>"
 
-        return DiagnosticsChapter(title: "Mounted Volumes", diagnostics: html)
+        return DiagnosticsChapter(title: "Volumes", diagnostics: html)
+    }
+
+    /// Builds one row per mounted volume, preserving Ejectify-only rows if the snapshot changes during collection.
+    private func makeRows() -> [VolumeDiagnosticsRow] {
+        let ejectifyVolumesByPath = ejectifyVolumes.reduce(into: [String: EjectifyVolumeDiagnosticsSnapshot]()) { result, volume in
+            result[volume.path] = volume
+        }
+        let discoveredRows = discoveredVolumes.map { discoveredVolume in
+            VolumeDiagnosticsRow(
+                discoveredVolume: discoveredVolume,
+                ejectifyVolume: ejectifyVolumesByPath[discoveredVolume.mountPath]
+            )
+        }
+        let discoveredPaths = Set(discoveredVolumes.map(\.mountPath))
+        let ejectifyOnlyRows = ejectifyVolumes
+            .filter { !discoveredPaths.contains($0.path) }
+            .map(VolumeDiagnosticsRow.init(ejectifyVolume:))
+
+        return (discoveredRows + ejectifyOnlyRows)
+            .sorted { $0.sortKey.localizedStandardCompare($1.sortKey) == .orderedAscending }
+    }
+}
+
+/// Render-ready diagnostics row for one volume.
+private struct VolumeDiagnosticsRow: Sendable {
+
+    /// Stable internal sort key for deterministic report output.
+    let sortKey: String
+
+    /// User-visible volume name.
+    let name: String
+
+    /// Best available Disk Arbitration UUID.
+    let uuid: String
+
+    /// BSD disk identifier, such as `disk6s2`.
+    let bsdName: String
+
+    /// Filesystem kind reported by Disk Arbitration.
+    let kind: String
+
+    /// Whether Disk Arbitration reports the device as internal.
+    let internalDevice: String
+
+    /// Whether Disk Arbitration reports the media as ejectable.
+    let ejectable: String
+
+    /// Whether Disk Arbitration reports the media as removable.
+    let removable: String
+
+    /// Whether the volume is present in Ejectify's managed-volume list.
+    let presentedInEjectify: String
+
+    /// Whether Ejectify automatic handling is enabled for the volume.
+    let activatedInEjectify: String
+
+    /// Creates a row from a macOS-discovered volume and its matching Ejectify volume, when present.
+    init(discoveredVolume: MountedVolumeDiscoverySnapshot, ejectifyVolume: EjectifyVolumeDiagnosticsSnapshot?) {
+        sortKey = discoveredVolume.mountPath
+        name = Self.preferredValue(discoveredVolume.volumeName, fallback: ejectifyVolume?.name)
+        uuid = Self.preferredValue(discoveredVolume.uuid, fallback: ejectifyVolume?.diskUUID)
+        bsdName = Self.preferredValue(discoveredVolume.bsdName, fallback: ejectifyVolume?.bsdName)
+        kind = discoveredVolume.volumeKind
+        internalDevice = discoveredVolume.internalDevice
+        ejectable = discoveredVolume.mediaEjectable
+        removable = discoveredVolume.mediaRemovable
+        presentedInEjectify = (ejectifyVolume != nil).diagnosticsDescription
+        activatedInEjectify = ejectifyVolume?.enabled.diagnosticsDescription ?? Self.notApplicable
+    }
+
+    /// Creates a row for an Ejectify-managed volume that was not present in the raw discovery snapshot.
+    init(ejectifyVolume: EjectifyVolumeDiagnosticsSnapshot) {
+        sortKey = ejectifyVolume.path
+        name = ejectifyVolume.name
+        uuid = ejectifyVolume.diskUUID
+        bsdName = ejectifyVolume.bsdName
+        kind = Self.unavailable
+        internalDevice = Self.unavailable
+        ejectable = Self.unavailable
+        removable = Self.unavailable
+        presentedInEjectify = true.diagnosticsDescription
+        activatedInEjectify = ejectifyVolume.enabled.diagnosticsDescription
+    }
+
+    /// Placeholder used when a value cannot apply to the row.
+    private static let notApplicable = "-"
+
+    /// Placeholder used when a metadata value is absent.
+    private static let unavailable = "-"
+
+    /// Returns the primary value unless it is unavailable, then falls back to Ejectify's matching model value.
+    private static func preferredValue(_ value: String, fallback: String?) -> String {
+        guard value == unavailable, let fallback, !fallback.isEmpty else {
+            return value
+        }
+
+        return fallback
     }
 }
 

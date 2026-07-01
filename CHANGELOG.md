@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.5
+
+- Added raw mounted volume discovery metadata to diagnostics reports to help troubleshoot volumes missing from Ejectify.
+
 ## 2.0.4
 
 - Added the ability to export a diagnostics report for troubleshooting.

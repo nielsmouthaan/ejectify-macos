@@ -168,7 +168,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         source: String,
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeName: String,
-        volumeUUID: UUID,
+        volumeUUID: UUID?,
         bsdName: String,
         success: Bool,
         message: String?
@@ -194,7 +194,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         source: String,
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeName: String,
-        volumeUUID: UUID,
+        volumeUUID: UUID?,
         bsdName: String
     ) {
         let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID, bsdName: bsdName)
@@ -455,7 +455,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
     }
 
     /// Requests a mount operation with a BSD-name hint and returns optional operation details.
-    func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, completion: @escaping (Bool, String?, DAReturn?) -> Void) {
+    func mount(volumeUUID: NSUUID?, volumeName: String, bsdName: String, completion: @escaping (Bool, String?, DAReturn?) -> Void) {
         routeOperation(
             operation: .mount,
             volumeUUID: volumeUUID,
@@ -468,7 +468,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
     }
 
     /// Requests an unmount operation with a BSD-name hint, routed by the active execution mode.
-    func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, completion: @escaping (Bool) -> Void) {
+    func unmount(volumeUUID: NSUUID?, volumeName: String, bsdName: String, force: Bool, completion: @escaping (Bool) -> Void) {
         routeOperation(
             operation: .unmount(force: force),
             volumeUUID: volumeUUID,
@@ -567,7 +567,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Routes mount/unmount requests to privileged helper or local execution based on current mode.
     private func routeOperation(
         operation: DiskArbitrationVolumeOperator.Operation,
-        volumeUUID: NSUUID,
+        volumeUUID: NSUUID?,
         volumeName: String,
         bsdName: String,
         completion: @escaping (Bool, String?, DAReturn?) -> Void,
@@ -587,7 +587,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
                 source: "Privileged helper",
                 operation: operation,
                 volumeName: volumeName,
-                volumeUUID: volumeUUID as UUID,
+                volumeUUID: volumeUUID.map { $0 as UUID },
                 bsdName: bsdName
             )
             performHelperOperationWithFallback(
@@ -604,7 +604,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Executes a privileged helper-backed operation and falls back to local execution on routing failures.
     private func performHelperOperationWithFallback(
         operation: DiskArbitrationVolumeOperator.Operation,
-        volumeUUID: NSUUID,
+        volumeUUID: NSUUID?,
         volumeName: String,
         bsdName: String,
         completion: @escaping (Bool, String?, DAReturn?) -> Void,
@@ -650,7 +650,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
         guard let proxy = helperProxy(
             for: connection,
-            operationDescription: "\(operation.operationName) \(VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID as UUID, bsdName: bsdName))",
+            operationDescription: "\(operation.operationName) \(VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID.map { $0 as UUID }, bsdName: bsdName))",
             onRoutingFailure: { _ in
                 completeWithLocalFallback()
             }
@@ -665,7 +665,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
                 source: "Privileged helper",
                 operation: operation,
                 volumeName: volumeName,
-                volumeUUID: volumeUUID as UUID,
+                volumeUUID: volumeUUID.map { $0 as UUID },
                 bsdName: bsdName,
                 success: success,
                 message: message
@@ -677,12 +677,12 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Executes mount/unmount in the app process when privileged helper routing is unavailable.
     private func performLocalDiskOperation(
         operation: DiskArbitrationVolumeOperator.Operation,
-        volumeUUID: NSUUID,
+        volumeUUID: NSUUID?,
         volumeName: String,
         bsdName: String,
         completion: @escaping (Bool, String?, DAReturn?) -> Void
     ) {
-        let uuid = volumeUUID as UUID
+        let uuid = volumeUUID.map { $0 as UUID }
         let completionBox = OperationCompletionBox(completion: completion)
 
         Self.logOperationDispatch(

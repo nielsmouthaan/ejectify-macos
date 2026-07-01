@@ -9,7 +9,7 @@ import Foundation
 import OSLog
 @preconcurrency import DiskArbitration
 
-/// Performs mount and unmount requests via Disk Arbitration for a volume UUID.
+/// Performs mount and unmount requests via Disk Arbitration for volume metadata.
 enum DiskArbitrationVolumeOperator {
 
     /// Creates configured Disk Arbitration sessions for shared app/helper usage.
@@ -26,28 +26,33 @@ enum DiskArbitrationVolumeOperator {
         }
     }
 
-    /// Converts volume UUID values from Disk Arbitration descriptions into Foundation UUID values.
-    enum VolumeUUIDResolver {
+    /// Converts Disk Arbitration UUID values into Foundation UUID values.
+    enum DiskUUIDResolver {
 
-        /// Extracts and normalizes a volume UUID from a disk description dictionary.
-        static func volumeUUID(from diskInfo: [NSString: Any]) -> UUID? {
-            guard let rawVolumeUUID = diskInfo[kDADiskDescriptionVolumeUUIDKey] else {
+        /// Extracts and normalizes the best available UUID from a disk description dictionary.
+        static func diskUUID(from diskInfo: [NSString: Any]) -> UUID? {
+            uuid(for: kDADiskDescriptionVolumeUUIDKey, from: diskInfo) ?? uuid(for: kDADiskDescriptionMediaUUIDKey, from: diskInfo)
+        }
+
+        /// Extracts and normalizes a UUID for the given Disk Arbitration description key.
+        private static func uuid(for key: CFString, from diskInfo: [NSString: Any]) -> UUID? {
+            guard let rawUUID = diskInfo[key] else {
                 return nil
             }
 
-            if let volumeUUID = rawVolumeUUID as? UUID {
-                return volumeUUID
+            if let uuid = rawUUID as? UUID {
+                return uuid
             }
 
-            if let volumeUUIDString = rawVolumeUUID as? String {
-                return UUID(uuidString: volumeUUIDString)
+            if let uuidString = rawUUID as? String {
+                return UUID(uuidString: uuidString)
             }
 
-            let rawCoreFoundationValue = rawVolumeUUID as CFTypeRef
+            let rawCoreFoundationValue = rawUUID as CFTypeRef
             if CFGetTypeID(rawCoreFoundationValue) == CFUUIDGetTypeID() {
                 let coreFoundationUUID = rawCoreFoundationValue as! CFUUID
-                let volumeUUIDString = CFUUIDCreateString(kCFAllocatorDefault, coreFoundationUUID) as String
-                return UUID(uuidString: volumeUUIDString)
+                let uuidString = CFUUIDCreateString(kCFAllocatorDefault, coreFoundationUUID) as String
+                return UUID(uuidString: uuidString)
             }
 
             return nil
@@ -110,7 +115,7 @@ enum DiskArbitrationVolumeOperator {
 
     /// Executes a Disk Arbitration mount/unmount operation and waits for callback completion, using the BSD name as a fast-path resolve hint before UUID scanning.
     static func perform(
-        volumeUUID: UUID,
+        volumeUUID: UUID?,
         volumeName: String,
         bsdName: String,
         operation: Operation,
@@ -167,7 +172,7 @@ enum DiskArbitrationVolumeOperator {
     }
 
     /// Returns whether the requested volume is currently resolvable via Disk Arbitration.
-    static func canResolveDisk(volumeUUID: UUID, volumeName: String, bsdName: String) -> Bool {
+    static func canResolveDisk(volumeUUID: UUID?, volumeName: String, bsdName: String) -> Bool {
         guard let session = diskArbitrationSession else {
             return false
         }
@@ -185,7 +190,7 @@ enum DiskArbitrationVolumeOperator {
 
     /// Resolves a Disk Arbitration disk, trying the provided BSD name first and falling back to UUID scan.
     private static func resolveDisk(
-        volumeUUID: UUID,
+        volumeUUID: UUID?,
         volumeName: String,
         bsdName: String,
         session: DASession,
@@ -198,7 +203,7 @@ enum DiskArbitrationVolumeOperator {
         )
 
         if !bsdName.isEmpty {
-            if let disk = resolveDiskByBSDName(bsdName, volumeUUID: volumeUUID, session: session) {
+            if let disk = resolveDiskByBSDName(bsdName, volumeUUID: volumeUUID, volumeName: volumeName, session: session) {
                 let resolvedVolumeLabel = resolvedVolumeLabel(
                     for: disk,
                     fallbackName: volumeName,
@@ -210,7 +215,8 @@ enum DiskArbitrationVolumeOperator {
             }
         }
 
-        if let disk = resolveDiskByVolumeUUIDScan(volumeUUID: volumeUUID, session: session) {
+        if let volumeUUID,
+           let disk = resolveDiskByVolumeUUIDScan(volumeUUID: volumeUUID, session: session) {
             let resolvedVolumeLabel = resolvedVolumeLabel(
                 for: disk,
                 fallbackName: volumeName,
@@ -231,7 +237,7 @@ enum DiskArbitrationVolumeOperator {
     private static func resolvedVolumeLabel(
         for disk: DADisk,
         fallbackName: String,
-        fallbackUUID: UUID,
+        fallbackUUID: UUID?,
         fallbackBSDName: String
     ) -> String {
         guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
@@ -239,29 +245,43 @@ enum DiskArbitrationVolumeOperator {
         }
 
         let resolvedName = (diskInfo[kDADiskDescriptionVolumeNameKey] as? String) ?? fallbackName
-        let resolvedUUID = VolumeUUIDResolver.volumeUUID(from: diskInfo) ?? fallbackUUID
+        let resolvedUUID = DiskUUIDResolver.diskUUID(from: diskInfo) ?? fallbackUUID
         let resolvedBSDName = (diskInfo[kDADiskDescriptionMediaBSDNameKey] as? String) ?? fallbackBSDName
 
         return VolumeLogLabelFormatter.label(name: resolvedName, uuid: resolvedUUID, bsdName: resolvedBSDName)
     }
 
-    /// Resolves a disk using a BSD name when it matches the requested volume UUID.
-    private static func resolveDiskByBSDName(_ bsdName: String, volumeUUID targetVolumeUUID: UUID, session: DASession) -> DADisk? {
+    /// Resolves a disk using a BSD name, validating UUID metadata when it is available.
+    private static func resolveDiskByBSDName(
+        _ bsdName: String,
+        volumeUUID targetVolumeUUID: UUID?,
+        volumeName targetVolumeName: String,
+        session: DASession
+    ) -> DADisk? {
         let matchedDisk = bsdName.withCString { rawBSDName in
             DADiskCreateFromBSDName(kCFAllocatorDefault, session, rawBSDName)
         }
 
         guard let disk = matchedDisk,
-              let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any],
-              let resolvedUUID = VolumeUUIDResolver.volumeUUID(from: diskInfo),
-              resolvedUUID == targetVolumeUUID else {
+              let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
+            return nil
+        }
+
+        if let targetVolumeUUID {
+            guard let resolvedUUID = DiskUUIDResolver.diskUUID(from: diskInfo),
+                  resolvedUUID == targetVolumeUUID else {
+                return nil
+            }
+        } else if let resolvedName = diskInfo[kDADiskDescriptionVolumeNameKey] as? String,
+                  !resolvedName.isEmpty,
+                  resolvedName != targetVolumeName {
             return nil
         }
 
         return disk
     }
 
-    /// Resolves a disk by scanning `/dev` and matching each disk description's volume UUID.
+    /// Resolves a disk by scanning `/dev` and matching each disk description's UUID.
     private static func resolveDiskByVolumeUUIDScan(volumeUUID targetVolumeUUID: UUID, session: DASession) -> DADisk? {
         let devURL = URL(fileURLWithPath: "/dev", isDirectory: true)
         let deviceNames = (try? FileManager.default.contentsOfDirectory(atPath: devURL.path)) ?? []
@@ -273,7 +293,7 @@ enum DiskArbitrationVolumeOperator {
 
             guard let disk = matchedDisk,
                   let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any],
-                  let resolvedUUID = VolumeUUIDResolver.volumeUUID(from: diskInfo),
+                  let resolvedUUID = DiskUUIDResolver.diskUUID(from: diskInfo),
                   resolvedUUID == targetVolumeUUID else {
                 continue
             }

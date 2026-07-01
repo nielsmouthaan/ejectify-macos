@@ -88,7 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         for volume in enabledVolumes {
             VolumeOperationRouter.shared.unmount(
-                volumeUUID: volume.id as NSUUID,
+                volumeUUID: volume.diskUUID.map { $0 as NSUUID },
                 volumeName: volume.name,
                 bsdName: volume.bsdName,
                 force: Preference.forceUnmount

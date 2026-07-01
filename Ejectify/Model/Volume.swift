@@ -39,8 +39,11 @@ final class Volume {
         return session
     }()
 
-    /// Stable identifier used for persisted per-volume settings.
-    let id: UUID
+    /// Identifier used for persisted per-volume settings, falling back to best-effort metadata when no disk UUID exists.
+    let id: String
+
+    /// Disk Arbitration UUID used to validate disk resolution when available.
+    let diskUUID: UUID?
 
     /// Human-readable volume name displayed in UI and logs.
     let name: String
@@ -56,13 +59,17 @@ final class Volume {
 
     /// Canonical volume label for logs.
     var logLabel: String {
-        VolumeLogLabelFormatter.label(name: name, uuid: id, bsdName: bsdName)
+        if let diskUUID {
+            return VolumeLogLabelFormatter.label(name: name, uuid: diskUUID, bsdName: bsdName)
+        }
+
+        return VolumeLogLabelFormatter.label(name: name, identifier: id, bsdName: bsdName)
     }
 
     /// Tracks whether this volume should be managed automatically, using a category-based default when no explicit user preference exists.
     var enabled: Bool {
         get {
-            let key = "volume." + id.uuidString
+            let key = "volume." + id
             guard let value = UserDefaults.standard.object(forKey: key) else {
                 return category.defaultEnabled
             }
@@ -74,13 +81,14 @@ final class Volume {
             return category.defaultEnabled
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: "volume." + id.uuidString)
+            UserDefaults.standard.set(newValue, forKey: "volume." + id)
         }
     }
 
     /// Creates a managed volume model from resolved Disk Arbitration metadata.
-    init(id: UUID, name: String, url: URL, bsdName: String, category: Category) {
+    init(id: String, diskUUID: UUID?, name: String, url: URL, bsdName: String, category: Category) {
         self.id = id
+        self.diskUUID = diskUUID
         self.name = name
         self.url = url
         self.bsdName = bsdName
@@ -114,11 +122,6 @@ final class Volume {
             return nil
         }
 
-        // Require a stable volume UUID for identification and settings.
-        guard let volumeUUID = DiskArbitrationVolumeOperator.VolumeUUIDResolver.volumeUUID(from: diskInfo) else {
-            return nil
-        }
-
         // Require a displayable volume name for UI/logging.
         guard let name = diskInfo[kDADiskDescriptionVolumeNameKey] as? String else {
             return nil
@@ -128,6 +131,9 @@ final class Volume {
         guard let bsdName = diskInfo[kDADiskDescriptionMediaBSDNameKey] as? String else {
             return nil
         }
+
+        let diskUUID = DiskArbitrationVolumeOperator.DiskUUIDResolver.diskUUID(from: diskInfo)
+        let id = diskUUID?.uuidString ?? fallbackID(name: name, bsdName: bsdName, diskInfo: diskInfo)
 
         let category: Category
         if disk.isDiskImage() {
@@ -145,7 +151,29 @@ final class Volume {
             return nil
         }
 
-        return Volume(id: volumeUUID, name: name, url: url, bsdName: bsdName, category: category)
+        if diskUUID == nil {
+            Self.logger.info("Managing volume without Disk Arbitration UUID: \(VolumeLogLabelFormatter.label(name: name, identifier: id, bsdName: bsdName), privacy: .public)")
+        }
+
+        return Volume(id: id, diskUUID: diskUUID, name: name, url: url, bsdName: bsdName, category: category)
+    }
+
+    /// Builds a best-effort identifier for volumes whose filesystems do not expose Disk Arbitration UUID metadata.
+    private static func fallbackID(name: String, bsdName: String, diskInfo: [NSString: Any]) -> String {
+        let identityComponents = [
+            "fallback",
+            diskInfo[kDADiskDescriptionDeviceVendorKey] as? String,
+            diskInfo[kDADiskDescriptionDeviceModelKey] as? String,
+            diskInfo[kDADiskDescriptionMediaNameKey] as? String,
+            diskInfo[kDADiskDescriptionMediaSizeKey].map { String(describing: $0) },
+            diskInfo[kDADiskDescriptionVolumeKindKey] as? String,
+            name,
+            bsdName
+        ]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        return identityComponents.joined(separator: "|")
     }
 
 }

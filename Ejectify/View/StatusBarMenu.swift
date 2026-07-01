@@ -95,7 +95,12 @@ final class StatusBarMenu: NSMenu {
     @objc private func volumeDidRename(notification: Notification) {
         if let volume = cachedVolume(from: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey) {
             let newVolumeName = notification.userInfo?[NSWorkspace.localizedVolumeNameUserInfoKey] as? String ?? ""
-            let newVolumeLabel = VolumeLogLabelFormatter.label(name: newVolumeName, uuid: volume.id, bsdName: volume.bsdName)
+            let newVolumeLabel: String
+            if let diskUUID = volume.diskUUID {
+                newVolumeLabel = VolumeLogLabelFormatter.label(name: newVolumeName, uuid: diskUUID, bsdName: volume.bsdName)
+            } else {
+                newVolumeLabel = VolumeLogLabelFormatter.label(name: newVolumeName, identifier: volume.id, bsdName: volume.bsdName)
+            }
             Self.logger.log("Volume did rename: \(volume.logLabel, privacy: .public) -> \(newVolumeLabel, privacy: .public)")
         }
         refreshVolumesMenu()

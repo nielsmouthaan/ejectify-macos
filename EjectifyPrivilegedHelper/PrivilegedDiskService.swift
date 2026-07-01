@@ -42,13 +42,13 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     }
 
     /// Performs a privileged mount for the provided volume metadata.
-    func mount(volumeUUID: NSUUID, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
-        perform(operation: .mount, volumeUUID: volumeUUID as UUID, volumeName: volumeName, bsdName: bsdName, reply: reply)
+    func mount(volumeUUID: NSUUID?, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
+        perform(operation: .mount, volumeUUID: volumeUUID.map { $0 as UUID }, volumeName: volumeName, bsdName: bsdName, reply: reply)
     }
 
     /// Performs a privileged unmount for the provided volume metadata.
-    func unmount(volumeUUID: NSUUID, volumeName: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
-        perform(operation: .unmount(force: force), volumeUUID: volumeUUID as UUID, volumeName: volumeName, bsdName: bsdName, reply: reply)
+    func unmount(volumeUUID: NSUUID?, volumeName: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
+        perform(operation: .unmount(force: force), volumeUUID: volumeUUID.map { $0 as UUID }, volumeName: volumeName, bsdName: bsdName, reply: reply)
     }
 
     /// Updates Disk Arbitration eject-notification muting through `defaults`.
@@ -77,7 +77,7 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     /// Executes a shared Disk Arbitration operation and returns the result through XPC.
     private func perform(
         operation: DiskArbitrationVolumeOperator.Operation,
-        volumeUUID: UUID,
+        volumeUUID: UUID?,
         volumeName: String,
         bsdName: String,
         reply: @escaping (Bool, String?, Int32) -> Void

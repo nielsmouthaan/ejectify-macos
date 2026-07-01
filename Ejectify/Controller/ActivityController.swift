@@ -22,14 +22,14 @@ final class ActivityController {
     /// Volumes still pending automatic remount after a successful automatic unmount.
     private var remountCandidates: [Volume] = []
 
-    /// Volume UUIDs currently processing an unmount request.
-    private var inFlightUnmounts: Set<UUID> = []
+    /// Volume identifiers currently processing an unmount request.
+    private var inFlightUnmounts: Set<String> = []
 
-    /// Pending mount tasks keyed by volume UUID.
-    private var pendingMountTasks: [UUID: Task<Void, Never>] = [:]
+    /// Pending mount tasks keyed by volume identifier.
+    private var pendingMountTasks: [String: Task<Void, Never>] = [:]
 
-    /// Pending completion handlers for each in-flight unmount keyed by volume UUID.
-    private var pendingUnmountCompletions: [UUID: [(Bool) -> Void]] = [:]
+    /// Pending completion handlers for each in-flight unmount keyed by volume identifier.
+    private var pendingUnmountCompletions: [String: [(Bool) -> Void]] = [:]
 
     /// Handles IOKit system sleep callbacks used to temporarily delay system sleep.
     private var systemSleepPowerObserver: SystemSleepPowerObserver?
@@ -268,12 +268,12 @@ final class ActivityController {
     }
 
     /// Returns whether the pending remount set still includes a volume ID.
-    private func hasRemountCandidate(withID volumeID: UUID) -> Bool {
+    private func hasRemountCandidate(withID volumeID: String) -> Bool {
         remountCandidates.contains { $0.id == volumeID }
     }
 
     /// Removes a volume from the pending remount set.
-    private func removeRemountCandidate(withID volumeID: UUID) {
+    private func removeRemountCandidate(withID volumeID: String) {
         remountCandidates.removeAll { $0.id == volumeID }
     }
 
@@ -319,7 +319,7 @@ final class ActivityController {
     }
 
     /// Cancels and removes any pending mount task for a volume.
-    private func cancelPendingMountTask(for volumeID: UUID) {
+    private func cancelPendingMountTask(for volumeID: String) {
         pendingMountTasks[volumeID]?.cancel()
         pendingMountTasks.removeValue(forKey: volumeID)
     }
@@ -365,14 +365,14 @@ final class ActivityController {
                     return
                 }
 
-                guard DiskArbitrationVolumeOperator.canResolveDisk(volumeUUID: volume.id, volumeName: volume.name, bsdName: volume.bsdName) else {
+                guard DiskArbitrationVolumeOperator.canResolveDisk(volumeUUID: volume.diskUUID, volumeName: volume.name, bsdName: volume.bsdName) else {
                     Self.logger.info("Skipping mount retry because disk is no longer available for \(volume.logLabel, privacy: .public)")
                     self.removeRemountCandidate(withID: volumeID)
                     return
                 }
 
                 let result: (success: Bool, message: String?, status: DAReturn?) = await withCheckedContinuation { continuation in
-                    VolumeOperationRouter.shared.mount(volumeUUID: volumeID as NSUUID, volumeName: volume.name, bsdName: volume.bsdName) { success, message, status in
+                    VolumeOperationRouter.shared.mount(volumeUUID: volume.diskUUID.map { $0 as NSUUID }, volumeName: volume.name, bsdName: volume.bsdName) { success, message, status in
                         continuation.resume(returning: (success, message, status))
                     }
                 }
@@ -574,7 +574,7 @@ final class ActivityController {
 
         inFlightUnmounts.insert(volumeID)
         Self.logger.log("Unmount request scheduled for \(volume.logLabel, privacy: .public)")
-        VolumeOperationRouter.shared.unmount(volumeUUID: volume.id as NSUUID, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success in
+        VolumeOperationRouter.shared.unmount(volumeUUID: volume.diskUUID.map { $0 as NSUUID }, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success in
             Task { @MainActor [weak self] in
                 guard let self else {
                     completion(success)
