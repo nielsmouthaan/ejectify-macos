@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.6
+
+- Fixed discovery of mounted volumes whose Disk Arbitration metadata does not provide a volume name.
+
 ## 2.0.5
 
 - Added raw mounted volume discovery metadata to diagnostics reports to help troubleshoot volumes missing from Ejectify.
