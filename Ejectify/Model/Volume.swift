@@ -122,8 +122,8 @@ final class Volume {
             return nil
         }
 
-        // Require a displayable volume name for UI/logging.
-        guard let name = diskInfo[kDADiskDescriptionVolumeNameKey] as? String else {
+        // Prefer Disk Arbitration metadata, but fall back to the mount point name for volumes whose filesystem label is empty.
+        guard let name = displayName(for: url, diskInfo: diskInfo) else {
             return nil
         }
 
@@ -158,6 +158,34 @@ final class Volume {
         return Volume(id: id, diskUUID: diskUUID, name: name, url: url, bsdName: bsdName, category: category)
     }
 
+    /// Returns the best user-visible name for a mounted volume.
+    static func displayName(for url: URL, diskInfo: [NSString: Any]) -> String? {
+        if let volumeName = diskInfo[kDADiskDescriptionVolumeNameKey] as? String,
+           let name = normalizedName(volumeName) {
+            return name
+        }
+
+        if let resourceName = url.resourceName(for: .volumeLocalizedNameKey) {
+            return resourceName
+        }
+
+        if let resourceName = url.resourceName(for: .volumeNameKey) {
+            return resourceName
+        }
+
+        if let displayName = normalizedName(FileManager.default.displayName(atPath: url.path)) {
+            return displayName
+        }
+
+        return normalizedName(url.lastPathComponent)
+    }
+
+    /// Trims unusable names from filesystem and metadata APIs.
+    private static func normalizedName(_ name: String) -> String? {
+        let normalizedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalizedName.isEmpty ? nil : normalizedName
+    }
+
     /// Builds a best-effort identifier for volumes whose filesystems do not expose Disk Arbitration UUID metadata.
     private static func fallbackID(name: String, bsdName: String, diskInfo: [NSString: Any]) -> String {
         let identityComponents = [
@@ -176,4 +204,31 @@ final class Volume {
         return identityComponents.joined(separator: "|")
     }
 
+}
+
+private extension URL {
+
+    /// Returns a non-empty string resource value for this URL.
+    func resourceName(for key: URLResourceKey) -> String? {
+        guard let value = try? resourceValues(forKeys: [key]) else {
+            return nil
+        }
+
+        let name: String?
+        switch key {
+        case .volumeLocalizedNameKey:
+            name = value.volumeLocalizedName
+        case .volumeNameKey:
+            name = value.volumeName
+        default:
+            name = nil
+        }
+
+        guard let name else {
+            return nil
+        }
+
+        let normalizedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalizedName.isEmpty ? nil : normalizedName
+    }
 }

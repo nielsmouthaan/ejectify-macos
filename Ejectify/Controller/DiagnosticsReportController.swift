@@ -252,7 +252,7 @@ private struct MountedVolumeDiscoverySnapshot: Sendable {
     /// Mounted filesystem path reported by `FileManager`.
     let mountPath: String
 
-    /// Disk Arbitration volume name, when available.
+    /// Best user-visible volume name available from Disk Arbitration or the mounted URL.
     let volumeName: String
 
     /// Disk Arbitration BSD disk identifier, when available.
@@ -310,7 +310,7 @@ private struct MountedVolumeDiscoverySnapshot: Sendable {
             return
         }
 
-        volumeName = Self.stringValue(for: kDADiskDescriptionVolumeNameKey, in: diskInfo)
+        volumeName = Volume.displayName(for: url, diskInfo: diskInfo) ?? Self.unavailable
         bsdName = Self.stringValue(for: kDADiskDescriptionMediaBSDNameKey, in: diskInfo)
         volumeKind = Self.stringValue(for: kDADiskDescriptionVolumeKindKey, in: diskInfo)
         uuid = Self.bestAvailableUUID(in: diskInfo)
