@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.7
+
+- Updated the header image.
+
 ## 2.0.6
 
 - Fixed discovery of mounted volumes whose Disk Arbitration metadata does not provide a volume name.
