@@ -6,18 +6,12 @@
 //
 
 import AppKit
-import OSLog
 @preconcurrency import DiskArbitration
 
 /// Responds to sleep/lock/display events by unmounting and remounting enabled volumes.
 @MainActor
 final class ActivityController {
 
-    /// Logger used for mount/unmount and readiness transition diagnostics.
-    private static let logger = Logger(
-        subsystem: LoggingConfiguration.subsystem,
-        category: String(describing: ActivityController.self)
-    )
 
     /// Volumes still pending automatic remount after a successful automatic unmount.
     private var remountCandidates: [Volume] = []
@@ -103,12 +97,12 @@ final class ActivityController {
         registerMountReadinessObservers()
         registerRemountCandidateObservers()
 
-        Self.logger.log("Monitoring configured for trigger: \(Preference.unmountWhen.rawValue, privacy: .public)")
+        Log.powerEvents.log("Monitoring configured; trigger=\(Preference.unmountWhen.rawValue)")
     }
 
     /// Unmounts all currently enabled volumes and tracks attempted unmounts for remount attempts.
     @objc func unmountVolumes(notification: Notification) {
-        Self.logger.log("Unmount trigger received: \(notification.name.rawValue, privacy: .public)")
+        Log.powerEvents.log("Unmount trigger received; notification=\(notification.name.rawValue)")
         let enabledVolumes = Volume.mountedVolumes().filter(\.enabled)
         mergeRemountCandidates(with: enabledVolumes, reason: "Unmount trigger received")
 
@@ -122,7 +116,7 @@ final class ActivityController {
         switch Preference.unmountWhen {
         case .systemStartsSleeping:
             if !startSystemSleepPowerMonitoring() {
-                Self.logger.warning("IOKit power monitoring unavailable; falling back to NSWorkspace.willSleepNotification")
+                Log.powerEvents.warning("IOKit power monitoring unavailable; fallback=NSWorkspace.willSleepNotification")
                 NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(unmountVolumes(notification:)), name: NSWorkspace.willSleepNotification, object: nil)
             }
         case .screensStartedSleeping:
@@ -181,27 +175,27 @@ final class ActivityController {
         let wasReadyToMount = isReadyToMount
 
         if let systemAwake {
-            Self.logger.info("\(systemAwake ? "System is awake" : "System is sleeping", privacy: .public)")
+            Log.powerEvents.info("System wake state changed; isAwake=\(systemAwake)")
             self.systemAwake = systemAwake
         }
 
         if let displayAwake {
-            Self.logger.info("\(displayAwake ? "Display is awake" : "Display is sleeping", privacy: .public)")
+            Log.powerEvents.info("Display wake state changed; isAwake=\(displayAwake)")
             self.displayAwake = displayAwake
         }
 
         if let sessionActive {
-            Self.logger.info("\(sessionActive ? "Session is active" : "Session is inactive", privacy: .public)")
+            Log.powerEvents.info("Session activity changed; isActive=\(sessionActive)")
             self.sessionActive = sessionActive
         }
 
         if let screenLocked {
-            Self.logger.info("\(screenLocked ? "Screen is locked" : "Screen is unlocked", privacy: .public)")
+            Log.powerEvents.info("Screen lock state changed; isLocked=\(screenLocked)")
             self.screenLocked = screenLocked
         }
 
         if let screensaverActive {
-            Self.logger.info("\(screensaverActive ? "Screensaver is active" : "Screensaver is inactive", privacy: .public)")
+            Log.powerEvents.info("Screensaver state changed; isActive=\(screensaverActive)")
             self.screensaverActive = screensaverActive
         }
 
@@ -212,10 +206,10 @@ final class ActivityController {
         }
 
         if isNowReadyToMount {
-            Self.logger.info("Mount readiness reached ready state")
+            Log.powerEvents.info("Mount readiness changed; isReady=true")
             triggerMountPass()
         } else {
-            Self.logger.info("Mount readiness left ready state")
+            Log.powerEvents.info("Mount readiness changed; isReady=false")
             cancelAllPendingMountTasks(reason: "Mount readiness left ready state")
         }
     }
@@ -223,11 +217,11 @@ final class ActivityController {
     /// Triggers one fire-and-forget mount pass for all remount candidates.
     private func triggerMountPass() {
         guard !self.remountCandidates.isEmpty else {
-            Self.logger.info("Mount pass skipped: no remount candidates")
+            Log.volumeOperations.info("Mount pass skipped: no remount candidates")
             return
         }
 
-        Self.logger.log("Mount pass triggered: \(self.remountCandidates.count, privacy: .public) candidate(s)")
+        Log.volumeOperations.log("Mount pass triggered: \(self.remountCandidates.count) candidate(s)")
         for volume in self.remountCandidates {
             scheduleMountTask(for: volume)
         }
@@ -239,7 +233,7 @@ final class ActivityController {
 
         guard !volumes.isEmpty else {
             if existingCount > 0 {
-                Self.logger.info("Preserving \(existingCount, privacy: .public) pending remount candidate(s): \(reason, privacy: .public)")
+                Log.volumeOperations.info("Preserving \(existingCount) pending remount candidate(s): \(reason)")
             }
             return
         }
@@ -261,8 +255,8 @@ final class ActivityController {
         remountCandidates = mergedCandidates
 
         if existingCount > 0 {
-            Self.logger.info(
-                "Merged remount candidates: preserved \(existingCount, privacy: .public), refreshed \(refreshedCount, privacy: .public), added \(addedCount, privacy: .public), total \(self.remountCandidates.count, privacy: .public): \(reason, privacy: .public)"
+            Log.volumeOperations.info(
+                "Merged remount candidates: preserved \(existingCount), refreshed \(refreshedCount), added \(addedCount), total \(self.remountCandidates.count): \(reason)"
             )
         }
     }
@@ -315,7 +309,7 @@ final class ActivityController {
 
         cancelPendingMountTask(for: volume.id)
         removeRemountCandidate(withID: volume.id)
-        Self.logger.info("Remount candidate cleared after external mount notification for \(volume.logLabel, privacy: .public)")
+        Log.volumeOperations.info("Remount candidate cleared after external mount notification for \(volume.logLabel)")
     }
 
     /// Cancels and removes any pending mount task for a volume.
@@ -330,7 +324,7 @@ final class ActivityController {
             return
         }
 
-        Self.logger.info("Cancelling \(self.pendingMountTasks.count, privacy: .public) pending mount task(s): \(reason, privacy: .public)")
+        Log.volumeOperations.info("Cancelling \(self.pendingMountTasks.count) pending mount task(s): \(reason)")
         for task in pendingMountTasks.values {
             task.cancel()
         }
@@ -344,7 +338,7 @@ final class ActivityController {
             return
         }
 
-        Self.logger.log("Mount request scheduled for \(volume.logLabel, privacy: .public)")
+        Log.volumeOperations.log("Mount request scheduled for \(volume.logLabel)")
 
         pendingMountTasks[volumeID] = Task { @MainActor [weak self] in
             guard let self else {
@@ -366,7 +360,7 @@ final class ActivityController {
                 }
 
                 guard DiskArbitrationVolumeOperator.canResolveDisk(volumeUUID: volume.diskUUID, volumeName: volume.name, bsdName: volume.bsdName) else {
-                    Self.logger.info("Skipping mount retry because disk is no longer available for \(volume.logLabel, privacy: .public)")
+                    Log.volumeOperations.info("Skipping mount retry because disk is no longer available for \(volume.logLabel)")
                     self.removeRemountCandidate(withID: volumeID)
                     return
                 }
@@ -387,19 +381,19 @@ final class ActivityController {
                 }
 
                 if let message = result.message, !message.isEmpty {
-                    Self.logger.error("Mount failed for \(volume.logLabel, privacy: .public): \(message, privacy: .public)")
+                    Log.volumeOperations.error("Mount failed for \(volume.logLabel): \(message)")
                 } else {
-                    Self.logger.error("Mount failed for \(volume.logLabel, privacy: .public)")
+                    Log.volumeOperations.error("Mount failed for \(volume.logLabel)")
                 }
 
                 guard result.status?.shouldRetryAutomaticRemount ?? true else {
-                    Self.logger.info("Mount retry skipped due to non-retryable status for \(volume.logLabel, privacy: .public)")
+                    Log.volumeOperations.info("Mount retry skipped due to non-retryable status for \(volume.logLabel)")
                     self.removeRemountCandidate(withID: volumeID)
                     return
                 }
 
                 guard attemptIndex < Self.remountRetryDelays.count else {
-                    Self.logger.info("Mount retry limit reached for \(volume.logLabel, privacy: .public)")
+                    Log.volumeOperations.info("Mount retry limit reached for \(volume.logLabel)")
                     self.removeRemountCandidate(withID: volumeID)
                     return
                 }
@@ -407,7 +401,7 @@ final class ActivityController {
                 let retryNumber = attemptIndex + 1
                 let retryDelay = Self.remountRetryDelays[attemptIndex]
                 attemptIndex += 1
-                Self.logger.info("Scheduling mount retry \(retryNumber, privacy: .public)/\(Self.remountRetryDelays.count, privacy: .public) for \(volume.logLabel, privacy: .public)")
+                Log.volumeOperations.info("Scheduling mount retry \(retryNumber)/\(Self.remountRetryDelays.count) for \(volume.logLabel)")
 
                 do {
                     try await Task.sleep(for: retryDelay)
@@ -441,18 +435,18 @@ final class ActivityController {
     private func beginSystemSleepDelay(token: Int) {
         if let pendingToken = pendingSystemSleepToken {
             if pendingToken == token {
-                Self.logger.info("Duplicate system sleep token received: \(token, privacy: .public)")
+                Log.powerEvents.info("Duplicate system sleep token received; token=\(token)")
                 return
             }
 
-            Self.logger.warning("Ignoring overlapping system sleep token \(token, privacy: .public) while waiting on token \(pendingToken, privacy: .public)")
+            Log.powerEvents.warning("Overlapping system sleep token ignored; token=\(token); pendingToken=\(pendingToken)")
             systemSleepPowerObserver?.allowPowerChange(for: token)
             return
         }
 
         pendingSystemSleepToken = token
         updateMountReadinessState(systemAwake: false)
-        Self.logger.log("System will sleep received; delaying sleep for up to \(Self.maximumSystemSleepDelaySeconds, privacy: .public) seconds to unmount enabled volumes")
+        Log.powerEvents.log("System sleep delayed for unmount; maximumDelaySeconds=\(Self.maximumSystemSleepDelaySeconds)")
 
         pendingSystemSleepTimeoutTask?.cancel()
         pendingSystemSleepTimeoutTask = Task { @MainActor [weak self] in
@@ -468,7 +462,7 @@ final class ActivityController {
             guard pendingSystemSleepToken == token else {
                 return
             }
-            Self.logger.warning("System sleep delay reached \(Self.maximumSystemSleepDelaySeconds, privacy: .public)-second cap")
+            Log.powerEvents.warning("System sleep delay reached cap; maximumDelaySeconds=\(Self.maximumSystemSleepDelaySeconds)")
             allowSystemSleepIfNeeded(for: token, reason: "\(Self.maximumSystemSleepDelaySeconds)-second timeout reached")
         }
 
@@ -480,10 +474,10 @@ final class ActivityController {
 
             let batchResult = await unmountEnabledVolumesAndWait()
             guard pendingSystemSleepToken == token else {
-                Self.logger.info("Ignoring unmount completion for stale system sleep token \(token, privacy: .public)")
+                Log.powerEvents.info("Stale system sleep unmount completion ignored; token=\(token)")
                 return
             }
-            Self.logger.log("System sleep unmount batch finished: \(batchResult.succeededCount, privacy: .public)/\(batchResult.requestedCount, privacy: .public) succeeded")
+            Log.powerEvents.log("System sleep unmount batch finished; succeededCount=\(batchResult.succeededCount); requestedCount=\(batchResult.requestedCount)")
             allowSystemSleepIfNeeded(for: token, reason: "unmount batch completed")
         }
     }
@@ -503,7 +497,7 @@ final class ActivityController {
         }
         pendingSystemSleepToken = nil
         cancelPendingSystemSleepTasks()
-        Self.logger.log("Allowing system sleep for token \(token, privacy: .public): \(reason, privacy: .public)")
+        Log.powerEvents.log("System sleep allowed; token=\(token); reason=\(reason)")
         systemSleepPowerObserver?.allowPowerChange(for: token)
     }
 
@@ -568,12 +562,12 @@ final class ActivityController {
         pendingUnmountCompletions[volumeID, default: []].append(completion)
 
         guard !inFlightUnmounts.contains(volumeID) else {
-            Self.logger.info("Unmount request joined existing in-flight operation: \(volume.logLabel, privacy: .public)")
+            Log.volumeOperations.info("Unmount request joined existing in-flight operation: \(volume.logLabel)")
             return
         }
 
         inFlightUnmounts.insert(volumeID)
-        Self.logger.log("Unmount request scheduled for \(volume.logLabel, privacy: .public)")
+        Log.volumeOperations.log("Unmount request scheduled for \(volume.logLabel)")
         VolumeOperationRouter.shared.unmount(volumeUUID: volume.diskUUID.map { $0 as NSUUID }, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success in
             Task { @MainActor [weak self] in
                 guard let self else {

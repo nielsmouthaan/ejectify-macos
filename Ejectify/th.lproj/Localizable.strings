@@ -28,7 +28,7 @@
 "Save the diagnostics report to the chosen location." = "บันทึกรายงานการวินิจฉัยไปยังตำแหน่งที่เลือก";
 "Could not save diagnostics report." = "ไม่สามารถบันทึกรายงานการวินิจฉัยได้";
 "Generating Diagnostics Report" = "กำลังสร้างรายงานการวินิจฉัย";
-"Ejectify is collecting relevant log events for the last 24 hours. This can take a while." = "Ejectify กำลังรวบรวมเหตุการณ์บันทึกที่เกี่ยวข้องในช่วง 24 ชั่วโมงที่ผ่านมา ซึ่งอาจใช้เวลาสักครู่";
+"Ejectify is collecting relevant log events. This can take a while." = "Ejectify กำลังรวบรวมเหตุการณ์บันทึกที่เกี่ยวข้อง ซึ่งอาจใช้เวลาสักครู่";
 "Diagnostics Report Generated" = "สร้างรายงานการวินิจฉัยแล้ว";
 "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder." = "สร้างรายงานการวินิจฉัยแล้ว คลิกแสดงใน Finder เพื่อค้นหาใน Finder";
 "Reveal in Finder" = "แสดงใน Finder";

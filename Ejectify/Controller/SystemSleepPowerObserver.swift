@@ -6,7 +6,6 @@
 import Foundation
 import IOKit
 import IOKit.pwr_mgt
-import OSLog
 
 /// Bridges low-level IOKit power callbacks to a main-actor handler.
 final class SystemSleepPowerObserver {
@@ -14,11 +13,6 @@ final class SystemSleepPowerObserver {
     /// Main-actor callback invoked when the system begins sleeping.
     private let onSystemWillSleep: @MainActor (Int) -> Void
 
-    /// Logger used for power notification registration and lifecycle diagnostics.
-    private static let logger = Logger(
-        subsystem: LoggingConfiguration.subsystem,
-        category: String(describing: SystemSleepPowerObserver.self)
-    )
 
     /// IOKit root power connection used to acknowledge sleep transitions.
     private var rootPort: io_connect_t = 0
@@ -52,12 +46,12 @@ final class SystemSleepPowerObserver {
         let refCon = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
         let localRootPort = IORegisterForSystemPower(refCon, &localNotificationPort, Self.powerCallback, &localNotifierObject)
         guard localRootPort != 0, let localNotificationPort else {
-            Self.logger.error("Failed to register for system power notifications")
+            Log.powerEvents.error("Failed to register for system power notifications")
             return false
         }
 
         guard let runLoopSource = IONotificationPortGetRunLoopSource(localNotificationPort)?.takeUnretainedValue() else {
-            Self.logger.error("Failed to attach system power callback run loop source")
+            Log.powerEvents.error("Failed to attach system power callback run loop source")
             if localNotifierObject != 0 {
                 IOObjectRelease(localNotifierObject)
             }
@@ -71,7 +65,7 @@ final class SystemSleepPowerObserver {
         self.notificationPort = localNotificationPort
         self.notifierObject = localNotifierObject
         self.runLoopSource = runLoopSource
-        Self.logger.log("System power monitoring enabled")
+        Log.powerEvents.log("System power monitoring enabled")
         return true
     }
 

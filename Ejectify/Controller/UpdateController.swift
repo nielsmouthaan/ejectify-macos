@@ -6,18 +6,12 @@
 //
 
 import AppKit
-import OSLog
 import Sparkle
 
 /// Coordinates Sparkle updater lifecycle and menu-triggered update checks.
 @MainActor
 final class UpdateController {
 
-    /// Logger used for updater startup and manual check diagnostics.
-    private static let logger = Logger(
-        subsystem: LoggingConfiguration.subsystem,
-        category: String(describing: UpdateController.self)
-    )
 
     /// Sparkle controller owning updater state and standard update UI.
     private let updaterController: SPUStandardUpdaterController
@@ -31,13 +25,15 @@ final class UpdateController {
     func start() {
         do {
             try updaterController.updater.start()
+            Log.updates.info("Sparkle updater started")
         } catch {
-            Self.logger.error("Failed to start Sparkle updater: \(error.localizedDescription, privacy: .public)")
+            Log.updates.error(error, message: "Sparkle updater startup failed")
         }
     }
 
     /// Triggers a user-initiated update check from the status menu.
     func checkForUpdates() {
+        Log.updates.log("Manual update check requested")
         updaterController.checkForUpdates(nil)
     }
 }

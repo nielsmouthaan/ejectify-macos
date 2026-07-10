@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import OSLog
 @preconcurrency import DiskArbitration
 
 /// Performs mount and unmount requests via Disk Arbitration for volume metadata.
@@ -98,11 +97,6 @@ enum DiskArbitrationVolumeOperator {
         var result = OperationResult(success: false, message: "No response from Disk Arbitration callback", status: nil)
     }
 
-    /// Logger shared by all disk operation paths.
-    private static let logger = Logger(
-        subsystem: LoggingConfiguration.subsystem,
-        category: String(describing: DiskArbitrationVolumeOperator.self)
-    )
 
     /// Shared callback queue used by the shared Disk Arbitration session.
     private static let callbackQueue = DispatchQueue(
@@ -197,7 +191,6 @@ enum DiskArbitrationVolumeOperator {
         logFailures: Bool = true
     ) -> DADisk? {
         let requestedVolumeLabel = VolumeLogLabelFormatter.label(
-            name: volumeName,
             uuid: volumeUUID,
             bsdName: bsdName
         )
@@ -206,11 +199,10 @@ enum DiskArbitrationVolumeOperator {
             if let disk = resolveDiskByBSDName(bsdName, volumeUUID: volumeUUID, volumeName: volumeName, session: session) {
                 let resolvedVolumeLabel = resolvedVolumeLabel(
                     for: disk,
-                    fallbackName: volumeName,
                     fallbackUUID: volumeUUID,
                     fallbackBSDName: bsdName
                 )
-                Self.logger.info("Disk resolved for \(resolvedVolumeLabel, privacy: .public) based on BSD name")
+                Log.volumeOperations.info("Disk resolved for \(resolvedVolumeLabel) based on BSD name")
                 return disk
             }
         }
@@ -219,16 +211,15 @@ enum DiskArbitrationVolumeOperator {
            let disk = resolveDiskByVolumeUUIDScan(volumeUUID: volumeUUID, session: session) {
             let resolvedVolumeLabel = resolvedVolumeLabel(
                 for: disk,
-                fallbackName: volumeName,
                 fallbackUUID: volumeUUID,
                 fallbackBSDName: bsdName
             )
-            Self.logger.info("Disk resolved for \(resolvedVolumeLabel, privacy: .public) by scanning devices")
+            Log.volumeOperations.info("Disk resolved for \(resolvedVolumeLabel) by scanning devices")
             return disk
         }
 
         if logFailures {
-            Self.logger.error("Disk resolve failed for \(requestedVolumeLabel, privacy: .public)")
+            Log.volumeOperations.error("Disk resolve failed for \(requestedVolumeLabel)")
         }
         return nil
     }
@@ -236,19 +227,17 @@ enum DiskArbitrationVolumeOperator {
     /// Builds a log label from the resolved disk metadata, falling back to the originally requested identifiers when needed.
     private static func resolvedVolumeLabel(
         for disk: DADisk,
-        fallbackName: String,
         fallbackUUID: UUID?,
         fallbackBSDName: String
     ) -> String {
         guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
-            return VolumeLogLabelFormatter.label(name: fallbackName, uuid: fallbackUUID, bsdName: fallbackBSDName)
+            return VolumeLogLabelFormatter.label(uuid: fallbackUUID, bsdName: fallbackBSDName)
         }
 
-        let resolvedName = (diskInfo[kDADiskDescriptionVolumeNameKey] as? String) ?? fallbackName
         let resolvedUUID = DiskUUIDResolver.diskUUID(from: diskInfo) ?? fallbackUUID
         let resolvedBSDName = (diskInfo[kDADiskDescriptionMediaBSDNameKey] as? String) ?? fallbackBSDName
 
-        return VolumeLogLabelFormatter.label(name: resolvedName, uuid: resolvedUUID, bsdName: resolvedBSDName)
+        return VolumeLogLabelFormatter.label(uuid: resolvedUUID, bsdName: resolvedBSDName)
     }
 
     /// Resolves a disk using a BSD name, validating UUID metadata when it is available.

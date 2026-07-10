@@ -28,7 +28,7 @@
 "Save the diagnostics report to the chosen location." = "將診斷報告儲存到所選位置。";
 "Could not save diagnostics report." = "無法儲存診斷報告。";
 "Generating Diagnostics Report" = "正在產生診斷報告";
-"Ejectify is collecting relevant log events for the last 24 hours. This can take a while." = "Ejectify 正在收集過去 24 小時的相關記錄事件。這可能需要一些時間。";
+"Ejectify is collecting relevant log events. This can take a while." = "Ejectify 正在收集相關記錄事件。這可能需要一些時間。";
 "Diagnostics Report Generated" = "診斷報告已產生";
 "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder." = "診斷報告已產生。按一下「在 Finder 中顯示」以在 Finder 中找到它。";
 "Reveal in Finder" = "在 Finder 中顯示";

@@ -28,7 +28,7 @@
 "Save the diagnostics report to the chosen location." = "Bewaar het diagnoserapport op de gekozen locatie.";
 "Could not save diagnostics report." = "Kon diagnoserapport niet bewaren.";
 "Generating Diagnostics Report" = "Diagnoserapport genereren";
-"Ejectify is collecting relevant log events for the last 24 hours. This can take a while." = "Ejectify verzamelt relevante loggebeurtenissen van de afgelopen 24 uur. Dit kan even duren.";
+"Ejectify is collecting relevant log events. This can take a while." = "Ejectify verzamelt relevante loggebeurtenissen. Dit kan even duren.";
 "Diagnostics Report Generated" = "Diagnoserapport gegenereerd";
 "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder." = "Het diagnoserapport is gegenereerd. Klik op Toon in Finder om het in Finder te vinden.";
 "Reveal in Finder" = "Toon in Finder";

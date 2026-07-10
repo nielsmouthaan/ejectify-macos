@@ -28,7 +28,7 @@
 "Save the diagnostics report to the chosen location." = "Tanılama raporunu seçilen konuma kaydet.";
 "Could not save diagnostics report." = "Tanılama raporu kaydedilemedi.";
 "Generating Diagnostics Report" = "Tanılama raporu oluşturuluyor";
-"Ejectify is collecting relevant log events for the last 24 hours. This can take a while." = "Ejectify, son 24 saatin ilgili günlük olaylarını topluyor. Bu biraz zaman alabilir.";
+"Ejectify is collecting relevant log events. This can take a while." = "Ejectify ilgili günlük olaylarını topluyor. Bu biraz zaman alabilir.";
 "Diagnostics Report Generated" = "Tanılama raporu oluşturuldu";
 "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder." = "Tanılama raporu oluşturuldu. Finder’da bulmak için Finder’da Göster’i tıklayın.";
 "Reveal in Finder" = "Finder’da Göster";

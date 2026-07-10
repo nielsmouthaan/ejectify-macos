@@ -28,7 +28,7 @@
 "Save the diagnostics report to the chosen location." = "Uložte diagnostickú správu do vybraného umiestnenia.";
 "Could not save diagnostics report." = "Diagnostickú správu sa nepodarilo uložiť.";
 "Generating Diagnostics Report" = "Generovanie diagnostickej správy";
-"Ejectify is collecting relevant log events for the last 24 hours. This can take a while." = "Ejectify zhromažďuje relevantné udalosti denníka za posledných 24 hodín. Môže to chvíľu trvať.";
+"Ejectify is collecting relevant log events. This can take a while." = "Ejectify zhromažďuje relevantné udalosti denníka. Môže to chvíľu trvať.";
 "Diagnostics Report Generated" = "Diagnostická správa bola vygenerovaná";
 "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder." = "Diagnostická správa bola vygenerovaná. Kliknutím na Zobraziť vo Finderi ju nájdete vo Finderi.";
 "Reveal in Finder" = "Zobraziť vo Finderi";

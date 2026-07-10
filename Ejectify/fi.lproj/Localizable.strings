@@ -28,7 +28,7 @@
 "Save the diagnostics report to the chosen location." = "Tallenna diagnostiikkaraportti valittuun sijaintiin.";
 "Could not save diagnostics report." = "Diagnostiikkaraporttia ei voitu tallentaa.";
 "Generating Diagnostics Report" = "Luodaan diagnostiikkaraporttia";
-"Ejectify is collecting relevant log events for the last 24 hours. This can take a while." = "Ejectify kerää olennaisia lokitapahtumia viimeisten 24 tunnin ajalta. Tämä voi kestää hetken.";
+"Ejectify is collecting relevant log events. This can take a while." = "Ejectify kerää olennaisia lokitapahtumia. Tämä voi kestää hetken.";
 "Diagnostics Report Generated" = "Diagnostiikkaraportti luotu";
 "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder." = "Diagnostiikkaraportti on luotu. Etsi se Finderissa klikkaamalla Näytä Finderissa.";
 "Reveal in Finder" = "Näytä Finderissa";

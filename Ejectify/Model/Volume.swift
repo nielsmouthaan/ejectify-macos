@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import OSLog
 @preconcurrency import DiskArbitration
 
 /// Represents a mounted volume discovered from Disk Arbitration metadata.
@@ -24,16 +23,11 @@ final class Volume {
         }
     }
 
-    /// Logger used for volume discovery and eligibility diagnostics.
-    private static let logger = Logger(
-        subsystem: LoggingConfiguration.subsystem,
-        category: String(describing: Volume.self)
-    )
 
     /// Shared Disk Arbitration session retained for the lifetime of the app so asynchronous callbacks are delivered reliably.
     nonisolated(unsafe) private static let diskArbitrationSession: DASession? = {
         guard let session = DiskArbitrationVolumeOperator.DiskArbitrationSessionFactory.makeSession(dispatchQueue: DispatchQueue.main) else {
-            Volume.logger.error("Failed to create Disk Arbitration session")
+            Log.volumeOperations.error("Failed to create Disk Arbitration session")
             return nil
         }
         return session
@@ -57,13 +51,9 @@ final class Volume {
     /// Category used for grouping volumes in the status-bar menu.
     let category: Category
 
-    /// Canonical volume label for logs.
+    /// Privacy-safe volume correlation fields for logs.
     var logLabel: String {
-        if let diskUUID {
-            return VolumeLogLabelFormatter.label(name: name, uuid: diskUUID, bsdName: bsdName)
-        }
-
-        return VolumeLogLabelFormatter.label(name: name, identifier: id, bsdName: bsdName)
+        VolumeLogLabelFormatter.label(uuid: diskUUID, bsdName: bsdName)
     }
 
     /// Tracks whether this volume should be managed automatically, using a category-based default when no explicit user preference exists.
@@ -98,7 +88,7 @@ final class Volume {
     /// Returns currently mounted volumes that Ejectify can manage.
     static func mountedVolumes() -> [Volume] {
         guard let mountedVolumeURLs = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys:nil, options: []) else {
-            Self.logger.warning("Failed to enumerate mounted volumes from FileManager")
+            Log.volumeOperations.warning("Failed to enumerate mounted volumes from FileManager")
             return []
         }
 
@@ -152,7 +142,7 @@ final class Volume {
         }
 
         if diskUUID == nil {
-            Self.logger.info("Managing volume without Disk Arbitration UUID: \(VolumeLogLabelFormatter.label(name: name, identifier: id, bsdName: bsdName), privacy: .public)")
+            Log.volumeOperations.info("Managing volume without Disk Arbitration UUID; \(VolumeLogLabelFormatter.label(uuid: nil, bsdName: bsdName))")
         }
 
         return Volume(id: id, diskUUID: diskUUID, name: name, url: url, bsdName: bsdName, category: category)

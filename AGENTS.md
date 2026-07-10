@@ -32,8 +32,14 @@ Ejectify is a macOS menu bar utility that helps users avoid “Disk Not Ejected 
 
 ### Logging instructions
 
-- Define `Logger` instances as `private static let logger` properties on the type that uses them.
-- Use `LoggingConfiguration.subsystem` for logger subsystems and derive logger categories from the concrete declaring type using the form `String(describing: ConcreteType.self)`.
-- Use direct `os.Logger` interpolation and put values directly in logger calls instead of prebuilding full log messages as regular strings.
-- For diagnostic interpolations, use `privacy: .public` unless the value is confidential or user-sensitive, such as secrets, tokens, personal content, or private file paths.
-- Use consistent log levels: `log` for important production breadcrumbs, `info` for extra diagnostic detail, `debug` for development-only detail, `warning` for recoverable degraded behavior, `error` for failed operations, and `fault` for likely bugs or violated invariants. Avoid `trace`, `notice`, and `critical` unless the project explicitly opts into those aliases.
+- Add logs for support-relevant workflow milestones, decisions, state changes, degraded behavior, and failures. Log each outcome once where it is known, and skip noisy routine interactions.
+- Keep logging lightweight. Do not add abstractions, state, or substantial processing solely for low-severity logs; prefer concise inline metadata and omit fields that require extra plumbing without clear diagnostic value.
+- Use the centralized `Log.category` facade instead of defining raw `Logger` instances in individual types.
+- Log categories represent stable app workflows or subsystems, not concrete Swift types. Reuse an existing category unless a new one materially improves support/debug filtering. Define new categories centrally on `Log`, use stable readable category strings, and never include user content, IDs, URLs, filenames, or dynamic values in category names.
+- Use `.debug` for verbose details useful while developing or investigating a specific issue. Debug events are written to OSLog but excluded from persisted Diagnostics by default; opt in only when the event is genuinely useful in support reports.
+- Use `.info` for supplemental diagnostic breadcrumbs, `.log` for important production workflow milestones, `.warning` for recoverable degraded behavior, `.error` for failed operations, and `.fault` for likely bugs or violated invariants. Avoid `trace`, `notice`, and `critical` unless the project explicitly adopts those aliases.
+- When an `Error` value is available and privacy-safe, use `Log.category.error(error, message:)` or `Log.category.fault(error, message:)` so Diagnostics preserves the underlying error. Use the message-only overload when an error description may contain private paths or user-authored content.
+- Every failed operation must be logged at `warning`, `error`, or `fault`; do not record failures only at `debug` or `info`.
+- Prefer domain events with concise `key=value` metadata. Use stable correlation fields where useful, but do not log secrets, tokens, user-authored volume names, private file paths, or fallback identifiers containing user or device metadata.
+- Main-app `Log` events write to both OSLog and persisted Diagnostics. Privileged-helper `Log` events write to OSLog and are included through the helper unified-log chapter in diagnostics reports.
+- Query unified logs only for the privileged helper and relevant non-app macOS services such as Disk Arbitration, launchd, and ServiceManagement. Do not query main-app OSLog events because Diagnostics already includes them.

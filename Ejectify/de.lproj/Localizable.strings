@@ -28,7 +28,7 @@
 "Save the diagnostics report to the chosen location." = "Sichere den Diagnosebericht am gewählten Ort.";
 "Could not save diagnostics report." = "Diagnosebericht konnte nicht gesichert werden.";
 "Generating Diagnostics Report" = "Diagnosebericht wird erstellt";
-"Ejectify is collecting relevant log events for the last 24 hours. This can take a while." = "Ejectify sammelt relevante Protokollereignisse der letzten 24 Stunden. Dies kann einen Moment dauern.";
+"Ejectify is collecting relevant log events. This can take a while." = "Ejectify sammelt relevante Protokollereignisse. Dies kann einen Moment dauern.";
 "Diagnostics Report Generated" = "Diagnosebericht erstellt";
 "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder." = "Der Diagnosebericht wurde erstellt. Klicke auf „Im Finder anzeigen“, um ihn im Finder zu finden.";
 "Reveal in Finder" = "Im Finder anzeigen";

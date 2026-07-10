@@ -7,30 +7,32 @@
 
 import Foundation
 
-/// Builds canonical volume labels used by logs across app and helper targets.
+/// Builds privacy-safe volume correlation fields used by logs across app and helper targets.
 enum VolumeLogLabelFormatter {
 
-    /// Builds a canonical label from typed UUID metadata.
-    static func label(name: String, uuid: UUID, bsdName: String) -> String {
-        label(name: name, uuidString: uuid.uuidString, bsdName: bsdName)
+    /// Builds correlation fields from typed UUID metadata.
+    static func label(uuid: UUID, bsdName: String) -> String {
+        fields(uuidString: uuid.uuidString, bsdName: bsdName)
     }
 
-    /// Builds a canonical label from optional UUID metadata.
-    static func label(name: String, uuid: UUID?, bsdName: String) -> String {
+    /// Builds correlation fields from optional UUID metadata.
+    static func label(uuid: UUID?, bsdName: String) -> String {
         guard let uuid else {
-            return "\(name) (UUID=-, BSD=\(bsdName))"
+            return fields(uuidString: nil, bsdName: bsdName)
         }
 
-        return label(name: name, uuid: uuid, bsdName: bsdName)
+        return fields(uuidString: uuid.uuidString, bsdName: bsdName)
     }
 
-    /// Builds a canonical label from raw UUID text and BSD name metadata.
-    static func label(name: String, uuidString: String, bsdName: String) -> String {
-        "\(name) (UUID=\(uuidString), BSD=\(bsdName))"
+    /// Builds correlation fields from raw UUID text and BSD name metadata.
+    static func label(uuidString: String, bsdName: String) -> String {
+        fields(uuidString: uuidString, bsdName: bsdName)
     }
 
-    /// Builds a canonical label from an Ejectify-managed identifier.
-    static func label(name: String, identifier: String, bsdName: String) -> String {
-        "\(name) (ID=\(identifier), BSD=\(bsdName))"
+    /// Formats normalized UUID and BSD values as concise log metadata.
+    private static func fields(uuidString: String?, bsdName: String) -> String {
+        let normalizedUUID = uuidString.flatMap { $0.isEmpty ? nil : $0 } ?? "none"
+        let normalizedBSDName = bsdName.isEmpty ? "none" : bsdName
+        return "volume_uuid=\(normalizedUUID); bsd_name=\(normalizedBSDName)"
     }
 }

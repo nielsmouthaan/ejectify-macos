@@ -28,7 +28,7 @@
 "Save the diagnostics report to the chosen location." = "Simpan laporan diagnostik ke lokasi yang dipilih.";
 "Could not save diagnostics report." = "Tidak dapat menyimpan laporan diagnostik.";
 "Generating Diagnostics Report" = "Menjana Laporan Diagnostik";
-"Ejectify is collecting relevant log events for the last 24 hours. This can take a while." = "Ejectify sedang mengumpulkan peristiwa log yang berkaitan untuk 24 jam terakhir. Ini mungkin mengambil sedikit masa.";
+"Ejectify is collecting relevant log events. This can take a while." = "Ejectify sedang mengumpulkan peristiwa log yang berkaitan. Ini mungkin mengambil sedikit masa.";
 "Diagnostics Report Generated" = "Laporan Diagnostik Dijana";
 "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder." = "Laporan diagnostik telah dijana. Klik Tunjukkan dalam Finder untuk mencarinya dalam Finder.";
 "Reveal in Finder" = "Tunjukkan dalam Finder";

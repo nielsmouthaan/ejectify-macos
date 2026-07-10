@@ -38,8 +38,8 @@
 		C0A100000000000000000062 /* VolumeLogLabelFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */; };
 		C0A100000000000000000064 /* PrivilegedHelperConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */; };
 		C0A100000000000000000065 /* PrivilegedHelperConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */; };
-		C0A100000000000000000071 /* LoggingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000073 /* LoggingConfiguration.swift */; };
-		C0A100000000000000000072 /* LoggingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000073 /* LoggingConfiguration.swift */; };
+		C0A100000000000000000071 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000073 /* Log.swift */; };
+		C0A100000000000000000072 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000073 /* Log.swift */; };
 		D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */; };
 		D1E700A42F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */; };
 		D1E700A52F8A000100C0D001 /* OnboardingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */; };
@@ -47,6 +47,11 @@
 		D1E700AD2F8A000100C0D001 /* OnboardingApprovalMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700AE2F8A000100C0D001 /* OnboardingApprovalMonitor.swift */; };
 		D1E700AB2F8A000100C0D001 /* StopNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700AC2F8A000100C0D001 /* StopNotificationView.swift */; };
 		D2A100A12F9B100100A0C001 /* UpdateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2A100A22F9B100100A0C001 /* UpdateController.swift */; };
+		E7C700010000000000000001 /* LogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C700060000000000000006 /* LogTests.swift */; };
+		E7C700020000000000000002 /* VolumeLogLabelFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C700070000000000000007 /* VolumeLogLabelFormatterTests.swift */; };
+		E7C700030000000000000003 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000073 /* Log.swift */; };
+		E7C700040000000000000004 /* VolumeLogLabelFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */; };
+		E7C700050000000000000005 /* Diagnostics in Frameworks */ = {isa = PBXBuildFile; productRef = D4A100A52FB0000100D0A001 /* Diagnostics */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -141,7 +146,7 @@
 		C0A100000000000000000054 /* SMAppService+StatusDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SMAppService+StatusDescription.swift"; sourceTree = "<group>"; };
 		C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeLogLabelFormatter.swift; sourceTree = "<group>"; };
 		C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperConfiguration.swift; sourceTree = "<group>"; };
-		C0A100000000000000000073 /* LoggingConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggingConfiguration.swift; sourceTree = "<group>"; };
+		C0A100000000000000000073 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		D1E700A22F8A000100C0D001 /* SystemSleepPowerObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSleepPowerObserver.swift; sourceTree = "<group>"; };
 		D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperLifecycleManager.swift; sourceTree = "<group>"; };
 		D1E700A62F8A000100C0D001 /* OnboardingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindowController.swift; sourceTree = "<group>"; };
@@ -149,6 +154,9 @@
 		D1E700AE2F8A000100C0D001 /* OnboardingApprovalMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingApprovalMonitor.swift; sourceTree = "<group>"; };
 		D1E700AC2F8A000100C0D001 /* StopNotificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopNotificationView.swift; sourceTree = "<group>"; };
 		F22E193528F67EE100899BDE /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		E7C700060000000000000006 /* LogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogTests.swift; sourceTree = "<group>"; };
+		E7C700070000000000000007 /* VolumeLogLabelFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeLogLabelFormatterTests.swift; sourceTree = "<group>"; };
+		E7C700080000000000000008 /* EjectifyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EjectifyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -166,6 +174,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E7C700090000000000000009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E7C700050000000000000005 /* Diagnostics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -187,6 +203,7 @@
 			children = (
 				B8AF59E72569569A003481A8 /* Ejectify */,
 				C0A100000000000000000022 /* EjectifyPrivilegedHelper */,
+				E7C7000A000000000000000A /* EjectifyTests */,
 				B8AF59E62569569A003481A8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -196,6 +213,7 @@
 			children = (
 				B8AF59E52569569A003481A8 /* Ejectify.app */,
 				C0A100000000000000000017 /* EjectifyPrivilegedHelper */,
+				E7C700080000000000000008 /* EjectifyTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -256,7 +274,7 @@
 			isa = PBXGroup;
 			children = (
 				C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */,
-				C0A100000000000000000073 /* LoggingConfiguration.swift */,
+				C0A100000000000000000073 /* Log.swift */,
 				C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */,
 				D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */,
 				C0A100000000000000000012 /* VolumeOperationRouter.swift */,
@@ -274,6 +292,23 @@
 				C0A100000000000000000015 /* main.swift */,
 			);
 			path = EjectifyPrivilegedHelper;
+			sourceTree = "<group>";
+		};
+		E7C7000A000000000000000A /* EjectifyTests */ = {
+			isa = PBXGroup;
+			children = (
+				E7C7000B000000000000000B /* Helper */,
+			);
+			path = EjectifyTests;
+			sourceTree = "<group>";
+		};
+		E7C7000B000000000000000B /* Helper */ = {
+			isa = PBXGroup;
+			children = (
+				E7C700060000000000000006 /* LogTests.swift */,
+				E7C700070000000000000007 /* VolumeLogLabelFormatterTests.swift */,
+			);
+			path = Helper;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -321,6 +356,26 @@
 			productReference = C0A100000000000000000017 /* EjectifyPrivilegedHelper */;
 			productType = "com.apple.product-type.tool";
 		};
+		E7C7000C000000000000000C /* EjectifyTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E7C700110000000000000011 /* Build configuration list for PBXNativeTarget "EjectifyTests" */;
+			buildPhases = (
+				E7C7000E000000000000000E /* Sources */,
+				E7C700090000000000000009 /* Frameworks */,
+				E7C7000D000000000000000D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = EjectifyTests;
+			packageProductDependencies = (
+				D4A100A52FB0000100D0A001 /* Diagnostics */,
+			);
+			productName = EjectifyTests;
+			productReference = E7C700080000000000000008 /* EjectifyTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -336,6 +391,9 @@
 					};
 					C0A100000000000000000035 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					E7C7000C000000000000000C = {
+						CreatedOnToolsVersion = 26.3;
 					};
 				};
 			};
@@ -391,6 +449,7 @@
 			targets = (
 				C0A100000000000000000035 /* EjectifyPrivilegedHelper */,
 				B8AF59E42569569A003481A8 /* Ejectify */,
+				E7C7000C000000000000000C /* EjectifyTests */,
 			);
 		};
 /* End PBXProject section */
@@ -402,6 +461,13 @@
 			files = (
 				B89F412B25AC9FD800E0B8C1 /* Localizable.strings in Resources */,
 				B8AF59ED2569569B003481A8 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E7C7000D000000000000000D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -434,7 +500,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0A100000000000000000061 /* VolumeLogLabelFormatter.swift in Sources */,
-				C0A100000000000000000071 /* LoggingConfiguration.swift in Sources */,
+				C0A100000000000000000071 /* Log.swift in Sources */,
 				C0A100000000000000000051 /* DiskArbitrationVolumeOperator.swift in Sources */,
 				A1B2C3D425C0AA1100ABC001 /* DAReturn+StatusDescription.swift in Sources */,
 				C0A100000000000000000064 /* PrivilegedHelperConfiguration.swift in Sources */,
@@ -466,13 +532,24 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0A100000000000000000062 /* VolumeLogLabelFormatter.swift in Sources */,
-				C0A100000000000000000072 /* LoggingConfiguration.swift in Sources */,
+				C0A100000000000000000072 /* Log.swift in Sources */,
 				C0A100000000000000000052 /* DiskArbitrationVolumeOperator.swift in Sources */,
 				A1B2C3D525C0AA1100ABC001 /* DAReturn+StatusDescription.swift in Sources */,
 				C0A100000000000000000065 /* PrivilegedHelperConfiguration.swift in Sources */,
 				C0A100000000000000000003 /* PrivilegedDiskServiceProtocol.swift in Sources */,
 				C0A100000000000000000004 /* PrivilegedDiskService.swift in Sources */,
 				C0A100000000000000000005 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E7C7000E000000000000000E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E7C700030000000000000003 /* Log.swift in Sources */,
+				E7C700040000000000000004 /* VolumeLogLabelFormatter.swift in Sources */,
+				E7C700010000000000000001 /* LogTests.swift in Sources */,
+				E7C700020000000000000002 /* VolumeLogLabelFormatterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -746,6 +823,38 @@
 			};
 			name = Release;
 		};
+		E7C7000F000000000000000F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = DNG6HL3Y5G;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.nielsmouthaan.EjectifyTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		E7C700100000000000000010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = DNG6HL3Y5G;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.nielsmouthaan.EjectifyTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -776,6 +885,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		E7C700110000000000000011 /* Build configuration list for PBXNativeTarget "EjectifyTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E7C7000F000000000000000F /* Debug */,
+				E7C700100000000000000010 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -800,7 +918,7 @@
 			repositoryURL = "https://github.com/AvdLee/Diagnostics";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 6.0.1;
+				minimumVersion = 7.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

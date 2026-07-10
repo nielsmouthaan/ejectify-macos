@@ -28,7 +28,7 @@
 "Save the diagnostics report to the chosen location." = "Gem diagnosticeringsrapporten på den valgte placering.";
 "Could not save diagnostics report." = "Kunne ikke gemme diagnosticeringsrapporten.";
 "Generating Diagnostics Report" = "Genererer diagnosticeringsrapport";
-"Ejectify is collecting relevant log events for the last 24 hours. This can take a while." = "Ejectify indsamler relevante loghændelser for de sidste 24 timer. Det kan tage et øjeblik.";
+"Ejectify is collecting relevant log events. This can take a while." = "Ejectify indsamler relevante loghændelser. Det kan tage et øjeblik.";
 "Diagnostics Report Generated" = "Diagnosticeringsrapport genereret";
 "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder." = "Diagnosticeringsrapporten er blevet genereret. Klik på Vis i Finder for at finde den i Finder.";
 "Reveal in Finder" = "Vis i Finder";

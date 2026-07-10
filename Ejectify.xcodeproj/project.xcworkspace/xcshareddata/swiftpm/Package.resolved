@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AvdLee/Diagnostics",
       "state" : {
-        "revision" : "109837f009a54e6caf6f37733d9f00f145acc1bb",
-        "version" : "6.0.1"
+        "revision" : "490338813372da5fe5415ae1012b0108b793435a",
+        "version" : "7.0.0"
       }
     },
     {

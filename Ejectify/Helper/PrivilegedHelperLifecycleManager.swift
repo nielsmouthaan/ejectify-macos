@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import OSLog
 import ServiceManagement
 
 /// Manages privileged helper daemon registration and approval status.
@@ -15,11 +14,6 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
     /// Shared lifecycle manager used by app routing logic.
     static let shared = PrivilegedHelperLifecycleManager()
 
-    /// Logger used for daemon registration lifecycle diagnostics.
-    private static let logger = Logger(
-        subsystem: LoggingConfiguration.subsystem,
-        category: String(describing: PrivilegedHelperLifecycleManager.self)
-    )
 
     /// Lazily created ServiceManagement daemon handle for status and registration calls.
     private var daemonService: SMAppService {
@@ -44,19 +38,19 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
             switch daemonService.status {
             case .notRegistered:
                 try daemonService.register()
-                Self.logger.log("Privileged helper daemon was not registered. Registration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
+                Log.privilegedHelper.log("Privileged helper daemon was not registered. Registration attempted; current status: \(daemonService.status.statusDescription)")
             case .enabled:
-                Self.logger.info("Privileged helper daemon already registered and enabled")
+                Log.privilegedHelper.info("Privileged helper daemon already registered and enabled")
             case .requiresApproval:
-                Self.logger.warning("Privileged helper daemon requires approval")
+                Log.privilegedHelper.warning("Privileged helper daemon requires approval")
             case .notFound:
                 try daemonService.register()
-                Self.logger.log("Privileged helper daemon service was not found. Registration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
+                Log.privilegedHelper.log("Privileged helper daemon service was not found. Registration attempted; current status: \(daemonService.status.statusDescription)")
             @unknown default:
-                Self.logger.warning("Privileged helper daemon reported an unexpected status: \(daemonService.status.statusDescription, privacy: .public)")
+                Log.privilegedHelper.warning("Privileged helper daemon reported an unexpected status: \(daemonService.status.statusDescription)")
             }
         } catch {
-            Self.logger.error("Privileged helper daemon registration failed: \(error.localizedDescription, privacy: .public)")
+            Log.privilegedHelper.error(error, message: "Privileged helper daemon registration failed")
         }
 
         return isDaemonEnabled
@@ -70,16 +64,16 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
             switch daemonService.status {
             case .enabled, .requiresApproval:
                 try daemonService.unregister()
-                Self.logger.log("Privileged helper daemon unregistration attempted; current status: \(daemonService.status.statusDescription, privacy: .public)")
+                Log.privilegedHelper.log("Privileged helper daemon unregistration attempted; current status: \(daemonService.status.statusDescription)")
             case .notRegistered:
-                Self.logger.info("Privileged helper daemon already unregistered")
+                Log.privilegedHelper.info("Privileged helper daemon already unregistered")
             case .notFound:
-                Self.logger.warning("Privileged helper daemon was not found while attempting unregistration")
+                Log.privilegedHelper.warning("Privileged helper daemon was not found while attempting unregistration")
             @unknown default:
-                Self.logger.warning("Privileged helper daemon reported an unexpected status while unregistering: \(daemonService.status.statusDescription, privacy: .public)")
+                Log.privilegedHelper.warning("Privileged helper daemon reported an unexpected status while unregistering: \(daemonService.status.statusDescription)")
             }
         } catch {
-            Self.logger.error("Privileged helper daemon unregistration failed: \(error.localizedDescription, privacy: .public)")
+            Log.privilegedHelper.error(error, message: "Privileged helper daemon unregistration failed")
         }
 
         return !isDaemonEnabled

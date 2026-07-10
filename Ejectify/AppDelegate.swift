@@ -6,18 +6,12 @@
 //
 
 import Cocoa
-import OSLog
 
 @MainActor
 
 /// Coordinates app startup and wires core menu/activity controllers.
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
-    /// Logger used for app lifecycle events and shared menu actions.
-    private static let logger = Logger(
-        subsystem: LoggingConfiguration.subsystem,
-        category: String(describing: AppDelegate.self)
-    )
 
     /// Shared delegate instance exposed for app-wide coordination.
     static let shared = NSApplication.shared.delegate as! AppDelegate
@@ -84,7 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Unmounts all enabled volumes in response to a user-initiated action.
     func performManualUnmountAll() {
         let enabledVolumes = Volume.mountedVolumes().filter(\.enabled)
-        Self.logger.log("Manual unmount-all triggered: \(enabledVolumes.count, privacy: .public) enabled volumes")
+        Log.app.log("Manual unmount-all triggered: \(enabledVolumes.count) enabled volumes")
 
         for volume in enabledVolumes {
             VolumeOperationRouter.shared.unmount(

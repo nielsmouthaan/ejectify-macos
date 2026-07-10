@@ -28,7 +28,7 @@
 "Save the diagnostics report to the chosen location." = "Save the diagnostics report to the chosen location.";
 "Could not save diagnostics report." = "Could not save diagnostics report.";
 "Generating Diagnostics Report" = "Generating Diagnostics Report";
-"Ejectify is collecting relevant log events for the last 24 hours. This can take a while." = "Ejectify is collecting relevant log events for the last 24 hours. This can take a while.";
+"Ejectify is collecting relevant log events. This can take a while." = "Ejectify is collecting relevant log events. This can take a while.";
 "Diagnostics Report Generated" = "Diagnostics Report Generated";
 "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder." = "The diagnostics report has been generated. Click Reveal in Finder to locate it in Finder.";
 "Reveal in Finder" = "Reveal in Finder";

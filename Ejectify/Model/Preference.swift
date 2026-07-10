@@ -7,16 +7,10 @@
 
 import Foundation
 import LaunchAtLogin
-import OSLog
 
 /// Centralizes persisted user preferences used by Ejectify.
 enum Preference {
 
-    /// Logger used for preference mutation diagnostics.
-    private static let logger = Logger(
-        subsystem: LoggingConfiguration.subsystem,
-        category: String(describing: Preference.self)
-    )
 
     /// Defines which system event triggers automatic unmounting.
     enum UnmountWhen: String {
@@ -49,7 +43,7 @@ enum Preference {
         }
         set {
             LaunchAtLogin.isEnabled = newValue
-            Self.logger.log("Preference changed: launchAtLogin=\(newValue, privacy: .public)")
+            Log.preferences.log("Preference changed: launchAtLogin=\(newValue)")
         }
     }
 
@@ -60,7 +54,7 @@ enum Preference {
         }
         set {
             UserDefaults.standard.set(newValue.rawValue, forKey: "preference.unmountWhen")
-            Self.logger.log("Preference changed: unmountWhen=\(newValue.rawValue, privacy: .public)")
+            Log.preferences.log("Preference changed: unmountWhen=\(newValue.rawValue)")
             Task { @MainActor in
                 AppDelegate.shared.activityController?.startMonitoring()
             }
@@ -74,7 +68,7 @@ enum Preference {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: "preference.forceUnmount")
-            Self.logger.log("Preference changed: forceUnmount=\(newValue, privacy: .public)")
+            Log.preferences.log("Preference changed: forceUnmount=\(newValue)")
         }
     }
 
@@ -85,7 +79,7 @@ enum Preference {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: "preference.hasSeenOnboarding")
-            Self.logger.info("Preference changed: hasSeenOnboarding=\(newValue, privacy: .public)")
+            Log.preferences.info("Preference changed: hasSeenOnboarding=\(newValue)")
         }
     }
 }

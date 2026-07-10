@@ -19,6 +19,7 @@ final class DiagnosticsReportController {
     /// Shows a save panel, generates a diagnostics report, and writes it to the selected URL.
     func saveDiagnosticsReport() {
         guard let targetURL = makeSavePanel().runModalResultURL else {
+            Log.diagnostics.info("Diagnostics export cancelled before generation")
             return
         }
 
@@ -101,6 +102,7 @@ private final class DiagnosticsReportProgressAlert {
                     return
                 }
 
+                Log.diagnostics.error("Diagnostics report generation failed; errorType=\(String(describing: type(of: error)))")
                 self?.markFailed(failureDescription: error.localizedDescription)
             }
         }
@@ -114,7 +116,7 @@ private final class DiagnosticsReportProgressAlert {
     private func configureForProgress() {
         alert.alertStyle = .informational
         alert.messageText = String(localized: "Generating Diagnostics Report")
-        alert.informativeText = String(localized: "Ejectify is collecting relevant log events for the last 24 hours. This can take a while.")
+        alert.informativeText = String(localized: "Ejectify is collecting relevant log events. This can take a while.")
         alert.addButton(withTitle: String(localized: "Cancel"))
 
         progressIndicator.style = .bar
@@ -128,6 +130,7 @@ private final class DiagnosticsReportProgressAlert {
     /// Updates the alert after the report is written successfully.
     private func markGenerated(at url: URL) {
         state = .generated(url)
+        Log.diagnostics.log("Diagnostics report generated")
         progressIndicator.stopAnimation(nil)
         progressIndicator.isHidden = true
         alert.accessoryView = nil
@@ -156,6 +159,7 @@ private final class DiagnosticsReportProgressAlert {
 
         switch state {
         case .generating(let generationTask):
+            Log.diagnostics.info("Diagnostics report generation cancelled")
             generationTask.cancel()
         case .generated(let url):
             DiagnosticsReportController.revealReport(at: url)
@@ -167,9 +171,6 @@ private final class DiagnosticsReportProgressAlert {
 
 /// Captures app state needed for diagnostics report generation.
 private struct EjectifyDiagnosticsSnapshot: Sendable {
-
-    /// Timestamp at which the diagnostics snapshot was created.
-    let generatedAt: Date
 
     /// Current launch-at-login preference.
     let launchAtLogin: Bool
@@ -207,7 +208,6 @@ private struct EjectifyDiagnosticsSnapshot: Sendable {
         let volumes = Volume.mountedVolumes().map(EjectifyVolumeDiagnosticsSnapshot.init(volume:))
         let mountedVolumeDiscovery = MountedVolumeDiscoverySnapshot.makeAll()
         return Self(
-            generatedAt: Date(),
             launchAtLogin: Preference.launchAtLogin,
             unmountWhen: Preference.unmountWhen.rawValue,
             forceUnmount: Preference.forceUnmount,
@@ -428,64 +428,41 @@ private enum EjectifyDiagnosticsReportFactory {
 
     /// Creates an HTML diagnostics report.
     static func make(filename: String, snapshot: EjectifyDiagnosticsSnapshot) async throws -> DiagnosticsReport {
+        Log.diagnostics.log("Diagnostics report generation started")
         let logStartDate = Date(timeIntervalSinceNow: -DiagnosticsLogLookback.duration)
-        let ejectifyLogCollection = try UnifiedLogCollector.collect(kind: .ejectify(startDate: logStartDate))
         var reporters: [DiagnosticsReporting] = [
-            EjectifyDiagnosticsIntroReporter(
-                generatedAt: snapshot.generatedAt,
-                logLookbackDescription: DiagnosticsLogLookback.description
-            ),
+            DiagnosticsReporter.DefaultReporter.generalInfo.reporter,
             DiagnosticsReporter.DefaultReporter.appSystemMetadata.reporter,
             EjectifyStateReporter(snapshot: snapshot),
             VolumesReporter(
                 discoveredVolumes: snapshot.mountedVolumeDiscovery,
                 ejectifyVolumes: snapshot.volumes
             ),
-            UnifiedLogsReporter(collection: ejectifyLogCollection)
+            DiagnosticsReporter.DefaultReporter.logs.reporter
         ]
         try Task.checkCancellation()
 
+        let helperLogCollection = try UnifiedLogCollector.collect(kind: .privilegedHelper(startDate: logStartDate))
+        reporters.append(UnifiedLogsReporter(collection: helperLogCollection))
+        try Task.checkCancellation()
+
         let launchdLogCollection = try UnifiedLogCollector.collect(kind: .launchdServiceManagement(startDate: logStartDate))
-        reporters.append(
-            UnifiedLogsReporter(
-                collection: launchdLogCollection
+        reporters.append(UnifiedLogsReporter(collection: launchdLogCollection))
+        try Task.checkCancellation()
+
+        let diskArbitrationLogCollection = try UnifiedLogCollector.collect(
+            kind: .diskArbitration(
+                filterTerms: diskArbitrationFilterTerms(from: snapshot),
+                startDate: logStartDate
             )
         )
         try Task.checkCancellation()
-
-        let diskArbitrationLogCollection: UnifiedLogCollection
-        if let firstEjectifyLogDate = ejectifyLogCollection.firstEntryDate {
-            diskArbitrationLogCollection = try UnifiedLogCollector.collect(
-                kind: .diskArbitration(
-                    filterTerms: diskArbitrationFilterTerms(from: snapshot),
-                    startDate: max(logStartDate, firstEjectifyLogDate)
-                )
-            )
-        } else if let failureMessage = ejectifyLogCollection.failureMessage {
-            diskArbitrationLogCollection = .empty(
-                title: "Disk Arbitration Logs (\(DiagnosticsLogLookback.title))",
-                message: """
-                Disk Arbitration logs were skipped because Ejectify logs could not be read: \(failureMessage).
-                """
-            )
-        } else {
-            diskArbitrationLogCollection = .empty(
-                title: "Disk Arbitration Logs (\(DiagnosticsLogLookback.title))",
-                message: """
-                Disk Arbitration logs were skipped because no matching Ejectify log entries were found in \(DiagnosticsLogLookback.description).
-                """
-            )
-        }
-
-        try Task.checkCancellation()
-        reporters.append(
-            UnifiedLogsReporter(
-                collection: diskArbitrationLogCollection
-            )
-        )
+        reporters.append(UnifiedLogsReporter(collection: diskArbitrationLogCollection))
+        reporters.append(DiagnosticsReporter.DefaultReporter.smartInsights.reporter)
 
         let report = await DiagnosticsReporter.create(
             filename: filename,
+            format: .html,
             using: reporters,
             reportTitle: "Ejectify Diagnostics Report"
         )
@@ -514,33 +491,6 @@ private enum DiagnosticsLogLookback {
 
     /// Maximum age of unified-log entries included in the diagnostics report.
     static let duration: TimeInterval = 24 * 60 * 60
-
-    /// Lowercase phrase used in explanatory report text.
-    static let description = "the last 24 hours"
-
-    /// Title-case phrase used in report chapter titles.
-    static let title = "Last 24 Hours"
-}
-
-/// Generates the introductory report chapter.
-private struct EjectifyDiagnosticsIntroReporter: DiagnosticsReporting {
-
-    /// Snapshot creation time.
-    let generatedAt: Date
-
-    /// Human-readable unified-log time window included in the report.
-    let logLookbackDescription: String
-
-    /// Creates the report chapter.
-    nonisolated(nonsending) func report() async -> DiagnosticsChapter {
-        let generatedAtText = DiagnosticsDateFormatter.string(from: generatedAt)
-        let html = """
-        <p>This diagnostics report was generated by Ejectify and saved locally on this Mac. It can help troubleshoot mounting, unmounting, privileged helper, and Disk Arbitration behavior.</p>
-        <p>Generated at <i>\(DiagnosticsHTML.escape(generatedAtText))</i>.</p>
-        <p>The log chapters in this report include only matching events from \(DiagnosticsHTML.escape(logLookbackDescription)).</p>
-        """
-        return DiagnosticsChapter(title: "Information", diagnostics: html, shouldShowTitle: false)
-    }
 }
 
 /// Generates a report chapter for Ejectify preferences and runtime state.
@@ -562,7 +512,7 @@ private struct EjectifyStateReporter: DiagnosticsReporting {
             ("Unmount-all hotkey registered", snapshot.isUnmountAllHotKeyRegistered.diagnosticsDescription)
         ]
 
-        return DiagnosticsChapter(title: "Ejectify State", diagnostics: DiagnosticsHTML.table(rows))
+        return DiagnosticsChapter(title: "Preferences & State", diagnostics: DiagnosticsHTML.table(rows))
     }
 }
 
@@ -717,16 +667,6 @@ private struct UnifiedLogCollection: Sendable {
     /// Rendered HTML for the log chapter body.
     let html: String
 
-    /// Earliest matching log entry date in this collection.
-    let firstEntryDate: Date?
-
-    /// Error message when reading this log collection failed.
-    let failureMessage: String?
-
-    /// Creates an empty log collection with a plain explanatory message.
-    static func empty(title: String, message: String) -> Self {
-        Self(title: title, html: "<p>\(DiagnosticsHTML.escape(message))</p>", firstEntryDate: nil, failureMessage: nil)
-    }
 }
 
 /// Reads relevant macOS unified log entries.
@@ -734,7 +674,7 @@ private enum UnifiedLogCollector {
 
     /// Defines which unified-log subset to collect.
     enum Kind: Sendable {
-        case ejectify(startDate: Date)
+        case privilegedHelper(startDate: Date)
         case launchdServiceManagement(startDate: Date)
         case diskArbitration(filterTerms: [String], startDate: Date)
     }
@@ -748,23 +688,19 @@ private enum UnifiedLogCollector {
             let store = try OSLogStore(scope: .system)
             let entries = try store.getEntries(with: [], at: kind.startPosition(in: store), matching: kind.predicate)
             let dateFormatter = DiagnosticsDateFormatter.make()
-            let logOutput = try formatEntries(entries, dateFormatter: dateFormatter)
+            let lines = try formatEntries(entries, dateFormatter: dateFormatter)
             try Task.checkCancellation()
 
-            guard let firstEntryDate = logOutput.firstEntryDate else {
+            guard !lines.isEmpty else {
                 return UnifiedLogCollection(
                     title: title,
-                    html: "<p>\(DiagnosticsHTML.escape(kind.emptyResultMessage))</p>",
-                    firstEntryDate: nil,
-                    failureMessage: nil
+                    html: "<p>\(DiagnosticsHTML.escape(kind.emptyResultMessage))</p>"
                 )
             }
 
             return UnifiedLogCollection(
                 title: title,
-                html: DiagnosticsHTML.pre(logOutput.lines),
-                firstEntryDate: firstEntryDate,
-                failureMessage: nil
+                html: DiagnosticsHTML.pre(lines)
             )
         } catch is CancellationError {
             throw CancellationError()
@@ -772,20 +708,17 @@ private enum UnifiedLogCollector {
             let message = "Unable to read \(title) from the unified log: \(error.localizedDescription)"
             return UnifiedLogCollection(
                 title: title,
-                html: DiagnosticsHTML.pre(message),
-                firstEntryDate: nil,
-                failureMessage: error.localizedDescription
+                html: DiagnosticsHTML.pre(message)
             )
         }
     }
 
-    /// Formats matching log entries while tracking the first matching entry date.
+    /// Formats matching log entries.
     private static func formatEntries(
         _ entries: AnySequence<OSLogEntry>,
         dateFormatter: ISO8601DateFormatter
-    ) throws -> (lines: String, firstEntryDate: Date?) {
+    ) throws -> String {
         var lines: [String] = []
-        var firstEntryDate: Date?
 
         for entry in entries {
             try Task.checkCancellation()
@@ -794,14 +727,10 @@ private enum UnifiedLogCollector {
                 continue
             }
 
-            if firstEntryDate == nil {
-                firstEntryDate = logEntry.date
-            }
-
             lines.append(format(entry: logEntry, dateFormatter: dateFormatter))
         }
 
-        return (lines.joined(separator: "\n"), firstEntryDate)
+        return lines.joined(separator: "\n")
     }
 
     /// Formats a unified-log entry into one readable line.
@@ -898,22 +827,21 @@ private extension UnifiedLogCollector.Kind {
     /// Report chapter title for this log subset.
     var title: String {
         switch self {
-        case .ejectify:
-            return "Ejectify Logs (\(DiagnosticsLogLookback.title))"
+        case .privilegedHelper:
+            return "Privileged Helper Logs"
         case .launchdServiceManagement:
-            return "Launchd and ServiceManagement Logs (\(DiagnosticsLogLookback.title))"
+            return "Launchd and ServiceManagement Logs"
         case .diskArbitration:
-            return "Disk Arbitration Logs (\(DiagnosticsLogLookback.title))"
+            return "Disk Arbitration Logs"
         }
     }
 
     /// Predicate used for unified-log filtering.
     var predicate: NSPredicate {
         switch self {
-        case .ejectify:
+        case .privilegedHelper:
             return NSPredicate(
-                format: "subsystem == %@ OR subsystem == %@",
-                LoggingConfiguration.subsystem,
+                format: "subsystem == %@",
                 PrivilegedHelperConfiguration.machServiceName
             )
         case .launchdServiceManagement:
@@ -926,23 +854,14 @@ private extension UnifiedLogCollector.Kind {
     /// Start position for unified-log enumeration.
     func startPosition(in store: OSLogStore) -> OSLogPosition? {
         switch self {
-        case .ejectify(let startDate), .launchdServiceManagement(let startDate), .diskArbitration(_, let startDate):
+        case .privilegedHelper(let startDate), .launchdServiceManagement(let startDate), .diskArbitration(_, let startDate):
             return store.position(date: startDate)
         }
     }
 
     /// Empty-state message for this log chapter.
     var emptyResultMessage: String {
-        switch self {
-        case .ejectify:
-            return "No matching Ejectify log entries were found in \(DiagnosticsLogLookback.description)."
-        case .launchdServiceManagement(let startDate):
-            let startDateText = DiagnosticsDateFormatter.string(from: startDate)
-            return "No matching error-or-fault Ejectify-related launchd or ServiceManagement log entries were found from \(startDateText) to now."
-        case .diskArbitration(_, let startDate):
-            let startDateText = DiagnosticsDateFormatter.string(from: startDate)
-            return "No matching error-or-fault Disk Arbitration log entries were found from \(startDateText) to now."
-        }
+        "No log entries were found."
     }
 
     /// Ejectify identifiers used to keep launchd and ServiceManagement logs specific to this app.

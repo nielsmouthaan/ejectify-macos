@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import OSLog
 @preconcurrency import DiskArbitration
 
 /// Notification posted whenever `VolumeOperationRouter` state has changed and UI should refresh.
@@ -103,11 +102,6 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
-    /// Logger used for routing mode and operation outcomes.
-    private static let logger = Logger(
-        subsystem: LoggingConfiguration.subsystem,
-        category: String(describing: VolumeOperationRouter.self)
-    )
 
     /// Queue used for local mount/unmount operations.
     private let localOperationQueue = DispatchQueue(
@@ -173,18 +167,18 @@ final class VolumeOperationRouter: @unchecked Sendable {
         success: Bool,
         message: String?
     ) {
-        let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID, bsdName: bsdName)
+        let volumeLabel = VolumeLogLabelFormatter.label(uuid: volumeUUID, bsdName: bsdName)
         if success {
             if let message, !message.isEmpty {
-                Self.logger.log("\(source, privacy: .public) \(operation.operationName, privacy: .public) succeeded for \(volumeLabel, privacy: .public): \(message, privacy: .public)")
+                Log.volumeOperations.log("\(source) \(operation.operationName) succeeded for \(volumeLabel): \(message)")
             } else {
-                Self.logger.log("\(source, privacy: .public) \(operation.operationName, privacy: .public) succeeded for \(volumeLabel, privacy: .public)")
+                Log.volumeOperations.log("\(source) \(operation.operationName) succeeded for \(volumeLabel)")
             }
         } else {
             if let message, !message.isEmpty {
-                Self.logger.error("\(source, privacy: .public) \(operation.operationName, privacy: .public) failed for \(volumeLabel, privacy: .public): \(message, privacy: .public)")
+                Log.volumeOperations.error("\(source) \(operation.operationName) failed for \(volumeLabel): \(message)")
             } else {
-                Self.logger.error("\(source, privacy: .public) \(operation.operationName, privacy: .public) failed for \(volumeLabel, privacy: .public)")
+                Log.volumeOperations.error("\(source) \(operation.operationName) failed for \(volumeLabel)")
             }
         }
     }
@@ -197,8 +191,8 @@ final class VolumeOperationRouter: @unchecked Sendable {
         volumeUUID: UUID?,
         bsdName: String
     ) {
-        let volumeLabel = VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID, bsdName: bsdName)
-        Self.logger.log("\(source, privacy: .public) \(operation.operationName, privacy: .public) dispatched for \(volumeLabel, privacy: .public)")
+        let volumeLabel = VolumeLogLabelFormatter.label(uuid: volumeUUID, bsdName: bsdName)
+        Log.volumeOperations.log("\(source) \(operation.operationName) dispatched for \(volumeLabel)")
     }
 
     /// Runs a closure while holding the shared router state lock.
@@ -262,21 +256,21 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Re-evaluates helper availability after receiving a helper-started signal.
     @MainActor
     private func handleHelperStartedNotification() {
-        Self.logger.log("Received privileged helper startup signal; reconciling routing state")
+        Log.privilegedHelper.log("Received privileged helper startup signal; reconciling routing state")
 
         guard !isStartupRoutingInitializationActive else {
-            Self.logger.info("Skipping helper startup reconciliation because startup helper ping is already in progress")
+            Log.privilegedHelper.info("Skipping helper startup reconciliation because startup helper ping is already in progress")
             return
         }
 
         if executionMode == .privilegedHelper, hasHelperConnection {
-            Self.logger.info("Skipping helper startup reconciliation because privileged helper routing is already active")
+            Log.privilegedHelper.info("Skipping helper startup reconciliation because privileged helper routing is already active")
             return
         }
 
         let didSucceed = configureExecutionMode()
         if !didSucceed {
-            Self.logger.warning("Privileged helper startup signal received, but helper reconciliation still failed")
+            Log.privilegedHelper.warning("Privileged helper startup signal received, but helper reconciliation still failed")
         }
     }
 
@@ -289,9 +283,9 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
 
         if previousMode == mode {
-            Self.logger.info("Execution mode remains \(mode.rawValue, privacy: .public): \(reason, privacy: .public)")
+            Log.privilegedHelper.info("Execution mode remains \(mode.rawValue): \(reason)")
         } else {
-            Self.logger.log("Execution mode changed from \(previousMode.rawValue, privacy: .public) to \(mode.rawValue, privacy: .public): \(reason, privacy: .public)")
+            Log.privilegedHelper.log("Execution mode changed from \(previousMode.rawValue) to \(mode.rawValue): \(reason)")
             notifyStateDidChange()
         }
     }
@@ -326,7 +320,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
             guard let self else {
                 return
             }
-            Self.logger.warning("Privileged helper XPC connection interrupted; switching to local mode")
+            Log.privilegedHelper.warning("Privileged helper XPC connection interrupted; switching to local mode")
             self.invalidateHelperConnection(matching: connection)
             self.setExecutionMode(.local, reason: "privileged helper connection interrupted")
         }
@@ -334,7 +328,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
             guard let self else {
                 return
             }
-            Self.logger.warning("Privileged helper XPC connection invalidated; switching to local mode")
+            Log.privilegedHelper.warning("Privileged helper XPC connection invalidated; switching to local mode")
             self.invalidateHelperConnection(matching: connection)
             self.setExecutionMode(.local, reason: "privileged helper connection invalidated")
         }
@@ -342,7 +336,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         withStateLock {
             helperConnection = connection
         }
-        Self.logger.log("Privileged helper XPC connection set up")
+        Log.privilegedHelper.log("Privileged helper XPC connection set up")
         return connection
     }
 
@@ -356,14 +350,14 @@ final class VolumeOperationRouter: @unchecked Sendable {
             guard let self else {
                 return
             }
-            Self.logger.warning("Privileged helper routing failed while \(operationDescription, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            Log.privilegedHelper.warning("Privileged helper routing failed while \(operationDescription): \(error.localizedDescription)")
             self.invalidateHelperConnection(matching: connection)
             self.setExecutionMode(.local, reason: "privileged helper routing failed")
             onRoutingFailure(error)
         }
 
         guard let typedProxy = proxy as? PrivilegedDiskServiceProtocol else {
-            Self.logger.warning("Privileged helper proxy could not be created while \(operationDescription, privacy: .public)")
+            Log.privilegedHelper.warning("Privileged helper proxy could not be created while \(operationDescription)")
             invalidateHelperConnection(matching: connection)
             setExecutionMode(.local, reason: "privileged helper proxy unavailable")
             return nil
@@ -375,7 +369,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Starts helper routing by opening XPC and pinging once to verify responsiveness.
     private func initializeHelperRoutingFromStartupPing() {
         guard beginStartupRoutingInitialization() else {
-            Self.logger.info("Skipping startup privileged helper ping because one is already in progress")
+            Log.privilegedHelper.info("Skipping startup privileged helper ping because one is already in progress")
             return
         }
 
@@ -402,10 +396,10 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
             if success {
                 self.setExecutionMode(.privilegedHelper, reason: "startup privileged helper ping succeeded")
-                Self.logger.log("Privileged helper is available and will be used for mount and unmount operations")
+                Log.privilegedHelper.log("Privileged helper is available and will be used for mount and unmount operations")
             } else {
                 let details = message ?? "No additional details"
-                Self.logger.warning("Privileged helper startup ping failed: \(details, privacy: .public)")
+                Log.privilegedHelper.warning("Privileged helper startup ping failed: \(details)")
                 self.invalidateHelperConnection(matching: connection)
                 self.setExecutionMode(.local, reason: "startup privileged helper ping failed")
             }
@@ -508,7 +502,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
 
         guard let connection = withStateLock({ helperConnection }) else {
-            Self.logger.error("Privileged helper connection unavailable while toggling eject notifications")
+            Log.privilegedHelper.error("Privileged helper connection unavailable while toggling eject notifications")
             setExecutionMode(.local, reason: "privileged helper connection missing")
             complete(false, "Privileged helper connection unavailable")
             return
@@ -527,10 +521,10 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
         proxy.setEjectNotificationsMuted(muted: muted) { success, message in
             if success {
-                Self.logger.log("Privileged helper updated eject notification muting to \(muted, privacy: .public)")
+                Log.privilegedHelper.log("Privileged helper updated eject notification muting to \(muted)")
             } else {
                 let details = message ?? "No additional details"
-                Self.logger.error("Privileged helper failed to update eject notification muting to \(muted, privacy: .public): \(details, privacy: .public)")
+                Log.privilegedHelper.error("Privileged helper failed to update eject notification muting to \(muted): \(details)")
             }
             complete(success, message)
         }
@@ -539,27 +533,27 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Sends a best-effort request for the privileged helper daemon to terminate itself.
     func requestHelperTermination() {
         guard PrivilegedHelperLifecycleManager.shared.isDaemonEnabled else {
-            Self.logger.info("Skipping helper termination request because the daemon is not enabled")
+            Log.privilegedHelper.info("Skipping helper termination request because the daemon is not enabled")
             return
         }
 
         guard let connection = withStateLock({ helperConnection }) else {
-            Self.logger.info("Skipping helper termination request because no active privileged helper connection exists")
+            Log.privilegedHelper.info("Skipping helper termination request because no active privileged helper connection exists")
             return
         }
 
-        Self.logger.log("Requesting privileged helper termination")
+        Log.privilegedHelper.log("Requesting privileged helper termination")
 
         let proxy = connection.remoteObjectProxyWithErrorHandler { error in
-            Self.logger.warning("Privileged helper termination request failed: \(error.localizedDescription, privacy: .public)")
+            Log.privilegedHelper.warning("Privileged helper termination request failed: \(error.localizedDescription)")
         } as? PrivilegedDiskServiceProtocol
 
         proxy?.requestTermination { success, message in
             if success {
-                Self.logger.log("Privileged helper termination request acknowledged")
+                Log.privilegedHelper.log("Privileged helper termination request acknowledged")
             } else {
                 let details = message ?? "No additional details"
-                Self.logger.warning("Privileged helper termination request was not acknowledged: \(details, privacy: .public)")
+                Log.privilegedHelper.warning("Privileged helper termination request was not acknowledged: \(details)")
             }
         }
     }
@@ -642,7 +636,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
 
         guard let connection = withStateLock({ helperConnection }) else {
-            Self.logger.warning("Privileged helper connection unavailable while \(operation.operationName, privacy: .public); falling back to local execution")
+            Log.privilegedHelper.warning("Privileged helper connection unavailable while \(operation.operationName); falling back to local execution")
             setExecutionMode(.local, reason: "privileged helper connection missing")
             completeWithLocalFallback()
             return
@@ -650,7 +644,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
         guard let proxy = helperProxy(
             for: connection,
-            operationDescription: "\(operation.operationName) \(VolumeLogLabelFormatter.label(name: volumeName, uuid: volumeUUID.map { $0 as UUID }, bsdName: bsdName))",
+            operationDescription: "\(operation.operationName) \(VolumeLogLabelFormatter.label(uuid: volumeUUID.map { $0 as UUID }, bsdName: bsdName))",
             onRoutingFailure: { _ in
                 completeWithLocalFallback()
             }

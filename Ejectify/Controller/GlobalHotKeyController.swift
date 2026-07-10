@@ -7,7 +7,6 @@
 
 import Carbon
 import Foundation
-import OSLog
 
 /// Registers and handles the app-wide keyboard shortcut for manual unmount-all.
 final class GlobalHotKeyController {
@@ -35,11 +34,6 @@ final class GlobalHotKeyController {
         return noErr
     }
 
-    /// Logger used for registration and trigger diagnostics.
-    private static let logger = Logger(
-        subsystem: LoggingConfiguration.subsystem,
-        category: String(describing: GlobalHotKeyController.self)
-    )
 
     /// Action invoked when the registered global hotkey is pressed.
     private let onUnmountAll: @MainActor () -> Void
@@ -84,7 +78,7 @@ final class GlobalHotKeyController {
         )
 
         guard status == noErr, let eventHandlerRef else {
-            Self.logger.error("Failed to install global hotkey event handler: status=\(status, privacy: .public)")
+            Log.hotKey.error("Failed to install global hotkey event handler: status=\(status)")
             return
         }
 
@@ -110,13 +104,13 @@ final class GlobalHotKeyController {
 
         guard status == noErr, let hotKeyRef else {
             isRegistered = false
-            Self.logger.error("Failed to register global unmount-all hotkey (Control-Command-U): status=\(status, privacy: .public)")
+            Log.hotKey.error("Failed to register global unmount-all hotkey (Control-Command-U): status=\(status)")
             return
         }
 
         eventHotKeyRef = hotKeyRef
         isRegistered = true
-        Self.logger.log("Registered global unmount-all hotkey: Control-Command-U")
+        Log.hotKey.log("Registered global unmount-all hotkey: Control-Command-U")
     }
 
     /// Unregisters the Carbon hotkey if it is currently active.
@@ -128,9 +122,9 @@ final class GlobalHotKeyController {
 
         let status = UnregisterEventHotKey(eventHotKeyRef)
         if status == noErr {
-            Self.logger.log("Unregistered global unmount-all hotkey")
+            Log.hotKey.log("Unregistered global unmount-all hotkey")
         } else {
-            Self.logger.error("Failed to unregister global unmount-all hotkey: status=\(status, privacy: .public)")
+            Log.hotKey.error("Failed to unregister global unmount-all hotkey: status=\(status)")
         }
 
         self.eventHotKeyRef = nil
@@ -145,7 +139,7 @@ final class GlobalHotKeyController {
 
         let status = RemoveEventHandler(eventHandlerRef)
         if status != noErr {
-            Self.logger.error("Failed to remove global hotkey event handler: status=\(status, privacy: .public)")
+            Log.hotKey.error("Failed to remove global hotkey event handler: status=\(status)")
         }
 
         self.eventHandlerRef = nil
@@ -165,7 +159,7 @@ final class GlobalHotKeyController {
         )
 
         guard status == noErr else {
-            Self.logger.error("Failed to read global hotkey event payload: status=\(status, privacy: .public)")
+            Log.hotKey.error("Failed to read global hotkey event payload: status=\(status)")
             return
         }
 
@@ -173,7 +167,7 @@ final class GlobalHotKeyController {
             return
         }
 
-        Self.logger.log("Global unmount-all hotkey pressed")
+        Log.hotKey.log("Global unmount-all hotkey pressed")
         Task { @MainActor [onUnmountAll] in
             onUnmountAll()
         }
