@@ -52,6 +52,10 @@
 		E7C700030000000000000003 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000073 /* Log.swift */; };
 		E7C700040000000000000004 /* VolumeLogLabelFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */; };
 		E7C700050000000000000005 /* Diagnostics in Frameworks */ = {isa = PBXBuildFile; productRef = D4A100A52FB0000100D0A001 /* Diagnostics */; };
+		E7C710010000000000000001 /* VolumeOperationOutcomePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C710020000000000000002 /* VolumeOperationOutcomePolicy.swift */; };
+		E7C710030000000000000003 /* VolumeOperationOutcomePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C710040000000000000004 /* VolumeOperationOutcomePolicyTests.swift */; };
+		E7C710050000000000000005 /* VolumeOperationOutcomePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C710020000000000000002 /* VolumeOperationOutcomePolicy.swift */; };
+		E7C710060000000000000006 /* DAReturn+StatusDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D625C0AA1100ABC001 /* DAReturn+StatusDescription.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -157,6 +161,8 @@
 		E7C700060000000000000006 /* LogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogTests.swift; sourceTree = "<group>"; };
 		E7C700070000000000000007 /* VolumeLogLabelFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeLogLabelFormatterTests.swift; sourceTree = "<group>"; };
 		E7C700080000000000000008 /* EjectifyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EjectifyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E7C710020000000000000002 /* VolumeOperationOutcomePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeOperationOutcomePolicy.swift; sourceTree = "<group>"; };
+		E7C710040000000000000004 /* VolumeOperationOutcomePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeOperationOutcomePolicyTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -277,6 +283,7 @@
 				C0A100000000000000000073 /* Log.swift */,
 				C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */,
 				D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */,
+				E7C710020000000000000002 /* VolumeOperationOutcomePolicy.swift */,
 				C0A100000000000000000012 /* VolumeOperationRouter.swift */,
 				C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */,
 				C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */,
@@ -306,6 +313,7 @@
 			isa = PBXGroup;
 			children = (
 				E7C700060000000000000006 /* LogTests.swift */,
+				E7C710040000000000000004 /* VolumeOperationOutcomePolicyTests.swift */,
 				E7C700070000000000000007 /* VolumeLogLabelFormatterTests.swift */,
 			);
 			path = Helper;
@@ -500,6 +508,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0A100000000000000000061 /* VolumeLogLabelFormatter.swift in Sources */,
+				E7C710010000000000000001 /* VolumeOperationOutcomePolicy.swift in Sources */,
 				C0A100000000000000000071 /* Log.swift in Sources */,
 				C0A100000000000000000051 /* DiskArbitrationVolumeOperator.swift in Sources */,
 				A1B2C3D425C0AA1100ABC001 /* DAReturn+StatusDescription.swift in Sources */,
@@ -546,9 +555,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E7C710060000000000000006 /* DAReturn+StatusDescription.swift in Sources */,
 				E7C700030000000000000003 /* Log.swift in Sources */,
+				E7C710050000000000000005 /* VolumeOperationOutcomePolicy.swift in Sources */,
 				E7C700040000000000000004 /* VolumeLogLabelFormatter.swift in Sources */,
 				E7C700010000000000000001 /* LogTests.swift in Sources */,
+				E7C710030000000000000003 /* VolumeOperationOutcomePolicyTests.swift in Sources */,
 				E7C700020000000000000002 /* VolumeLogLabelFormatterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

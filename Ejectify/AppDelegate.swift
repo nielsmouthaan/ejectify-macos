@@ -86,7 +86,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 volumeName: volume.name,
                 bsdName: volume.bsdName,
                 force: Preference.forceUnmount
-            ) { _ in }
+            ) { _, _, _ in }
         }
 
         statusBar?.refreshMenu()

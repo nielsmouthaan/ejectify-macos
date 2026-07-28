@@ -13,7 +13,7 @@ import AppKit
 final class ActivityController {
 
 
-    /// Volumes still pending automatic remount after a successful automatic unmount.
+    /// Volumes still pending wake-time reconciliation after an automatic unmount attempt.
     private var remountCandidates: [Volume] = []
 
     /// Volume identifiers currently processing an unmount request.
@@ -62,13 +62,6 @@ final class ActivityController {
 
     /// Hard cap for delaying system sleep while waiting for unmount completion.
     private static let maximumSystemSleepDelay: Duration = .seconds(maximumSystemSleepDelaySeconds)
-
-    /// Delays used for automatic remount retries after a failed attempt.
-    private static let remountRetryDelays: [Duration] = [
-        .seconds(3),
-        .seconds(10),
-        .seconds(30)
-    ]
 
     /// Distributed notification posted when the screen lock is engaged.
     private static let screenLockedNotificationName = Notification.Name("com.apple.screenIsLocked")
@@ -271,6 +264,20 @@ final class ActivityController {
         remountCandidates.removeAll { $0.id == volumeID }
     }
 
+    /// Applies the shared candidate-retention policy after an automatic remount workflow event.
+    @discardableResult
+    private func applyRemountCandidateDisposition(
+        after event: VolumeOperationOutcomePolicy.AutomaticRemountCandidateEvent,
+        volumeID: String
+    ) -> VolumeOperationOutcomePolicy.AutomaticRemountCandidateDisposition {
+        let disposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(after: event)
+        if disposition == .remove {
+            removeRemountCandidate(withID: volumeID)
+        }
+
+        return disposition
+    }
+
     /// Applies readiness-state updates from workspace and distributed notifications.
     @objc private func handleMountReadinessNotification(_ notification: Notification) {
         switch notification.name {
@@ -331,14 +338,14 @@ final class ActivityController {
         pendingMountTasks.removeAll()
     }
 
-    /// Schedules an immediate mount task for a volume when one is not already pending.
+    /// Schedules an immediate automatic remount sequence for a volume when one is not already pending.
     private func scheduleMountTask(for volume: Volume) {
         let volumeID = volume.id
         guard pendingMountTasks[volumeID] == nil else {
             return
         }
 
-        Log.volumeOperations.log("Mount request scheduled for \(volume.logLabel)")
+        Log.volumeOperations.log("Automatic remount sequence scheduled for \(volume.logLabel)")
 
         pendingMountTasks[volumeID] = Task { @MainActor [weak self] in
             guard let self else {
@@ -359,54 +366,62 @@ final class ActivityController {
                     return
                 }
 
-                guard DiskArbitrationVolumeOperator.canResolveDisk(volumeUUID: volume.diskUUID, volumeName: volume.name, bsdName: volume.bsdName) else {
-                    Log.volumeOperations.info("Skipping mount retry because disk is no longer available for \(volume.logLabel)")
-                    self.removeRemountCandidate(withID: volumeID)
-                    return
-                }
+                let attemptResult: VolumeOperationOutcomePolicy.AutomaticRemountAttemptResult
 
-                let result: (success: Bool, message: String?, status: DAReturn?) = await withCheckedContinuation { continuation in
-                    VolumeOperationRouter.shared.mount(volumeUUID: volume.diskUUID.map { $0 as NSUUID }, volumeName: volume.name, bsdName: volume.bsdName) { success, message, status in
-                        continuation.resume(returning: (success, message, status))
+                if DiskArbitrationVolumeOperator.canResolveDisk(volumeUUID: volume.diskUUID, volumeName: volume.name, bsdName: volume.bsdName) {
+                    let result: (success: Bool, message: String?, status: DAReturn?) = await withCheckedContinuation { continuation in
+                        VolumeOperationRouter.shared.mount(volumeUUID: volume.diskUUID.map { $0 as NSUUID }, volumeName: volume.name, bsdName: volume.bsdName) { success, message, status in
+                            continuation.resume(returning: (success, message, status))
+                        }
                     }
-                }
 
-                guard !Task.isCancelled else {
-                    return
-                }
+                    guard !Task.isCancelled else {
+                        return
+                    }
 
-                if result.success {
-                    self.removeRemountCandidate(withID: volumeID)
-                    return
-                }
+                    if result.success {
+                        attemptResult = .mountSucceeded
+                    } else {
+                        if let message = result.message, !message.isEmpty {
+                            Log.volumeOperations.error("Mount failed for \(volume.logLabel): \(message)")
+                        } else {
+                            Log.volumeOperations.error("Mount failed for \(volume.logLabel)")
+                        }
 
-                if let message = result.message, !message.isEmpty {
-                    Log.volumeOperations.error("Mount failed for \(volume.logLabel): \(message)")
+                        attemptResult = .mountFailed(status: result.status)
+                    }
                 } else {
-                    Log.volumeOperations.error("Mount failed for \(volume.logLabel)")
+                    let attemptNumber = attemptIndex + 1
+                    Log.volumeOperations.warning("Disk unavailable during automatic remount attempt; attempt=\(attemptNumber); \(volume.logLabel)")
+                    attemptResult = .diskUnavailable
                 }
 
-                guard result.status?.shouldRetryAutomaticRemount ?? true else {
-                    Log.volumeOperations.info("Mount retry skipped due to non-retryable status for \(volume.logLabel)")
-                    self.removeRemountCandidate(withID: volumeID)
+                switch VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(for: attemptResult) {
+                case .succeeded:
+                    self.applyRemountCandidateDisposition(after: .remountSucceeded, volumeID: volumeID)
                     return
-                }
-
-                guard attemptIndex < Self.remountRetryDelays.count else {
-                    Log.volumeOperations.info("Mount retry limit reached for \(volume.logLabel)")
-                    self.removeRemountCandidate(withID: volumeID)
+                case .terminalFailure:
+                    Log.volumeOperations.info("Automatic remount stopped due to non-retryable status for \(volume.logLabel)")
+                    self.applyRemountCandidateDisposition(after: .terminalRemountFailure, volumeID: volumeID)
                     return
-                }
+                case .retryableFailure:
+                    guard let retryDelay = VolumeOperationOutcomePolicy.automaticRemountRetryDelay(afterFailedAttemptAt: attemptIndex) else {
+                        Log.volumeOperations.warning("Automatic remount retry limit reached for \(volume.logLabel)")
+                        self.applyRemountCandidateDisposition(after: .retryExhausted, volumeID: volumeID)
+                        return
+                    }
 
-                let retryNumber = attemptIndex + 1
-                let retryDelay = Self.remountRetryDelays[attemptIndex]
-                attemptIndex += 1
-                Log.volumeOperations.info("Scheduling mount retry \(retryNumber)/\(Self.remountRetryDelays.count) for \(volume.logLabel)")
+                    let retryNumber = attemptIndex + 1
+                    attemptIndex += 1
+                    Log.volumeOperations.info("Scheduling automatic remount retry \(retryNumber)/\(VolumeOperationOutcomePolicy.automaticRemountRetryDelays.count) for \(volume.logLabel)")
 
-                do {
-                    try await Task.sleep(for: retryDelay)
-                } catch {
-                    return
+                    do {
+                        try await Task.sleep(for: retryDelay)
+                    } catch {
+                        self.applyRemountCandidateDisposition(after: .retryCancelled, volumeID: volumeID)
+                        Log.volumeOperations.info("Automatic remount retry cancelled; preserving candidate for \(volume.logLabel)")
+                        return
+                    }
                 }
             }
         }
@@ -568,7 +583,7 @@ final class ActivityController {
 
         inFlightUnmounts.insert(volumeID)
         Log.volumeOperations.log("Unmount request scheduled for \(volume.logLabel)")
-        VolumeOperationRouter.shared.unmount(volumeUUID: volume.diskUUID.map { $0 as NSUUID }, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success in
+        VolumeOperationRouter.shared.unmount(volumeUUID: volume.diskUUID.map { $0 as NSUUID }, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success, _, status in
             Task { @MainActor [weak self] in
                 guard let self else {
                     completion(success)
@@ -576,8 +591,15 @@ final class ActivityController {
                 }
 
                 self.inFlightUnmounts.remove(volumeID)
-                if !success {
-                    self.removeRemountCandidate(withID: volumeID)
+                let candidateDisposition = self.applyRemountCandidateDisposition(
+                    after: .unmountCompleted(success: success, status: status),
+                    volumeID: volumeID
+                )
+                if candidateDisposition == .remove {
+                    let statusDescription = status?.statusDescription ?? "none"
+                    Log.volumeOperations.info("Remount candidate removed after definitive unmount failure; status=\(statusDescription); \(volume.logLabel)")
+                } else if !success {
+                    Log.volumeOperations.info("Preserving remount candidate after indeterminate unmount result for \(volume.logLabel)")
                 }
                 let completions = self.pendingUnmountCompletions.removeValue(forKey: volumeID) ?? []
                 completions.forEach { $0(success) }

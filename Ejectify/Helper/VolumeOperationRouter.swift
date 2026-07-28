@@ -461,16 +461,14 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
-    /// Requests an unmount operation with a BSD-name hint, routed by the active execution mode.
-    func unmount(volumeUUID: NSUUID?, volumeName: String, bsdName: String, force: Bool, completion: @escaping (Bool) -> Void) {
+    /// Requests an unmount operation with a BSD-name hint and returns optional operation details.
+    func unmount(volumeUUID: NSUUID?, volumeName: String, bsdName: String, force: Bool, completion: @escaping (Bool, String?, DAReturn?) -> Void) {
         routeOperation(
             operation: .unmount(force: force),
             volumeUUID: volumeUUID,
             volumeName: volumeName,
             bsdName: bsdName,
-            completion: { success, _, _ in
-                completion(success)
-            }
+            completion: completion
         ) { proxy, reply in
             proxy.unmount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, force: force, withReply: reply)
         }
@@ -654,7 +652,10 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
 
         request(proxy) { success, message, statusRawValue in
-            let status: DAReturn? = success ? nil : statusRawValue
+            let status = VolumeOperationOutcomePolicy.normalizedHelperStatus(
+                success: success,
+                rawStatus: statusRawValue
+            )
             Self.logOperationResult(
                 source: "Privileged helper",
                 operation: operation,
