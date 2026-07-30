@@ -84,6 +84,11 @@ enum VolumeOperationOutcomePolicy {
                 return .retryableFailure
             }
 
+            // A disk can disappear after the availability check and return while the retry sequence is still active.
+            if status == Int32(kDAReturnNotFound) {
+                return .retryableFailure
+            }
+
             return status.shouldRetryAutomaticRemount ? .retryableFailure : .terminalFailure
         }
     }

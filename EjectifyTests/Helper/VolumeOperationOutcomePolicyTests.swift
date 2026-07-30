@@ -119,6 +119,14 @@ struct VolumeOperationOutcomePolicyTests {
         #expect(outcome == .retryableFailure)
     }
 
+    @Test func missingDiskMountStatusIsRetryable() {
+        let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
+            for: .mountFailed(status: Int32(kDAReturnNotFound))
+        )
+
+        #expect(outcome == .retryableFailure)
+    }
+
     @Test func nonRetryableMountStatusIsTerminal() {
         let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
             for: .mountFailed(status: Int32(kDAReturnUnsupported))
