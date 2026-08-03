@@ -2,10 +2,8 @@
 
 ## 2.0.7
 
-- Improved automatic remount retries for volumes that take time to reappear after wake.
-- Kept managed volumes pending for wake reconciliation after unsuccessful automatic unmounts.
-- Improved diagnostics for UNIX-encoded resource-busy errors.
-- Updated the header image.
+- Improved automatic remount reliability for volumes that take time to become available or unmount later than expected around sleep and wake.
+- Improved diagnostics reports with clearer app, privileged helper, and macOS disk-operation logs.
 
 ## 2.0.6
 

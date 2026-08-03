@@ -20,6 +20,12 @@ Ejectify is a macOS menu bar utility that helps users avoid “Disk Not Ejected 
 - Use [XcodeBuildMCP's CLI](https://github.com/getsentry/XcodeBuildMCP/blob/main/docs/CLI.md) (`xcodebuildmcp`) for building, testing and running the project. Use "Ejectify" as scheme and "./Ejectify.xcodeproj" as project path.
 - When notarizing Ejectify, use the `ejectify-notary` notarytool keychain profile, for example `./release/release.sh --notary-profile ejectify-notary`.
 
+### Changelog instructions
+
+- Build each release entry from the user-facing changes since the previous released version or tag, not from the most recent commit alone.
+- Describe shipped features, fixes, compatibility changes, and support-relevant diagnostics improvements in terms of their user-visible outcome.
+- Exclude documentation-only changes, repository assets that are not bundled with the app, tests, refactors, and internal development or release tooling unless they materially change the installed app's behavior.
+
 ### File organization instructions
 
 - Keep the existing simple structure unless there is a clear reason to change it.
