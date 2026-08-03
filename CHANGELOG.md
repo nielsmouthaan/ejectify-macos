@@ -1,13 +1,10 @@
 # Changelog
 
-## 2.0.8
+## 2.0.7
 
 - Improved automatic remount retries for volumes that take time to reappear after wake.
 - Kept managed volumes pending for wake reconciliation after unsuccessful automatic unmounts.
 - Improved diagnostics for UNIX-encoded resource-busy errors.
-
-## 2.0.7
-
 - Updated the header image.
 
 ## 2.0.6
