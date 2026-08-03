@@ -11,6 +11,11 @@ import Testing
 
 struct VolumeOperationOutcomePolicyTests {
 
+    struct UnmountCompletion: Sendable {
+        let success: Bool
+        let status: DAReturn?
+    }
+
     @Test func failedHelperResultWithoutStatusNormalizesToNil() {
         let status = VolumeOperationOutcomePolicy.normalizedHelperStatus(
             success: false,
@@ -38,28 +43,24 @@ struct VolumeOperationOutcomePolicyTests {
         #expect(status == nil)
     }
 
-    @Test func indeterminateUnmountFailurePreservesRemountCandidate() {
+    @Test(arguments: [
+        UnmountCompletion(success: true, status: nil),
+        UnmountCompletion(success: false, status: nil),
+        UnmountCompletion(success: false, status: Int32(kDAReturnBusy)),
+        UnmountCompletion(success: false, status: 49_168),
+        UnmountCompletion(success: false, status: Int32(kDAReturnNotPermitted)),
+        UnmountCompletion(success: false, status: Int32(kDAReturnUnsupported))
+    ])
+    func automaticUnmountCompletionAlwaysPreservesRemountCandidate(_ completion: UnmountCompletion) {
         let disposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(
-            after: .unmountCompleted(success: false, status: nil)
+            after: .unmountCompleted(success: completion.success, status: completion.status)
         )
 
         #expect(disposition == .preserve)
     }
 
-    @Test func definitiveUnmountFailureRemovesRemountCandidate() {
-        let disposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(
-            after: .unmountCompleted(success: false, status: Int32(kDAReturnBusy))
-        )
-
-        #expect(disposition == .remove)
-    }
-
-    @Test func successfulUnmountPreservesRemountCandidate() {
-        let disposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(
-            after: .unmountCompleted(success: true, status: nil)
-        )
-
-        #expect(disposition == .preserve)
+    @Test func encodedUnixBusyStatusHasRecognizableDescription() {
+        #expect(DAReturn(49_168).statusDescription == "EBUSY (Resource busy)")
     }
 
     @Test func retryCancellationPreservesRemountCandidate() {
@@ -141,6 +142,22 @@ struct VolumeOperationOutcomePolicyTests {
         )
 
         #expect(outcome == .succeeded)
+    }
+
+    @Test func busyUnmountRemainsPendingUntilWakeReconciliationSucceeds() {
+        let unmountDisposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(
+            after: .unmountCompleted(success: false, status: 49_168)
+        )
+        let wakeOutcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
+            for: .mountSucceeded
+        )
+        let reconciledDisposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(
+            after: .remountSucceeded
+        )
+
+        #expect(unmountDisposition == .preserve)
+        #expect(wakeOutcome == .succeeded)
+        #expect(reconciledDisposition == .remove)
     }
 
     @Test func retryScheduleUsesExistingDelaysBeforeExhaustion() {

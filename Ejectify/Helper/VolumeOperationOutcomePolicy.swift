@@ -11,7 +11,7 @@ import Foundation
 /// Normalizes routed operation results and defines automatic remount retry decisions.
 enum VolumeOperationOutcomePolicy {
 
-    /// Describes whether an automatic remount candidate remains pending after unmount completion.
+    /// Describes whether an automatic wake-reconciliation candidate remains pending.
     enum AutomaticRemountCandidateDisposition: Equatable {
         case preserve
         case remove
@@ -61,8 +61,10 @@ enum VolumeOperationOutcomePolicy {
         after event: AutomaticRemountCandidateEvent
     ) -> AutomaticRemountCandidateDisposition {
         switch event {
-        case .unmountCompleted(let success, let status):
-            return success || status == nil ? .preserve : .remove
+        case .unmountCompleted:
+            // The unmount result describes only the immediate request. The volume can still
+            // disappear during sleep, so its actual state must be reconciled after wake.
+            return .preserve
         case .retryCancelled:
             return .preserve
         case .remountSucceeded, .terminalRemountFailure, .retryExhausted:

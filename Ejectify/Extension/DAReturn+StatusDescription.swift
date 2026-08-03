@@ -54,8 +54,12 @@ extension DAReturn {
         case Int32(kDAReturnUnsupported):
             return "kDAReturnUnsupported"
         default:
-            if let description = unixErrorDescription {
-                return "Unknown (\(self): \(description))"
+            if let unixError {
+                if unixError.code == Int32(EBUSY) {
+                    return "EBUSY (Resource busy)"
+                }
+
+                return "Unknown (\(self): \(unixError.description))"
             }
 
             return "Unknown (\(self))"
@@ -95,8 +99,8 @@ extension DAReturn {
         return (system: system, subsystem: subsystem, code: code)
     }
 
-    /// Decodes a UNIX-encoded Mach error (`unix_err(errno)`) into a dynamic `strerror` message.
-    private var unixErrorDescription: String? {
+    /// Decodes a UNIX-encoded Mach error (`unix_err(errno)`) into its errno and description.
+    private var unixError: (code: Int32, description: String)? {
         let components = machErrorComponents
 
         // `unix_err(errno)` is encoded as err_kern (system 0), subsystem 3, and errno in low 14 bits.
@@ -105,11 +109,12 @@ extension DAReturn {
             return nil
         }
 
-        guard let messagePointer = strerror(Int32(components.code)) else {
+        let code = Int32(components.code)
+        guard let messagePointer = strerror(code) else {
             return nil
         }
 
         let message = String(cString: messagePointer)
-        return message.isEmpty ? nil : message
+        return message.isEmpty ? nil : (code, message)
     }
 }

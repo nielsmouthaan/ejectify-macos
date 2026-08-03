@@ -591,15 +591,13 @@ final class ActivityController {
                 }
 
                 self.inFlightUnmounts.remove(volumeID)
-                let candidateDisposition = self.applyRemountCandidateDisposition(
+                self.applyRemountCandidateDisposition(
                     after: .unmountCompleted(success: success, status: status),
                     volumeID: volumeID
                 )
-                if candidateDisposition == .remove {
+                if !success {
                     let statusDescription = status?.statusDescription ?? "none"
-                    Log.volumeOperations.info("Remount candidate removed after definitive unmount failure; status=\(statusDescription); \(volume.logLabel)")
-                } else if !success {
-                    Log.volumeOperations.info("Preserving remount candidate after indeterminate unmount result for \(volume.logLabel)")
+                    Log.volumeOperations.info("Automatic unmount failed; preserving candidate for wake reconciliation; status=\(statusDescription); \(volume.logLabel)")
                 }
                 let completions = self.pendingUnmountCompletions.removeValue(forKey: volumeID) ?? []
                 completions.forEach { $0(success) }
