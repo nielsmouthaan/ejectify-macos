@@ -17,7 +17,7 @@ extension Notification.Name {
 /// Routes volume operations to the privileged helper when available, with local fallback.
 final class VolumeOperationRouter: @unchecked Sendable {
 
-    /// Describes where mount/unmount requests are currently executed.
+    /// Describes where disk-operation requests are currently executed.
     enum ExecutionMode: String {
         case local
         case privilegedHelper
@@ -103,7 +103,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
     }
 
 
-    /// Queue used for local mount/unmount operations.
+    /// Queue used for local disk operations.
     private let localOperationQueue = DispatchQueue(
         label: "nl.nielsmouthaan.Ejectify.LocalDiskOperation",
         qos: .userInitiated,
@@ -137,12 +137,12 @@ final class VolumeOperationRouter: @unchecked Sendable {
         PrivilegedHelperLifecycleManager.shared.isDaemonEnabled
     }
 
-    /// Returns the active execution mode for mount and unmount routing.
+    /// Returns the active execution mode for disk-operation routing.
     var executionMode: ExecutionMode {
         withStateLock { executionModeStorage }
     }
 
-    /// Returns whether mount and unmount requests are currently routed through the privileged helper.
+    /// Returns whether disk-operation requests are currently routed through the privileged helper.
     var isUsingPrivilegedHelper: Bool {
         executionMode == .privilegedHelper
     }
@@ -157,7 +157,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         withStateLock { helperConnection != nil }
     }
 
-    /// Logs a mount/unmount outcome with a consistent format used by privileged helper and local execution paths.
+    /// Logs a disk-operation outcome with a consistent format used by privileged helper and local execution paths.
     private nonisolated static func logOperationResult(
         source: String,
         operation: DiskArbitrationVolumeOperator.Operation,
@@ -474,6 +474,19 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
+    /// Requests a whole-disk eject operation with a BSD-name hint and returns optional operation details.
+    func eject(volumeUUID: NSUUID?, volumeName: String, bsdName: String, completion: @escaping (Bool, String?, DAReturn?) -> Void) {
+        routeOperation(
+            operation: .eject,
+            volumeUUID: volumeUUID,
+            volumeName: volumeName,
+            bsdName: bsdName,
+            completion: completion
+        ) { proxy, reply in
+            proxy.eject(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, withReply: reply)
+        }
+    }
+
     /// Updates the system setting that controls "Disk Not Ejected Properly" notifications.
     func setEjectNotificationsMuted(_ muted: Bool, completion: @escaping (Bool, String?) -> Void) {
         let completionBox = ToggleSettingCompletionBox(completion: completion)
@@ -556,7 +569,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
-    /// Routes mount/unmount requests to privileged helper or local execution based on current mode.
+    /// Routes disk-operation requests to privileged helper or local execution based on current mode.
     private func routeOperation(
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeUUID: NSUUID?,
@@ -669,7 +682,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
-    /// Executes mount/unmount in the app process when privileged helper routing is unavailable.
+    /// Executes a disk operation in the app process when privileged helper routing is unavailable.
     private func performLocalDiskOperation(
         operation: DiskArbitrationVolumeOperator.Operation,
         volumeUUID: NSUUID?,

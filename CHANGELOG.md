@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.0
+
+- Added an opt-in whole-disk eject mode for automatically and manually ejecting selected devices without attempting to remount them.
+- Added automatic unlocking and remounting of encrypted APFS volumes using a saved Keychain password or a secure password prompt.
+
 ## 2.0.7
 
 - Improved automatic remount reliability for volumes that take time to become available or unmount later than expected around sleep and wake.

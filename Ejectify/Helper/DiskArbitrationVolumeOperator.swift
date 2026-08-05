@@ -8,7 +8,7 @@
 import Foundation
 @preconcurrency import DiskArbitration
 
-/// Performs mount and unmount requests via Disk Arbitration for volume metadata.
+/// Performs mount, unmount, and whole-disk eject requests via Disk Arbitration.
 enum DiskArbitrationVolumeOperator {
 
     /// Creates configured Disk Arbitration sessions for shared app/helper usage.
@@ -62,6 +62,7 @@ enum DiskArbitrationVolumeOperator {
     enum Operation {
         case mount
         case unmount(force: Bool)
+        case eject
 
         /// Human-readable operation name used in logs and error messages.
         var operationName: String {
@@ -70,6 +71,8 @@ enum DiskArbitrationVolumeOperator {
                 return "mount"
             case .unmount(let force):
                 return force ? "forced unmount" : "unmount"
+            case .eject:
+                return "eject"
             }
         }
     }
@@ -136,6 +139,25 @@ enum DiskArbitrationVolumeOperator {
         switch operation {
         case .mount:
             DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), { _, dissenter, context in
+                guard let context else {
+                    return
+                }
+
+                let callbackState = Unmanaged<CallbackState>.fromOpaque(context).takeRetainedValue()
+                callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter)
+                callbackState.semaphore.signal()
+            }, callbackContext)
+        case .eject:
+            guard let wholeDisk = DADiskCopyWholeDisk(disk) else {
+                Unmanaged<CallbackState>.fromOpaque(callbackContext).release()
+                return OperationResult(
+                    success: false,
+                    message: "Whole disk for requested volume not found",
+                    status: Int32(kDAReturnNotFound)
+                )
+            }
+
+            DADiskEject(wholeDisk, DADiskEjectOptions(kDADiskEjectOptionDefault), { _, dissenter, context in
                 guard let context else {
                     return
                 }

@@ -73,6 +73,7 @@ struct VolumeOperationOutcomePolicyTests {
 
     @Test func completedAndTerminalRemountEventsRemoveCandidate() {
         let events: [VolumeOperationOutcomePolicy.AutomaticRemountCandidateEvent] = [
+            .ejectModeEnabled,
             .remountSucceeded,
             .terminalRemountFailure,
             .retryExhausted
@@ -166,5 +167,32 @@ struct VolumeOperationOutcomePolicyTests {
         }
 
         #expect(delays == [.seconds(3), .seconds(10), .seconds(30), nil])
+    }
+
+    @Test func terminalEncryptedAPFSFailureRequestsUnlockInUnmountMode() {
+        let action = VolumeOperationOutcomePolicy.automaticRemountTerminalAction(
+            isEncrypted: true,
+            isAPFS: true,
+            ejectModeEnabled: false
+        )
+
+        #expect(action == .unlockEncryptedAPFS)
+    }
+
+    @Test(arguments: [
+        (isEncrypted: false, isAPFS: true, ejectModeEnabled: false),
+        (isEncrypted: true, isAPFS: false, ejectModeEnabled: false),
+        (isEncrypted: true, isAPFS: true, ejectModeEnabled: true)
+    ])
+    func terminalFailureDoesNotUnlockOutsideEncryptedAPFSUnmountMode(
+        fixture: (isEncrypted: Bool, isAPFS: Bool, ejectModeEnabled: Bool)
+    ) {
+        let action = VolumeOperationOutcomePolicy.automaticRemountTerminalAction(
+            isEncrypted: fixture.isEncrypted,
+            isAPFS: fixture.isAPFS,
+            ejectModeEnabled: fixture.ejectModeEnabled
+        )
+
+        #expect(action == .finish)
     }
 }

@@ -142,8 +142,11 @@ final class StatusBarMenu: NSMenu {
         let isHotKeyRegistered = MainActor.assumeIsolated {
             AppDelegate.shared.isUnmountAllHotKeyRegistered
         }
+        let allVolumesActionTitle = Preference.ejectInsteadOfUnmount
+            ? String(localized: "Eject all")
+            : String(localized: "Unmount all")
         let unmountAllItem = NSMenuItem(
-            title: String(localized: "Unmount all"),
+            title: allVolumesActionTitle,
             action: #selector(unmountAllClicked(menuItem:)),
             keyEquivalent: isHotKeyRegistered ? "u" : ""
         )
@@ -190,13 +193,26 @@ final class StatusBarMenu: NSMenu {
         launchAtLoginItem.state = Preference.launchAtLogin ? .on : .off
         addItem(launchAtLoginItem)
 
-        let unmountWhenItem = NSMenuItem(title: String(localized: "Unmount when"), action: nil, keyEquivalent: "")
+        let unmountWhenTitle = Preference.ejectInsteadOfUnmount
+            ? String(localized: "Eject when")
+            : String(localized: "Unmount when")
+        let unmountWhenItem = NSMenuItem(title: unmountWhenTitle, action: nil, keyEquivalent: "")
         unmountWhenItem.submenu = buildUnmountWhenMenu()
         addItem(unmountWhenItem)
+
+        let ejectInsteadOfUnmountItem = NSMenuItem(
+            title: String(localized: "Eject instead of unmount"),
+            action: #selector(ejectInsteadOfUnmountClicked(menuItem:)),
+            keyEquivalent: ""
+        )
+        ejectInsteadOfUnmountItem.target = self
+        ejectInsteadOfUnmountItem.state = Preference.ejectInsteadOfUnmount ? .on : .off
+        addItem(ejectInsteadOfUnmountItem)
 
         let forceUnmountItem = NSMenuItem(title: String(localized: "Force unmount"), action: #selector(forceUnmountClicked(menuItem:)), keyEquivalent: "")
         forceUnmountItem.target = self
         forceUnmountItem.state = Preference.forceUnmount ? .on : .off
+        forceUnmountItem.isEnabled = !Preference.ejectInsteadOfUnmount
         addItem(forceUnmountItem)
 
         let elevatedPermissionsItem = NSMenuItem(title: String(localized: "Use elevated permissions"), action: #selector(elevatedPermissionsClicked(menuItem:)), keyEquivalent: "")
@@ -246,7 +262,10 @@ final class StatusBarMenu: NSMenu {
 
     /// Builds the submenu for selecting the unmount trigger condition.
     private func buildUnmountWhenMenu() -> NSMenu {
-        let unmountWhenMenu = NSMenu(title: String(localized: "Unmount when"))
+        let title = Preference.ejectInsteadOfUnmount
+            ? String(localized: "Eject when")
+            : String(localized: "Unmount when")
+        let unmountWhenMenu = NSMenu(title: title)
         unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "System starts sleeping"), unmountWhen: .systemStartsSleeping))
         unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "Display turned off"), unmountWhen: .screensStartedSleeping))
         unmountWhenMenu.addItem(makeUnmountWhenMenuItem(title: String(localized: "Screen is locked"), unmountWhen: .screenIsLocked))
@@ -355,6 +374,12 @@ final class StatusBarMenu: NSMenu {
     /// Toggles force-unmount preference from the menu.
     @objc private func forceUnmountClicked(menuItem: NSMenuItem) {
         Preference.forceUnmount = toggledValue(for: menuItem.state)
+        updateMenu()
+    }
+
+    /// Toggles whole-disk eject mode from the menu.
+    @objc private func ejectInsteadOfUnmountClicked(menuItem: NSMenuItem) {
+        Preference.ejectInsteadOfUnmount = toggledValue(for: menuItem.state)
         updateMenu()
     }
 

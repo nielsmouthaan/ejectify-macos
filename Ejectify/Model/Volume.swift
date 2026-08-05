@@ -48,8 +48,17 @@ final class Volume {
     /// BSD disk identifier associated with this volume (for example `disk6s2`).
     let bsdName: String
 
+    /// BSD identifier for the parent whole disk used to deduplicate eject requests.
+    let wholeDiskBSDName: String
+
     /// Category used for grouping volumes in the status-bar menu.
     let category: Category
+
+    /// Indicates whether Disk Arbitration reports the volume media as encrypted.
+    let isEncrypted: Bool
+
+    /// Indicates whether Disk Arbitration reports the volume kind as APFS.
+    let isAPFS: Bool
 
     /// Privacy-safe volume correlation fields for logs.
     var logLabel: String {
@@ -76,13 +85,26 @@ final class Volume {
     }
 
     /// Creates a managed volume model from resolved Disk Arbitration metadata.
-    init(id: String, diskUUID: UUID?, name: String, url: URL, bsdName: String, category: Category) {
+    init(
+        id: String,
+        diskUUID: UUID?,
+        name: String,
+        url: URL,
+        bsdName: String,
+        wholeDiskBSDName: String,
+        category: Category,
+        isEncrypted: Bool,
+        isAPFS: Bool
+    ) {
         self.id = id
         self.diskUUID = diskUUID
         self.name = name
         self.url = url
         self.bsdName = bsdName
+        self.wholeDiskBSDName = wholeDiskBSDName
         self.category = category
+        self.isEncrypted = isEncrypted
+        self.isAPFS = isAPFS
     }
 
     /// Returns currently mounted volumes that Ejectify can manage.
@@ -135,6 +157,8 @@ final class Volume {
         }
 
         let isMediaEjectable = (diskInfo[kDADiskDescriptionMediaEjectableKey] as? Bool) ?? false
+        let isEncrypted = (diskInfo[kDADiskDescriptionMediaEncryptedKey] as? Bool) ?? false
+        let isAPFS = (diskInfo[kDADiskDescriptionVolumeKindKey] as? String) == "apfs"
 
         // Include disk images, macOS-ejectable media, and external devices such as Thunderbolt SSDs whose media is not classified as ejectable but can still be unmounted.
         guard category == .diskImage || isMediaEjectable || category == .external else {
@@ -145,7 +169,38 @@ final class Volume {
             Log.volumeOperations.info("Managing volume without Disk Arbitration UUID; \(VolumeLogLabelFormatter.label(uuid: nil, bsdName: bsdName))")
         }
 
-        return Volume(id: id, diskUUID: diskUUID, name: name, url: url, bsdName: bsdName, category: category)
+        return Volume(
+            id: id,
+            diskUUID: diskUUID,
+            name: name,
+            url: url,
+            bsdName: bsdName,
+            wholeDiskBSDName: wholeDiskBSDName(for: disk, fallbackBSDName: bsdName),
+            category: category,
+            isEncrypted: isEncrypted,
+            isAPFS: isAPFS
+        )
+    }
+
+    /// Returns one representative volume per parent whole disk, preserving input order.
+    static func uniqueWholeDiskRepresentatives(from volumes: [Volume]) -> [Volume] {
+        var seenWholeDiskBSDNames: Set<String> = []
+
+        return volumes.filter { volume in
+            seenWholeDiskBSDNames.insert(volume.wholeDiskBSDName).inserted
+        }
+    }
+
+    /// Resolves the parent whole-disk BSD identifier for a Disk Arbitration disk.
+    private static func wholeDiskBSDName(for disk: DADisk, fallbackBSDName: String) -> String {
+        guard let wholeDisk = DADiskCopyWholeDisk(disk),
+              let wholeDiskInfo = DADiskCopyDescription(wholeDisk) as? [NSString: Any],
+              let wholeDiskBSDName = wholeDiskInfo[kDADiskDescriptionMediaBSDNameKey] as? String,
+              !wholeDiskBSDName.isEmpty else {
+            return fallbackBSDName
+        }
+
+        return wholeDiskBSDName
     }
 
     /// Returns the best user-visible name for a mounted volume.

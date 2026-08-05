@@ -8,7 +8,7 @@
 import AppKit
 @preconcurrency import DiskArbitration
 
-/// Responds to sleep/lock/display events by unmounting and remounting enabled volumes.
+/// Responds to sleep/lock/display events by unmounting or ejecting enabled volumes and remounting when applicable.
 @MainActor
 final class ActivityController {
 
@@ -19,23 +19,38 @@ final class ActivityController {
     /// Volume identifiers currently processing an unmount request.
     private var inFlightUnmounts: Set<String> = []
 
+    /// Whole-disk BSD names currently processing an eject request.
+    private var inFlightEjects: Set<String> = []
+
     /// Pending mount tasks keyed by volume identifier.
     private var pendingMountTasks: [String: Task<Void, Never>] = [:]
 
     /// Pending completion handlers for each in-flight unmount keyed by volume identifier.
     private var pendingUnmountCompletions: [String: [(Bool) -> Void]] = [:]
 
+    /// Pending completion handlers for each in-flight eject keyed by whole-disk BSD name.
+    private var pendingEjectCompletions: [String: [(Bool) -> Void]] = [:]
+
+    /// Store used for encrypted APFS volume unlock passwords.
+    private let encryptedVolumeCredentialStore = EncryptedVolumeCredentialStore.shared
+
+    /// Unlocker used when an encrypted APFS volume remains locked after a terminal mount failure.
+    private let encryptedVolumeUnlocker = APFSEncryptedVolumeUnlocker.shared
+
+    /// Prompt used to ask for encrypted volume passwords when needed.
+    private let encryptedVolumePasswordPrompt = EncryptedVolumePasswordPrompt()
+
     /// Handles IOKit system sleep callbacks used to temporarily delay system sleep.
     private var systemSleepPowerObserver: SystemSleepPowerObserver?
 
-    /// Pending system-sleep token currently held while unmount requests run.
+    /// Pending system-sleep token currently held while disk-operation requests run.
     private var pendingSystemSleepToken: Int?
 
     /// Timeout task that enforces the maximum system sleep delay.
     private var pendingSystemSleepTimeoutTask: Task<Void, Never>?
 
-    /// Unmount task started for the pending system sleep token.
-    private var pendingSystemSleepUnmountTask: Task<Void, Never>?
+    /// Disk-operation task started for the pending system sleep token.
+    private var pendingSystemSleepDiskOperationTask: Task<Void, Never>?
 
     /// Tracks whether the machine is currently awake enough to permit remounting.
     private var systemAwake = true
@@ -57,10 +72,10 @@ final class ActivityController {
         systemAwake && displayAwake && sessionActive && !screenLocked && !screensaverActive
     }
 
-    /// Maximum number of seconds sleep may be deferred while unmounting.
+    /// Maximum number of seconds sleep may be deferred while disk operations run.
     private static let maximumSystemSleepDelaySeconds = 10
 
-    /// Hard cap for delaying system sleep while waiting for unmount completion.
+    /// Hard cap for delaying system sleep while waiting for disk-operation completion.
     private static let maximumSystemSleepDelay: Duration = .seconds(maximumSystemSleepDelaySeconds)
 
     /// Distributed notification posted when the screen lock is engaged.
@@ -93,15 +108,40 @@ final class ActivityController {
         Log.powerEvents.log("Monitoring configured; trigger=\(Preference.unmountWhen.rawValue)")
     }
 
-    /// Unmounts all currently enabled volumes and tracks attempted unmounts for remount attempts.
+    /// Handles all currently enabled volumes using the configured automatic disk operation.
     @objc func unmountVolumes(notification: Notification) {
-        Log.powerEvents.log("Unmount trigger received; notification=\(notification.name.rawValue)")
+        Log.powerEvents.log("Disk operation trigger received; notification=\(notification.name.rawValue)")
         let enabledVolumes = Volume.mountedVolumes().filter(\.enabled)
+
+        guard !Preference.ejectInsteadOfUnmount else {
+            clearRemountStateForEjectMode()
+            let representatives = Volume.uniqueWholeDiskRepresentatives(from: enabledVolumes)
+            Log.volumeOperations.log("Automatic eject batch started: \(representatives.count) whole disk(s) for \(enabledVolumes.count) enabled volume(s)")
+
+            for volume in representatives {
+                requestEject(for: volume) { _ in }
+            }
+            return
+        }
+
         mergeRemountCandidates(with: enabledVolumes, reason: "Unmount trigger received")
 
         for volume in enabledVolumes {
             requestUnmount(for: volume) { _ in }
         }
+    }
+
+    /// Cancels pending mounts and clears remount candidates because ejected disks cannot be remounted automatically.
+    func clearRemountStateForEjectMode() {
+        let candidateCount = remountCandidates.count
+        cancelAllPendingMountTasks(reason: "Eject mode enabled")
+        remountCandidates.removeAll()
+
+        guard candidateCount > 0 else {
+            return
+        }
+
+        Log.volumeOperations.log("Remount candidates cleared because eject mode is enabled: count=\(candidateCount)")
     }
 
     /// Registers only the selected unmount trigger while remounting remains readiness-based.
@@ -209,6 +249,12 @@ final class ActivityController {
 
     /// Triggers one fire-and-forget mount pass for all remount candidates.
     private func triggerMountPass() {
+        guard !Preference.ejectInsteadOfUnmount else {
+            clearRemountStateForEjectMode()
+            Log.volumeOperations.info("Mount pass skipped because eject mode is enabled")
+            return
+        }
+
         guard !self.remountCandidates.isEmpty else {
             Log.volumeOperations.info("Mount pass skipped: no remount candidates")
             return
@@ -358,6 +404,11 @@ final class ActivityController {
             var attemptIndex = 0
 
             while !Task.isCancelled {
+                guard !Preference.ejectInsteadOfUnmount else {
+                    self.clearRemountStateForEjectMode()
+                    return
+                }
+
                 guard self.isReadyToMount else {
                     return
                 }
@@ -401,6 +452,21 @@ final class ActivityController {
                     self.applyRemountCandidateDisposition(after: .remountSucceeded, volumeID: volumeID)
                     return
                 case .terminalFailure:
+                    let terminalAction = VolumeOperationOutcomePolicy.automaticRemountTerminalAction(
+                        isEncrypted: volume.isEncrypted,
+                        isAPFS: volume.isAPFS,
+                        ejectModeEnabled: Preference.ejectInsteadOfUnmount
+                    )
+
+                    if terminalAction == .unlockEncryptedAPFS {
+                        let didUnlock = await self.unlockEncryptedVolume(for: volume)
+                        let event: VolumeOperationOutcomePolicy.AutomaticRemountCandidateEvent = didUnlock
+                            ? .remountSucceeded
+                            : .terminalRemountFailure
+                        self.applyRemountCandidateDisposition(after: event, volumeID: volumeID)
+                        return
+                    }
+
                     Log.volumeOperations.info("Automatic remount stopped due to non-retryable status for \(volume.logLabel)")
                     self.applyRemountCandidateDisposition(after: .terminalRemountFailure, volumeID: volumeID)
                     return
@@ -427,7 +493,130 @@ final class ActivityController {
         }
     }
 
-    /// Starts IOKit power monitoring used to delay sleep while unmounting volumes.
+    /// Attempts to unlock and mount an encrypted APFS volume using Keychain first, then a user prompt.
+    private func unlockEncryptedVolume(for volume: Volume) async -> Bool {
+        guard !Preference.ejectInsteadOfUnmount, !Task.isCancelled else {
+            return false
+        }
+
+        do {
+            if let savedPassword = try encryptedVolumeCredentialStore.password(for: volume.id) {
+                Log.volumeOperations.info("Trying saved encrypted APFS password for \(volume.logLabel)")
+                let result = await encryptedVolumeUnlocker.unlock(
+                    request: APFSEncryptedVolumeUnlocker.UnlockRequest(volume: volume),
+                    password: savedPassword
+                )
+
+                switch result {
+                case .success:
+                    return true
+                case .invalidPassword:
+                    Log.volumeOperations.warning("Saved encrypted APFS password was rejected for \(volume.logLabel)")
+                    deleteEncryptedVolumePassword(for: volume)
+                    return await promptForEncryptedVolumePassword(
+                        for: volume,
+                        previousFailure: String(localized: "The saved password for \"\(volume.name)\" no longer works.")
+                    )
+                case .failed(let message):
+                    showEncryptedVolumeUnlockFailure(for: volume, details: message)
+                    return false
+                }
+            }
+        } catch {
+            Log.volumeOperations.error(error, message: "Encrypted APFS password could not be read from Keychain for \(volume.logLabel)")
+            return await promptForEncryptedVolumePassword(
+                for: volume,
+                previousFailure: String(localized: "Ejectify could not read the saved password from Keychain.")
+            )
+        }
+
+        return await promptForEncryptedVolumePassword(for: volume, previousFailure: nil)
+    }
+
+    /// Prompts for an encrypted APFS password until unlock succeeds or the user cancels.
+    private func promptForEncryptedVolumePassword(for volume: Volume, previousFailure: String?) async -> Bool {
+        var promptFailure = previousFailure
+
+        while !Task.isCancelled, !Preference.ejectInsteadOfUnmount {
+            guard let response = encryptedVolumePasswordPrompt.requestPassword(
+                for: volume,
+                previousFailure: promptFailure
+            ) else {
+                Log.volumeOperations.info("Encrypted APFS unlock cancelled for \(volume.logLabel)")
+                return false
+            }
+
+            let result = await encryptedVolumeUnlocker.unlock(
+                request: APFSEncryptedVolumeUnlocker.UnlockRequest(volume: volume),
+                password: response.password
+            )
+
+            switch result {
+            case .success:
+                updateEncryptedVolumePassword(
+                    response.password,
+                    shouldSave: response.shouldSaveInKeychain,
+                    volume: volume
+                )
+                return true
+            case .invalidPassword:
+                promptFailure = String(localized: "Could not unlock \"\(volume.name)\". Check the password and try again.")
+            case .failed(let message):
+                showEncryptedVolumeUnlockFailure(for: volume, details: message)
+                return false
+            }
+        }
+
+        return false
+    }
+
+    /// Saves or removes an encrypted volume password after a successful unlock.
+    private func updateEncryptedVolumePassword(_ password: String, shouldSave: Bool, volume: Volume) {
+        guard shouldSave else {
+            deleteEncryptedVolumePassword(for: volume)
+            return
+        }
+
+        do {
+            try encryptedVolumeCredentialStore.savePassword(password, for: volume.id)
+            Log.volumeOperations.log("Encrypted APFS password saved in Keychain for \(volume.logLabel)")
+        } catch {
+            Log.volumeOperations.error(error, message: "Encrypted APFS password could not be saved in Keychain for \(volume.logLabel)")
+            showEncryptedVolumeKeychainSaveFailure(for: volume)
+        }
+    }
+
+    /// Deletes an encrypted volume password while preserving failure diagnostics.
+    private func deleteEncryptedVolumePassword(for volume: Volume) {
+        do {
+            try encryptedVolumeCredentialStore.deletePassword(for: volume.id)
+        } catch {
+            Log.volumeOperations.error(error, message: "Encrypted APFS password could not be deleted from Keychain for \(volume.logLabel)")
+        }
+    }
+
+    /// Presents a terminal encrypted APFS unlock failure without persisting command output to diagnostics.
+    private func showEncryptedVolumeUnlockFailure(for volume: Volume, details: String?) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(localized: "Could not unlock volume")
+        let baseMessage = String(localized: "Could not unlock \"\(volume.name)\".")
+        alert.informativeText = details.map { "\(baseMessage)\n\n\($0)" } ?? baseMessage
+        alert.runModal()
+    }
+
+    /// Presents a warning when an unlocked volume password could not be saved.
+    private func showEncryptedVolumeKeychainSaveFailure(for volume: Volume) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(localized: "Could not save password")
+        alert.informativeText = String(
+            localized: "Ejectify unlocked \"\(volume.name)\", but could not save its password in Keychain."
+        )
+        alert.runModal()
+    }
+
+    /// Starts IOKit power monitoring used to delay sleep while handling volumes.
     @discardableResult
     private func startSystemSleepPowerMonitoring() -> Bool {
         if systemSleepPowerObserver == nil {
@@ -446,7 +635,7 @@ final class ActivityController {
         systemSleepPowerObserver = nil
     }
 
-    /// Delays system sleep while unmounting and automatically releases sleep after success or timeout.
+    /// Delays system sleep while handling volumes and automatically releases sleep after success or timeout.
     private func beginSystemSleepDelay(token: Int) {
         if let pendingToken = pendingSystemSleepToken {
             if pendingToken == token {
@@ -461,7 +650,7 @@ final class ActivityController {
 
         pendingSystemSleepToken = token
         updateMountReadinessState(systemAwake: false)
-        Log.powerEvents.log("System sleep delayed for unmount; maximumDelaySeconds=\(Self.maximumSystemSleepDelaySeconds)")
+        Log.powerEvents.log("System sleep delayed for disk operations; maximumDelaySeconds=\(Self.maximumSystemSleepDelaySeconds)")
 
         pendingSystemSleepTimeoutTask?.cancel()
         pendingSystemSleepTimeoutTask = Task { @MainActor [weak self] in
@@ -481,19 +670,19 @@ final class ActivityController {
             allowSystemSleepIfNeeded(for: token, reason: "\(Self.maximumSystemSleepDelaySeconds)-second timeout reached")
         }
 
-        pendingSystemSleepUnmountTask?.cancel()
-        pendingSystemSleepUnmountTask = Task { @MainActor [weak self] in
+        pendingSystemSleepDiskOperationTask?.cancel()
+        pendingSystemSleepDiskOperationTask = Task { @MainActor [weak self] in
             guard let self else {
                 return
             }
 
-            let batchResult = await unmountEnabledVolumesAndWait()
+            let batchResult = await handleEnabledVolumesAndWait()
             guard pendingSystemSleepToken == token else {
-                Log.powerEvents.info("Stale system sleep unmount completion ignored; token=\(token)")
+                Log.powerEvents.info("Stale system sleep disk operation completion ignored; token=\(token)")
                 return
             }
-            Log.powerEvents.log("System sleep unmount batch finished; succeededCount=\(batchResult.succeededCount); requestedCount=\(batchResult.requestedCount)")
-            allowSystemSleepIfNeeded(for: token, reason: "unmount batch completed")
+            Log.powerEvents.log("System sleep disk operation batch finished; succeededCount=\(batchResult.succeededCount); requestedCount=\(batchResult.requestedCount)")
+            allowSystemSleepIfNeeded(for: token, reason: "disk operation batch completed")
         }
     }
 
@@ -516,35 +705,56 @@ final class ActivityController {
         systemSleepPowerObserver?.allowPowerChange(for: token)
     }
 
-    /// Cancels and clears pending timeout/unmount tasks for an active system-sleep delay.
+    /// Cancels and clears pending timeout and disk-operation tasks for an active system-sleep delay.
     private func cancelPendingSystemSleepTasks() {
         pendingSystemSleepTimeoutTask?.cancel()
         pendingSystemSleepTimeoutTask = nil
-        pendingSystemSleepUnmountTask?.cancel()
-        pendingSystemSleepUnmountTask = nil
+        pendingSystemSleepDiskOperationTask?.cancel()
+        pendingSystemSleepDiskOperationTask = nil
     }
 
-    /// Represents the completion summary for one unmount batch.
-    private struct UnmountBatchResult {
+    /// Represents the completion summary for one disk-operation batch.
+    private struct DiskOperationBatchResult {
 
-        /// Number of enabled volumes included in the batch request.
+        /// Number of disk operations included in the batch request.
         let requestedCount: Int
 
-        /// Number of volume unmount requests that reported success.
+        /// Number of disk operations that reported success.
         let succeededCount: Int
     }
 
-    /// Unmounts all enabled volumes and waits for every callback to complete.
-    private func unmountEnabledVolumesAndWait() async -> UnmountBatchResult {
+    /// Handles all enabled volumes using the configured operation and waits for every callback.
+    private func handleEnabledVolumesAndWait() async -> DiskOperationBatchResult {
         let enabledVolumes = Volume.mountedVolumes().filter { $0.enabled }
+
+        guard !Preference.ejectInsteadOfUnmount else {
+            clearRemountStateForEjectMode()
+            let representatives = Volume.uniqueWholeDiskRepresentatives(from: enabledVolumes)
+            Log.volumeOperations.log("System sleep eject batch started: \(representatives.count) whole disk(s) for \(enabledVolumes.count) enabled volume(s)")
+
+            return await performDiskOperationBatch(volumes: representatives) { volume, completion in
+                self.requestEject(for: volume, completion: completion)
+            }
+        }
+
         mergeRemountCandidates(with: enabledVolumes, reason: "Starting new system sleep unmount batch")
 
-        guard !enabledVolumes.isEmpty else {
-            return UnmountBatchResult(requestedCount: 0, succeededCount: 0)
+        return await performDiskOperationBatch(volumes: enabledVolumes) { volume, completion in
+            self.requestUnmount(for: volume, completion: completion)
+        }
+    }
+
+    /// Performs one asynchronous disk operation per volume and summarizes callback results.
+    private func performDiskOperationBatch(
+        volumes: [Volume],
+        operation: (Volume, @escaping (Bool) -> Void) -> Void
+    ) async -> DiskOperationBatchResult {
+        guard !volumes.isEmpty else {
+            return DiskOperationBatchResult(requestedCount: 0, succeededCount: 0)
         }
 
         return await withCheckedContinuation { continuation in
-            var pendingCallbacks = enabledVolumes.count
+            var pendingCallbacks = volumes.count
             var succeededCount = 0
             var didResume = false
 
@@ -553,11 +763,11 @@ final class ActivityController {
                     return
                 }
                 didResume = true
-                continuation.resume(returning: UnmountBatchResult(requestedCount: enabledVolumes.count, succeededCount: succeededCount))
+                continuation.resume(returning: DiskOperationBatchResult(requestedCount: volumes.count, succeededCount: succeededCount))
             }
 
-            for volume in enabledVolumes {
-                requestUnmount(for: volume) { success in
+            for volume in volumes {
+                operation(volume) { success in
                     if success {
                         succeededCount += 1
                     }
@@ -567,6 +777,35 @@ final class ActivityController {
             }
 
             completeIfNeeded()
+        }
+    }
+
+    /// Enqueues a routed eject request for one whole disk and tracks in-flight state.
+    private func requestEject(for volume: Volume, completion: @escaping (Bool) -> Void) {
+        let wholeDiskBSDName = volume.wholeDiskBSDName
+        pendingEjectCompletions[wholeDiskBSDName, default: []].append(completion)
+
+        guard inFlightEjects.insert(wholeDiskBSDName).inserted else {
+            Log.volumeOperations.info("Eject request joined existing in-flight operation: wholeDiskBSDName=\(wholeDiskBSDName)")
+            return
+        }
+
+        Log.volumeOperations.log("Eject request scheduled: wholeDiskBSDName=\(wholeDiskBSDName); \(volume.logLabel)")
+        VolumeOperationRouter.shared.eject(
+            volumeUUID: volume.diskUUID.map { $0 as NSUUID },
+            volumeName: volume.name,
+            bsdName: volume.bsdName
+        ) { [weak self] success, _, _ in
+            Task { @MainActor [weak self] in
+                guard let self else {
+                    completion(success)
+                    return
+                }
+
+                self.inFlightEjects.remove(wholeDiskBSDName)
+                let completions = self.pendingEjectCompletions.removeValue(forKey: wholeDiskBSDName) ?? []
+                completions.forEach { $0(success) }
+            }
         }
     }
 

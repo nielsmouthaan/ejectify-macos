@@ -20,6 +20,7 @@ enum VolumeOperationOutcomePolicy {
     /// Represents an event that can change whether an automatic remount candidate remains pending.
     enum AutomaticRemountCandidateEvent: Equatable {
         case unmountCompleted(success: Bool, status: DAReturn?)
+        case ejectModeEnabled
         case remountSucceeded
         case terminalRemountFailure
         case retryExhausted
@@ -38,6 +39,12 @@ enum VolumeOperationOutcomePolicy {
         case succeeded
         case retryableFailure
         case terminalFailure
+    }
+
+    /// Describes how an automatic remount terminal failure should be handled.
+    enum AutomaticRemountTerminalAction: Equatable {
+        case finish
+        case unlockEncryptedAPFS
     }
 
     /// Delays used after consecutive retryable automatic remount failures.
@@ -67,7 +74,7 @@ enum VolumeOperationOutcomePolicy {
             return .preserve
         case .retryCancelled:
             return .preserve
-        case .remountSucceeded, .terminalRemountFailure, .retryExhausted:
+        case .ejectModeEnabled, .remountSucceeded, .terminalRemountFailure, .retryExhausted:
             return .remove
         }
     }
@@ -102,5 +109,18 @@ enum VolumeOperationOutcomePolicy {
         }
 
         return automaticRemountRetryDelays[index]
+    }
+
+    /// Selects encrypted APFS unlock handling only for terminal failures while unmount mode remains active.
+    static func automaticRemountTerminalAction(
+        isEncrypted: Bool,
+        isAPFS: Bool,
+        ejectModeEnabled: Bool
+    ) -> AutomaticRemountTerminalAction {
+        guard isEncrypted, isAPFS, !ejectModeEnabled else {
+            return .finish
+        }
+
+        return .unlockEncryptedAPFS
     }
 }
