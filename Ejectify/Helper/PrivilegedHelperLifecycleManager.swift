@@ -56,6 +56,38 @@ final class PrivilegedHelperLifecycleManager: @unchecked Sendable {
         return isDaemonEnabled
     }
 
+    /// Re-registers an enabled launch daemon after unregistering its previous app-bundle association.
+    @discardableResult
+    func reregisterDaemon() async -> Bool {
+        let daemonService = self.daemonService
+
+        do {
+            try await Self.replaceDaemonRegistration(
+                unregister: {
+                    try await daemonService.unregister()
+                    Log.privilegedHelper.log("Privileged helper daemon unregistered before replacement registration")
+                },
+                register: {
+                    try daemonService.register()
+                    Log.privilegedHelper.log("Privileged helper daemon replacement registered; currentStatus=\(daemonService.status.statusDescription)")
+                }
+            )
+        } catch {
+            Log.privilegedHelper.error(error, message: "Privileged helper daemon replacement registration failed")
+        }
+
+        return isDaemonEnabled
+    }
+
+    /// Awaits `unregister` before invoking `register` for a replacement daemon registration.
+    static func replaceDaemonRegistration(
+        unregister: () async throws -> Void,
+        register: () throws -> Void
+    ) async throws {
+        try await unregister()
+        try register()
+    }
+
     /// Unregisters the launch daemon and returns whether privileged routing is disabled.
     @discardableResult
     func unregisterDaemon() -> Bool {

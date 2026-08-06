@@ -333,24 +333,25 @@ final class StatusBarMenu: NSMenu {
     @objc private func elevatedPermissionsClicked(menuItem: NSMenuItem) {
         let shouldEnable = toggledValue(for: menuItem.state)
         let operationRouter = VolumeOperationRouter.shared
-        let didSucceed: Bool
 
         if shouldEnable {
-            didSucceed = operationRouter.requestPrivilegedExecutionMode()
-            guard !didSucceed else {
-                updateMenu()
-                return
-            }
+            Task { @MainActor in
+                let didSucceed = await operationRouter.requestPrivilegedExecutionModeRepairingStaleRegistration()
+                guard !didSucceed else {
+                    updateMenu()
+                    return
+                }
 
-            showPermissionAlert(
-                messageText: String(localized: "Could not enable elevated permissions."),
-                informativeText: String(localized: "Check System Settings if Ejectify is enabled.")
-            )
-            updateMenu()
+                showPermissionAlert(
+                    messageText: String(localized: "Could not enable elevated permissions."),
+                    informativeText: String(localized: "Check System Settings if Ejectify is enabled.")
+                )
+                updateMenu()
+            }
             return
         }
 
-        didSucceed = operationRouter.disablePrivilegedExecutionMode()
+        let didSucceed = operationRouter.disablePrivilegedExecutionMode()
         guard didSucceed else {
             showPermissionAlert(
                 messageText: String(localized: "Could not disable elevated permissions.")

@@ -380,7 +380,9 @@ final class VolumeOperationRouter: @unchecked Sendable {
         guard let proxy = helperProxy(
             for: connection,
             operationDescription: "startup ping",
-            onRoutingFailure: { _ in }
+            onRoutingFailure: { [weak self] _ in
+                self?.endStartupRoutingInitialization()
+            }
         ) else {
             endStartupRoutingInitialization()
             return
@@ -419,6 +421,32 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
         initializeHelperRoutingFromStartupPing()
         return true
+    }
+
+    /// Repairs an enabled daemon registration that no longer provides a reachable helper.
+    @discardableResult
+    private func repairEnabledDaemonRegistration() async -> Bool {
+        Log.privilegedHelper.warning("Privileged helper daemon is enabled but unavailable; attempting daemon re-registration")
+
+        guard await PrivilegedHelperLifecycleManager.shared.reregisterDaemon() else {
+            let status = PrivilegedHelperLifecycleManager.shared.daemonStatus
+            invalidateHelperConnection()
+            setExecutionMode(.local, reason: "daemon re-registration requires user approval or failed: \(status.statusDescription)")
+            return false
+        }
+
+        initializeHelperRoutingFromStartupPing()
+        return true
+    }
+
+    /// Repairs a stale enabled registration or performs the ordinary privileged-execution request.
+    @discardableResult
+    func requestPrivilegedExecutionModeRepairingStaleRegistration() async -> Bool {
+        if isDaemonEnabled, !isUsingPrivilegedHelper, !isStartupRoutingInitializationActive {
+            return await repairEnabledDaemonRegistration()
+        }
+
+        return requestPrivilegedExecutionMode()
     }
 
     /// Attempts to register and enable privileged helper execution after an explicit user action.

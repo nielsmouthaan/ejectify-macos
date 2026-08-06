@@ -65,6 +65,10 @@
 		E8A1000A000000000000000A /* APFSEncryptedVolumeUnlockerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A1000C000000000000000C /* APFSEncryptedVolumeUnlockerTests.swift */; };
 		E8A1000B000000000000000B /* VolumeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A1000D000000000000000D /* VolumeTests.swift */; };
 		E8A1000F000000000000000F /* DiskArbitrationVolumeOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */; };
+		F3A100010000000000000001 /* PrivilegedHelperLifecycleManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A100050000000000000005 /* PrivilegedHelperLifecycleManagerTests.swift */; };
+		F3A100020000000000000002 /* PrivilegedHelperLifecycleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */; };
+		F3A100030000000000000003 /* PrivilegedHelperConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */; };
+		F3A100040000000000000004 /* SMAppService+StatusDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000054 /* SMAppService+StatusDescription.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -177,6 +181,7 @@
 		E8A100060000000000000006 /* EncryptedVolumePasswordPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncryptedVolumePasswordPrompt.swift; sourceTree = "<group>"; };
 		E8A1000C000000000000000C /* APFSEncryptedVolumeUnlockerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APFSEncryptedVolumeUnlockerTests.swift; sourceTree = "<group>"; };
 		E8A1000D000000000000000D /* VolumeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeTests.swift; sourceTree = "<group>"; };
+		F3A100050000000000000005 /* PrivilegedHelperLifecycleManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperLifecycleManagerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -332,6 +337,7 @@
 			children = (
 				E8A1000C000000000000000C /* APFSEncryptedVolumeUnlockerTests.swift */,
 				E7C700060000000000000006 /* LogTests.swift */,
+				F3A100050000000000000005 /* PrivilegedHelperLifecycleManagerTests.swift */,
 				E7C710040000000000000004 /* VolumeOperationOutcomePolicyTests.swift */,
 				E7C700070000000000000007 /* VolumeLogLabelFormatterTests.swift */,
 			);
@@ -593,6 +599,10 @@
 				E8A1000F000000000000000F /* DiskArbitrationVolumeOperator.swift in Sources */,
 				E7C710060000000000000006 /* DAReturn+StatusDescription.swift in Sources */,
 				E7C700030000000000000003 /* Log.swift in Sources */,
+				F3A100030000000000000003 /* PrivilegedHelperConfiguration.swift in Sources */,
+				F3A100020000000000000002 /* PrivilegedHelperLifecycleManager.swift in Sources */,
+				F3A100010000000000000001 /* PrivilegedHelperLifecycleManagerTests.swift in Sources */,
+				F3A100040000000000000004 /* SMAppService+StatusDescription.swift in Sources */,
 				E7C710050000000000000005 /* VolumeOperationOutcomePolicy.swift in Sources */,
 				E7C700040000000000000004 /* VolumeLogLabelFormatter.swift in Sources */,
 				E7C700010000000000000001 /* LogTests.swift in Sources */,
