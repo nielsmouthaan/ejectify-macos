@@ -41,12 +41,6 @@ enum VolumeOperationOutcomePolicy {
         case terminalFailure
     }
 
-    /// Describes how an automatic remount terminal failure should be handled.
-    enum AutomaticRemountTerminalAction: Equatable {
-        case finish
-        case unlockEncryptedAPFS
-    }
-
     /// Delays used after consecutive retryable automatic remount failures.
     static let automaticRemountRetryDelays: [Duration] = [
         .seconds(3),
@@ -111,16 +105,12 @@ enum VolumeOperationOutcomePolicy {
         return automaticRemountRetryDelays[index]
     }
 
-    /// Selects encrypted APFS unlock handling only for terminal failures while unmount mode remains active.
-    static func automaticRemountTerminalAction(
+    /// Returns whether a failed normal mount should query live encrypted APFS lock state.
+    static func shouldProbeEncryptedAPFSLockState(
         isEncrypted: Bool,
         isAPFS: Bool,
         ejectModeEnabled: Bool
-    ) -> AutomaticRemountTerminalAction {
-        guard isEncrypted, isAPFS, !ejectModeEnabled else {
-            return .finish
-        }
-
-        return .unlockEncryptedAPFS
+    ) -> Bool {
+        isEncrypted && isAPFS && !ejectModeEnabled
     }
 }

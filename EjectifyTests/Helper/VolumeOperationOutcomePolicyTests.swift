@@ -169,14 +169,14 @@ struct VolumeOperationOutcomePolicyTests {
         #expect(delays == [.seconds(3), .seconds(10), .seconds(30), nil])
     }
 
-    @Test func terminalEncryptedAPFSFailureRequestsUnlockInUnmountMode() {
-        let action = VolumeOperationOutcomePolicy.automaticRemountTerminalAction(
+    @Test func encryptedAPFSMountFailureRequestsLockStateProbeInUnmountMode() {
+        let shouldProbe = VolumeOperationOutcomePolicy.shouldProbeEncryptedAPFSLockState(
             isEncrypted: true,
             isAPFS: true,
             ejectModeEnabled: false
         )
 
-        #expect(action == .unlockEncryptedAPFS)
+        #expect(shouldProbe)
     }
 
     @Test(arguments: [
@@ -184,15 +184,15 @@ struct VolumeOperationOutcomePolicyTests {
         (isEncrypted: true, isAPFS: false, ejectModeEnabled: false),
         (isEncrypted: true, isAPFS: true, ejectModeEnabled: true)
     ])
-    func terminalFailureDoesNotUnlockOutsideEncryptedAPFSUnmountMode(
+    func mountFailureDoesNotProbeOutsideEncryptedAPFSUnmountMode(
         fixture: (isEncrypted: Bool, isAPFS: Bool, ejectModeEnabled: Bool)
     ) {
-        let action = VolumeOperationOutcomePolicy.automaticRemountTerminalAction(
+        let shouldProbe = VolumeOperationOutcomePolicy.shouldProbeEncryptedAPFSLockState(
             isEncrypted: fixture.isEncrypted,
             isAPFS: fixture.isAPFS,
             ejectModeEnabled: fixture.ejectModeEnabled
         )
 
-        #expect(action == .finish)
+        #expect(shouldProbe == false)
     }
 }

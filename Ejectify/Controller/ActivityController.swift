@@ -34,7 +34,10 @@ final class ActivityController {
     /// Store used for encrypted APFS volume unlock passwords.
     private let encryptedVolumeCredentialStore = EncryptedVolumeCredentialStore.shared
 
-    /// Unlocker used when an encrypted APFS volume remains locked after a terminal mount failure.
+    /// Probe used to confirm that an encrypted APFS volume is locked after a normal mount failure.
+    private let encryptedVolumeLockStateProbe = APFSVolumeLockStateProbe.shared
+
+    /// Unlocker used when an encrypted APFS volume remains locked after a normal mount failure.
     private let encryptedVolumeUnlocker = APFSEncryptedVolumeUnlocker.shared
 
     /// Prompt used to ask for encrypted volume passwords when needed.
@@ -447,18 +450,23 @@ final class ActivityController {
                     attemptResult = .diskUnavailable
                 }
 
-                switch VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(for: attemptResult) {
-                case .succeeded:
-                    self.applyRemountCandidateDisposition(after: .remountSucceeded, volumeID: volumeID)
-                    return
-                case .terminalFailure:
-                    let terminalAction = VolumeOperationOutcomePolicy.automaticRemountTerminalAction(
-                        isEncrypted: volume.isEncrypted,
-                        isAPFS: volume.isAPFS,
-                        ejectModeEnabled: Preference.ejectInsteadOfUnmount
+                if case .mountFailed = attemptResult,
+                   VolumeOperationOutcomePolicy.shouldProbeEncryptedAPFSLockState(
+                       isEncrypted: volume.isEncrypted,
+                       isAPFS: volume.isAPFS,
+                       ejectModeEnabled: Preference.ejectInsteadOfUnmount
+                   ) {
+                    let lockState = await self.encryptedVolumeLockStateProbe.lockState(
+                        request: APFSVolumeLockStateProbe.Request(volume: volume)
                     )
 
-                    if terminalAction == .unlockEncryptedAPFS {
+                    guard !Task.isCancelled,
+                          !Preference.ejectInsteadOfUnmount,
+                          self.hasRemountCandidate(withID: volumeID) else {
+                        return
+                    }
+
+                    if lockState == .locked {
                         let didUnlock = await self.unlockEncryptedVolume(for: volume)
                         let event: VolumeOperationOutcomePolicy.AutomaticRemountCandidateEvent = didUnlock
                             ? .remountSucceeded
@@ -466,7 +474,13 @@ final class ActivityController {
                         self.applyRemountCandidateDisposition(after: event, volumeID: volumeID)
                         return
                     }
+                }
 
+                switch VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(for: attemptResult) {
+                case .succeeded:
+                    self.applyRemountCandidateDisposition(after: .remountSucceeded, volumeID: volumeID)
+                    return
+                case .terminalFailure:
                     Log.volumeOperations.info("Automatic remount stopped due to non-retryable status for \(volume.logLabel)")
                     self.applyRemountCandidateDisposition(after: .terminalRemountFailure, volumeID: volumeID)
                     return
