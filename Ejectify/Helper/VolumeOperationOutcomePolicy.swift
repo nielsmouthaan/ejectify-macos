@@ -41,6 +41,13 @@ enum VolumeOperationOutcomePolicy {
         case terminalFailure
     }
 
+    /// Describes how encrypted APFS unlock handling should continue after live-state revalidation.
+    enum EncryptedAPFSUnlockContinuation: Equatable {
+        case attemptUnlock
+        case completeWithoutUnlock
+        case deferUntilLater
+    }
+
     /// Delays used after consecutive retryable automatic remount failures.
     static let automaticRemountRetryDelays: [Duration] = [
         .seconds(3),
@@ -112,5 +119,24 @@ enum VolumeOperationOutcomePolicy {
         ejectModeEnabled: Bool
     ) -> Bool {
         isEncrypted && isAPFS && !ejectModeEnabled
+    }
+
+    /// Selects whether a revalidated encrypted APFS workflow should unlock, finish, or preserve its candidate.
+    static func encryptedAPFSUnlockContinuation(
+        candidateExists: Bool,
+        isReadyToMount: Bool,
+        ejectModeEnabled: Bool,
+        lockState: APFSVolumeLockStateProbe.LockState
+    ) -> EncryptedAPFSUnlockContinuation {
+        guard candidateExists, isReadyToMount, !ejectModeEnabled else {
+            return .deferUntilLater
+        }
+
+        switch lockState {
+        case .locked, .unknown:
+            return .attemptUnlock
+        case .unlocked:
+            return .completeWithoutUnlock
+        }
     }
 }

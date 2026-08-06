@@ -25,6 +25,9 @@ final class ActivityController {
     /// Pending mount tasks keyed by volume identifier.
     private var pendingMountTasks: [String: Task<Void, Never>] = [:]
 
+    /// Volume identifiers currently owned by an encrypted APFS unlock workflow.
+    private var encryptedUnlocksInProgress: Set<String> = []
+
     /// Pending completion handlers for each in-flight unmount keyed by volume identifier.
     private var pendingUnmountCompletions: [String: [(Bool) -> Void]] = [:]
 
@@ -42,6 +45,13 @@ final class ActivityController {
 
     /// Prompt used to ask for encrypted volume passwords when needed.
     private let encryptedVolumePasswordPrompt = EncryptedVolumePasswordPrompt()
+
+    /// Describes the final effect of encrypted APFS unlock handling on its remount candidate.
+    private enum EncryptedVolumeUnlockOutcome {
+        case succeeded
+        case failed
+        case deferred
+    }
 
     /// Handles IOKit system sleep callbacks used to temporarily delay system sleep.
     private var systemSleepPowerObserver: SystemSleepPowerObserver?
@@ -467,11 +477,14 @@ final class ActivityController {
                     }
 
                     if lockState == .locked {
-                        let didUnlock = await self.unlockEncryptedVolume(for: volume)
-                        let event: VolumeOperationOutcomePolicy.AutomaticRemountCandidateEvent = didUnlock
-                            ? .remountSucceeded
-                            : .terminalRemountFailure
-                        self.applyRemountCandidateDisposition(after: event, volumeID: volumeID)
+                        switch await self.unlockEncryptedVolume(for: volume) {
+                        case .succeeded:
+                            self.applyRemountCandidateDisposition(after: .remountSucceeded, volumeID: volumeID)
+                        case .failed:
+                            self.applyRemountCandidateDisposition(after: .terminalRemountFailure, volumeID: volumeID)
+                        case .deferred:
+                            Log.volumeOperations.info("Encrypted APFS unlock deferred while preserving remount candidate for \(volume.logLabel)")
+                        }
                         return
                     }
                 }
@@ -508,14 +521,33 @@ final class ActivityController {
     }
 
     /// Attempts to unlock and mount an encrypted APFS volume using Keychain first, then a user prompt.
-    private func unlockEncryptedVolume(for volume: Volume) async -> Bool {
+    private func unlockEncryptedVolume(for volume: Volume) async -> EncryptedVolumeUnlockOutcome {
         guard !Preference.ejectInsteadOfUnmount, !Task.isCancelled else {
-            return false
+            return .deferred
+        }
+
+        guard encryptedUnlocksInProgress.insert(volume.id).inserted else {
+            Log.volumeOperations.info("Duplicate encrypted APFS unlock suppressed for \(volume.logLabel)")
+            return .deferred
+        }
+
+        defer {
+            encryptedUnlocksInProgress.remove(volume.id)
         }
 
         do {
             if let savedPassword = try encryptedVolumeCredentialStore.password(for: volume.id) {
                 Log.volumeOperations.info("Trying saved encrypted APFS password for \(volume.logLabel)")
+
+                switch await encryptedUnlockContinuation(for: volume) {
+                case .attemptUnlock:
+                    break
+                case .completeWithoutUnlock:
+                    return .succeeded
+                case .deferUntilLater:
+                    return .deferred
+                }
+
                 let result = await encryptedVolumeUnlocker.unlock(
                     request: APFSEncryptedVolumeUnlocker.UnlockRequest(volume: volume),
                     password: savedPassword
@@ -523,7 +555,7 @@ final class ActivityController {
 
                 switch result {
                 case .success:
-                    return true
+                    return .succeeded
                 case .invalidPassword:
                     Log.volumeOperations.warning("Saved encrypted APFS password was rejected for \(volume.logLabel)")
                     deleteEncryptedVolumePassword(for: volume)
@@ -533,7 +565,7 @@ final class ActivityController {
                     )
                 case .failed(let message):
                     showEncryptedVolumeUnlockFailure(for: volume, details: message)
-                    return false
+                    return .failed
                 }
             }
         } catch {
@@ -548,16 +580,30 @@ final class ActivityController {
     }
 
     /// Prompts for an encrypted APFS password until unlock succeeds or the user cancels.
-    private func promptForEncryptedVolumePassword(for volume: Volume, previousFailure: String?) async -> Bool {
+    private func promptForEncryptedVolumePassword(
+        for volume: Volume,
+        previousFailure: String?
+    ) async -> EncryptedVolumeUnlockOutcome {
         var promptFailure = previousFailure
 
-        while !Task.isCancelled, !Preference.ejectInsteadOfUnmount {
+        while !Preference.ejectInsteadOfUnmount {
             guard let response = encryptedVolumePasswordPrompt.requestPassword(
                 for: volume,
                 previousFailure: promptFailure
             ) else {
                 Log.volumeOperations.info("Encrypted APFS unlock cancelled for \(volume.logLabel)")
-                return false
+                return .failed
+            }
+
+            switch await encryptedUnlockContinuation(for: volume) {
+            case .attemptUnlock:
+                break
+            case .completeWithoutUnlock:
+                Log.volumeOperations.info("Stale encrypted APFS prompt skipped because volume is already unlocked for \(volume.logLabel)")
+                return .succeeded
+            case .deferUntilLater:
+                Log.volumeOperations.info("Stale encrypted APFS prompt response ignored for \(volume.logLabel)")
+                return .deferred
             }
 
             let result = await encryptedVolumeUnlocker.unlock(
@@ -572,16 +618,38 @@ final class ActivityController {
                     shouldSave: response.shouldSaveInKeychain,
                     volume: volume
                 )
-                return true
+                return .succeeded
             case .invalidPassword:
                 promptFailure = String(localized: "Could not unlock \"\(volume.name)\". Check the password and try again.")
             case .failed(let message):
                 showEncryptedVolumeUnlockFailure(for: volume, details: message)
-                return false
+                return .failed
             }
         }
 
-        return false
+        return .deferred
+    }
+
+    /// Revalidates the candidate and live lock state before invoking encrypted APFS unlock handling.
+    private func encryptedUnlockContinuation(
+        for volume: Volume
+    ) async -> VolumeOperationOutcomePolicy.EncryptedAPFSUnlockContinuation {
+        guard !Preference.ejectInsteadOfUnmount,
+              isReadyToMount,
+              hasRemountCandidate(withID: volume.id) else {
+            return .deferUntilLater
+        }
+
+        let lockState = await encryptedVolumeLockStateProbe.lockState(
+            request: APFSVolumeLockStateProbe.Request(volume: volume)
+        )
+
+        return VolumeOperationOutcomePolicy.encryptedAPFSUnlockContinuation(
+            candidateExists: hasRemountCandidate(withID: volume.id),
+            isReadyToMount: isReadyToMount,
+            ejectModeEnabled: Preference.ejectInsteadOfUnmount,
+            lockState: lockState
+        )
     }
 
     /// Saves or removes an encrypted volume password after a successful unlock.

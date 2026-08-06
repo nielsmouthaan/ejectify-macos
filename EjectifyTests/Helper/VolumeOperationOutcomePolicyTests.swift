@@ -195,4 +195,50 @@ struct VolumeOperationOutcomePolicyTests {
 
         #expect(shouldProbe == false)
     }
+
+    @Test(arguments: [
+        (candidateExists: false, isReadyToMount: true, ejectModeEnabled: false),
+        (candidateExists: true, isReadyToMount: false, ejectModeEnabled: false),
+        (candidateExists: true, isReadyToMount: true, ejectModeEnabled: true)
+    ])
+    func staleEncryptedAPFSUnlockIsDeferred(
+        fixture: (candidateExists: Bool, isReadyToMount: Bool, ejectModeEnabled: Bool)
+    ) {
+        let continuation = VolumeOperationOutcomePolicy.encryptedAPFSUnlockContinuation(
+            candidateExists: fixture.candidateExists,
+            isReadyToMount: fixture.isReadyToMount,
+            ejectModeEnabled: fixture.ejectModeEnabled,
+            lockState: .locked
+        )
+
+        #expect(continuation == .deferUntilLater)
+    }
+
+    @Test func alreadyUnlockedEncryptedAPFSVolumeCompletesWithoutUnlock() {
+        let continuation = VolumeOperationOutcomePolicy.encryptedAPFSUnlockContinuation(
+            candidateExists: true,
+            isReadyToMount: true,
+            ejectModeEnabled: false,
+            lockState: .unlocked
+        )
+
+        #expect(continuation == .completeWithoutUnlock)
+    }
+
+    @Test(arguments: [
+        APFSVolumeLockStateProbe.LockState.locked,
+        APFSVolumeLockStateProbe.LockState.unknown
+    ])
+    func currentEncryptedAPFSVolumeAttemptsUnlock(
+        lockState: APFSVolumeLockStateProbe.LockState
+    ) {
+        let continuation = VolumeOperationOutcomePolicy.encryptedAPFSUnlockContinuation(
+            candidateExists: true,
+            isReadyToMount: true,
+            ejectModeEnabled: false,
+            lockState: lockState
+        )
+
+        #expect(continuation == .attemptUnlock)
+    }
 }
