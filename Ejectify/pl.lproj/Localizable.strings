@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Wysuń zamiast odmontowywać";
 "Unlock encrypted volume" = "Odblokuj zaszyfrowany wolumin";
 "Unlock" = "Odblokuj";
+"Unlock \"%@\"?" = "Odblokować „%@”?";
+"Not Now" = "Nie teraz";
+"Don’t Ask Again" = "Nie pytaj ponownie";
+"Save this password in Keychain for future automatic unlocking" = "Zachowaj to hasło w pęku kluczy na potrzeby przyszłego automatycznego odblokowywania";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS nie odblokował automatycznie tego zaszyfrowanego woluminu APFS. Ejectify nie ma dostępu do haseł zachowanych przez Narzędzie dyskowe. Wprowadź hasło woluminu, aby Ejectify mógł przekazać je do macOS i ponownie zamontować wolumin.";
 "Password" = "Hasło";
 "Save password in Keychain" = "Zachowaj hasło w pęku kluczy";
 "Enter a password to unlock this volume." = "Wprowadź hasło, aby odblokować ten wolumin.";

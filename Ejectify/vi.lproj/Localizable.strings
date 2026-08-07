@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Gỡ thay vì ngắt kết nối";
 "Unlock encrypted volume" = "Mở khóa ổ đĩa được mã hóa";
 "Unlock" = "Mở khóa";
+"Unlock \"%@\"?" = "Mở khóa “%@”?";
+"Not Now" = "Không phải bây giờ";
+"Don’t Ask Again" = "Không hỏi lại";
+"Save this password in Keychain for future automatic unlocking" = "Lưu mật khẩu này vào Chuỗi khóa để tự động mở khóa trong tương lai";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS đã không tự động mở khóa ổ đĩa APFS được mã hóa này. Ejectify không thể truy cập mật khẩu do Tiện ích ổ đĩa lưu. Hãy nhập mật khẩu ổ đĩa để Ejectify chuyển mật khẩu đó cho macOS và gắn lại ổ đĩa.";
 "Password" = "Mật khẩu";
 "Save password in Keychain" = "Lưu mật khẩu vào Chuỗi khóa";
 "Enter a password to unlock this volume." = "Nhập mật khẩu để mở khóa ổ đĩa này.";

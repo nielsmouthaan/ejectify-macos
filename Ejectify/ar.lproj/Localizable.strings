@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "الإخراج بدلاً من إلغاء التحميل";
 "Unlock encrypted volume" = "فتح قفل وحدة تخزين مشفرة";
 "Unlock" = "فتح القفل";
+"Unlock \"%@\"?" = "فتح قفل «%@»؟";
+"Not Now" = "ليس الآن";
+"Don’t Ask Again" = "عدم السؤال مرة أخرى";
+"Save this password in Keychain for future automatic unlocking" = "حفظ كلمة السر هذه في سلسلة المفاتيح لفتح القفل تلقائيًا في المستقبل";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "لم يفتح macOS قفل وحدة تخزين APFS المشفرة هذه تلقائيًا. لا يستطيع Ejectify الوصول إلى كلمات السر المحفوظة بواسطة أداة القرص. أدخل كلمة سر وحدة التخزين ليقوم Ejectify بتمريرها إلى macOS وإعادة تحميل وحدة التخزين.";
 "Password" = "كلمة السر";
 "Save password in Keychain" = "حفظ كلمة السر في سلسلة المفاتيح";
 "Enter a password to unlock this volume." = "أدخل كلمة سر لفتح قفل وحدة التخزين هذه.";

@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Vysunout místo odpojení";
 "Unlock encrypted volume" = "Odemknout šifrovaný svazek";
 "Unlock" = "Odemknout";
+"Unlock \"%@\"?" = "Odemknout „%@“?";
+"Not Now" = "Teď ne";
+"Don’t Ask Again" = "Příště se neptat";
+"Save this password in Keychain for future automatic unlocking" = "Uložit toto heslo do Klíčenky pro budoucí automatické odemykání";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS tento šifrovaný svazek APFS automaticky neodemkl. Ejectify nemá přístup k heslům uloženým Diskovou utilitou. Zadejte heslo svazku, aby ho Ejectify mohl předat systému macOS a svazek znovu připojit.";
 "Password" = "Heslo";
 "Save password in Keychain" = "Uložit heslo do Klíčenky";
 "Enter a password to unlock this volume." = "Zadejte heslo k odemknutí tohoto svazku.";

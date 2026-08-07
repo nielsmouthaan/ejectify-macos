@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Mat ut i stedet for å deaktivere";
 "Unlock encrypted volume" = "Lås opp kryptert volum";
 "Unlock" = "Lås opp";
+"Unlock \"%@\"?" = "Låse opp «%@»?";
+"Not Now" = "Ikke nå";
+"Don’t Ask Again" = "Ikke spør igjen";
+"Save this password in Keychain for future automatic unlocking" = "Lagre dette passordet i Nøkkelring for fremtidig automatisk opplåsing";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS låste ikke opp dette krypterte APFS-volumet automatisk. Ejectify har ikke tilgang til passord som er lagret av Diskverktøy. Skriv inn volumpassordet, slik at Ejectify kan sende det til macOS og montere volumet på nytt.";
 "Password" = "Passord";
 "Save password in Keychain" = "Lagre passord i Nøkkelring";
 "Enter a password to unlock this volume." = "Skriv inn et passord for å låse opp dette volumet.";

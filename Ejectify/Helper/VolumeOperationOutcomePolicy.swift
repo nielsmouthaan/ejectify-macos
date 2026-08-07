@@ -12,13 +12,13 @@ import Foundation
 enum VolumeOperationOutcomePolicy {
 
     /// Describes whether an automatic wake-reconciliation candidate remains pending.
-    enum AutomaticRemountCandidateDisposition: Equatable {
+    enum AutomaticRemountCandidateDisposition: Equatable, Sendable {
         case preserve
         case remove
     }
 
     /// Represents an event that can change whether an automatic remount candidate remains pending.
-    enum AutomaticRemountCandidateEvent: Equatable {
+    enum AutomaticRemountCandidateEvent: Equatable, Sendable {
         case unmountCompleted(success: Bool, status: DAReturn?)
         case ejectModeEnabled
         case remountSucceeded
@@ -28,23 +28,41 @@ enum VolumeOperationOutcomePolicy {
     }
 
     /// Represents one immediate automatic remount attempt before retry policy is applied.
-    enum AutomaticRemountAttemptResult: Equatable {
+    enum AutomaticRemountAttemptResult: Equatable, Sendable {
         case diskUnavailable
         case mountSucceeded
         case mountFailed(status: DAReturn?)
     }
 
     /// Describes how the automatic remount workflow should proceed after one attempt.
-    enum AutomaticRemountAttemptOutcome: Equatable {
+    enum AutomaticRemountAttemptOutcome: Equatable, Sendable {
         case succeeded
         case retryableFailure
         case terminalFailure
     }
 
     /// Describes how encrypted APFS unlock handling should continue after live-state revalidation.
-    enum EncryptedAPFSUnlockContinuation: Equatable {
+    enum EncryptedAPFSUnlockContinuation: Equatable, Sendable {
         case attemptUnlock
-        case completeWithoutUnlock
+        case attemptNormalMount
+        case deferUntilLater
+    }
+
+    /// Describes the live encrypted APFS state observed after the native-unlock grace period.
+    enum NativeUnlockPostGraceState: Equatable, Sendable {
+        case externallyMounted
+        case unlocked
+        case locked
+        case unknown
+        case unavailable
+    }
+
+    /// Describes how automatic remount reconciliation should continue after the native-unlock grace period.
+    enum NativeUnlockGraceContinuation: Equatable, Sendable {
+        case completeAfterExternalMount
+        case attemptNormalMount
+        case useEncryptedFallback
+        case resumeNormalRetryPolicy
         case deferUntilLater
     }
 
@@ -54,6 +72,9 @@ enum VolumeOperationOutcomePolicy {
         .seconds(10),
         .seconds(30)
     ]
+
+    /// Time allowed for macOS to unlock an encrypted APFS volume using its native credential handling.
+    static let nativeUnlockGraceDelay: Duration = .seconds(5)
 
     /// Converts the helper's non-optional raw status into the optional status used by app routing.
     static func normalizedHelperStatus(success: Bool, rawStatus: Int32) -> DAReturn? {
@@ -121,7 +142,50 @@ enum VolumeOperationOutcomePolicy {
         isEncrypted && isAPFS && !ejectModeEnabled
     }
 
-    /// Selects whether a revalidated encrypted APFS workflow should unlock, finish, or preserve its candidate.
+    /// Returns whether a confirmed locked encrypted APFS mount failure should start its one native-unlock grace period.
+    static func shouldStartNativeUnlockGrace(
+        after result: AutomaticRemountAttemptResult,
+        isEncrypted: Bool,
+        isAPFS: Bool,
+        ejectModeEnabled: Bool,
+        lockState: APFSVolumeLockStateProbe.LockState,
+        hasAlreadyWaited: Bool
+    ) -> Bool {
+        guard case .mountFailed = result else {
+            return false
+        }
+
+        return shouldProbeEncryptedAPFSLockState(
+            isEncrypted: isEncrypted,
+            isAPFS: isAPFS,
+            ejectModeEnabled: ejectModeEnabled
+        ) && lockState == .locked && !hasAlreadyWaited
+    }
+
+    /// Selects the next automatic remount action from the state observed after native-unlock grace.
+    static func nativeUnlockGraceContinuation(
+        candidateExists: Bool,
+        isReadyToMount: Bool,
+        ejectModeEnabled: Bool,
+        state: NativeUnlockPostGraceState
+    ) -> NativeUnlockGraceContinuation {
+        guard candidateExists, isReadyToMount, !ejectModeEnabled else {
+            return .deferUntilLater
+        }
+
+        switch state {
+        case .externallyMounted:
+            return .completeAfterExternalMount
+        case .unlocked:
+            return .attemptNormalMount
+        case .locked:
+            return .useEncryptedFallback
+        case .unknown, .unavailable:
+            return .resumeNormalRetryPolicy
+        }
+    }
+
+    /// Selects whether a revalidated encrypted APFS workflow should unlock, retry mounting, or preserve its candidate.
     static func encryptedAPFSUnlockContinuation(
         candidateExists: Bool,
         isReadyToMount: Bool,
@@ -136,7 +200,7 @@ enum VolumeOperationOutcomePolicy {
         case .locked, .unknown:
             return .attemptUnlock
         case .unlocked:
-            return .completeWithoutUnlock
+            return .attemptNormalMount
         }
     }
 }

@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Werp uit in plaats van deactiveren";
 "Unlock encrypted volume" = "Ontgrendel gecodeerd volume";
 "Unlock" = "Ontgrendel";
+"Unlock \"%@\"?" = "‘%@’ ontgrendelen?";
+"Not Now" = "Niet nu";
+"Don’t Ask Again" = "Niet meer vragen";
+"Save this password in Keychain for future automatic unlocking" = "Bewaar dit wachtwoord in de sleutelhanger voor toekomstige automatische ontgrendeling";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS heeft dit gecodeerde APFS-volume niet automatisch ontgrendeld. Ejectify heeft geen toegang tot wachtwoorden die door Schijfhulpprogramma zijn bewaard. Voer het volumewachtwoord in, zodat Ejectify het aan macOS kan doorgeven en het volume opnieuw kan activeren.";
 "Password" = "Wachtwoord";
 "Save password in Keychain" = "Bewaar wachtwoord in sleutelhanger";
 "Enter a password to unlock this volume." = "Voer een wachtwoord in om dit volume te ontgrendelen.";

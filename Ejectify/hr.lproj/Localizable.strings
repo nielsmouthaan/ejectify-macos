@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Izbaci umjesto odspajanja";
 "Unlock encrypted volume" = "Otključaj šifrirani volumen";
 "Unlock" = "Otključaj";
+"Unlock \"%@\"?" = "Otključati „%@“?";
+"Not Now" = "Ne sada";
+"Don’t Ask Again" = "Ne pitaj ponovno";
+"Save this password in Keychain for future automatic unlocking" = "Spremi ovu lozinku u Privjesak ključeva za buduće automatsko otključavanje";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS nije automatski otključao ovaj šifrirani APFS volumen. Ejectify ne može pristupiti lozinkama koje je spremio Uslužni program diska. Unesite lozinku volumena kako bi je Ejectify proslijedio sustavu macOS i ponovno montirao volumen.";
 "Password" = "Lozinka";
 "Save password in Keychain" = "Spremi lozinku u Privjesak ključeva";
 "Enter a password to unlock this volume." = "Unesite lozinku za otključavanje ovog volumena.";

@@ -11,6 +11,13 @@ import AppKit
 @MainActor
 final class EncryptedVolumePasswordPrompt {
 
+    /// Explicit action selected from the encrypted-volume password prompt.
+    enum Outcome {
+        case unlock(Response)
+        case notNow
+        case doNotAskAgain
+    }
+
     /// User input returned from the unlock prompt.
     struct Response {
 
@@ -21,26 +28,38 @@ final class EncryptedVolumePasswordPrompt {
         let shouldSaveInKeychain: Bool
     }
 
-    /// Presents the prompt and returns the entered password, or `nil` when cancelled.
-    func requestPassword(for volume: Volume, previousFailure: String?) -> Response? {
+    /// Presents the prompt and returns the selected action.
+    func requestPassword(for volume: Volume, previousFailure: String?) -> Outcome {
         var currentFailure = previousFailure
 
         while true {
             let alert = NSAlert()
             alert.alertStyle = .informational
-            alert.messageText = String(localized: "Unlock encrypted volume")
+            alert.messageText = String(localized: "Unlock \"\(volume.name)\"?")
             alert.informativeText = informativeText(for: volume, previousFailure: currentFailure)
             alert.addButton(withTitle: String(localized: "Unlock"))
-            alert.addButton(withTitle: String(localized: "Cancel"))
+            alert.addButton(withTitle: String(localized: "Not Now"))
+            alert.addButton(withTitle: String(localized: "Don’t Ask Again"))
             alert.accessoryView = makeAccessoryView()
 
             NSApp.activate(ignoringOtherApps: true)
             let result = alert.runModal()
-            guard result == .alertFirstButtonReturn,
-                  let stackView = alert.accessoryView as? NSStackView,
+
+            switch result {
+            case .alertSecondButtonReturn:
+                return .notNow
+            case .alertThirdButtonReturn:
+                return .doNotAskAgain
+            case .alertFirstButtonReturn:
+                break
+            default:
+                return .notNow
+            }
+
+            guard let stackView = alert.accessoryView as? NSStackView,
                   let passwordField = stackView.arrangedSubviews.first(where: { $0 is NSSecureTextField }) as? NSSecureTextField,
                   let saveCheckbox = stackView.arrangedSubviews.first(where: { $0 is NSButton }) as? NSButton else {
-                return nil
+                return .notNow
             }
 
             let password = passwordField.stringValue
@@ -49,15 +68,15 @@ final class EncryptedVolumePasswordPrompt {
                 continue
             }
 
-            return Response(password: password, shouldSaveInKeychain: saveCheckbox.state == .on)
+            return .unlock(
+                Response(password: password, shouldSaveInKeychain: saveCheckbox.state == .on)
+            )
         }
     }
 
     /// Builds the prompt explanatory copy.
     private func informativeText(for volume: Volume, previousFailure: String?) -> String {
-        let baseMessage = String(
-            localized: "Ejectify needs the password for \"\(volume.name)\" to unlock and remount this encrypted APFS volume."
-        )
+        let baseMessage = String(localized: "macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume.")
 
         guard let previousFailure, !previousFailure.isEmpty else {
             return baseMessage
@@ -72,11 +91,11 @@ final class EncryptedVolumePasswordPrompt {
         passwordField.placeholderString = String(localized: "Password")
 
         let saveCheckbox = NSButton(
-            checkboxWithTitle: String(localized: "Save password in Keychain"),
+            checkboxWithTitle: String(localized: "Save this password in Keychain for future automatic unlocking"),
             target: nil,
             action: nil
         )
-        saveCheckbox.state = .on
+        saveCheckbox.state = .off
 
         let stackView = NSStackView(views: [passwordField, saveCheckbox])
         stackView.orientation = .vertical

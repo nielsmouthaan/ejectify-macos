@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Eject Instead of Unmount";
 "Unlock encrypted volume" = "Unlock Encrypted Volume";
 "Unlock" = "Unlock";
+"Unlock \"%@\"?" = "Unlock “%@”?";
+"Not Now" = "Not Now";
+"Don’t Ask Again" = "Don’t Ask Again";
+"Save this password in Keychain for future automatic unlocking" = "Save this password in Keychain for future automatic unlocking";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume.";
 "Password" = "Password";
 "Save password in Keychain" = "Save Password in Keychain";
 "Enter a password to unlock this volume." = "Enter a password to unlock this volume.";

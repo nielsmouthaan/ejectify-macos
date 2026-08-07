@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "הוצאה במקום ניתוק";
 "Unlock encrypted volume" = "ביטול נעילת אמצעי אחסון מוצפן";
 "Unlock" = "ביטול נעילה";
+"Unlock \"%@\"?" = "לבטל את נעילת ״%@״?";
+"Not Now" = "לא עכשיו";
+"Don’t Ask Again" = "לא לשאול שוב";
+"Save this password in Keychain for future automatic unlocking" = "שמירת הסיסמה הזו בצרור המפתחות לביטול נעילה אוטומטי בעתיד";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS לא ביטל אוטומטית את נעילת אמצעי האחסון המוצפן מסוג APFS. ל-Ejectify אין גישה לסיסמאות שנשמרו באמצעות כלי העזר לכוננים. יש להזין את סיסמת אמצעי האחסון כדי ש-Ejectify יעביר אותה ל-macOS ויחבר מחדש את אמצעי האחסון.";
 "Password" = "סיסמה";
 "Save password in Keychain" = "שמור סיסמה בצרור המפתחות";
 "Enter a password to unlock this volume." = "הזן סיסמה כדי לבטל את נעילת אמצעי האחסון הזה.";

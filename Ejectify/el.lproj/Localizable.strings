@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Εξαγωγή αντί για κατάργηση προσάρτησης";
 "Unlock encrypted volume" = "Ξεκλείδωμα κρυπτογραφημένου τόμου";
 "Unlock" = "Ξεκλείδωμα";
+"Unlock \"%@\"?" = "Ξεκλείδωμα του «%@»;";
+"Not Now" = "Όχι τώρα";
+"Don’t Ask Again" = "Να μην ερωτηθώ ξανά";
+"Save this password in Keychain for future automatic unlocking" = "Αποθήκευση αυτού του συνθηματικού στην Κλειδοθήκη για μελλοντικό αυτόματο ξεκλείδωμα";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "Το macOS δεν ξεκλείδωσε αυτόματα αυτόν τον κρυπτογραφημένο τόμο APFS. Το Ejectify δεν έχει πρόσβαση στα συνθηματικά που είναι αποθηκευμένα στο Βοήθημα δίσκων. Εισαγάγετε το συνθηματικό του τόμου, ώστε το Ejectify να το διαβιβάσει στο macOS και να προσαρτήσει ξανά τον τόμο.";
 "Password" = "Συνθηματικό";
 "Save password in Keychain" = "Αποθήκευση συνθηματικού στην Κλειδοθήκη";
 "Enter a password to unlock this volume." = "Εισαγάγετε συνθηματικό για να ξεκλειδώσετε αυτόν τον τόμο.";

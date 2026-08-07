@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Ejetar em vez de desmontar";
 "Unlock encrypted volume" = "Desbloquear volume cifrado";
 "Unlock" = "Desbloquear";
+"Unlock \"%@\"?" = "Desbloquear “%@”?";
+"Not Now" = "Agora não";
+"Don’t Ask Again" = "Não voltar a perguntar";
+"Save this password in Keychain for future automatic unlocking" = "Guardar esta palavra-passe no Porta-chaves para futuros desbloqueios automáticos";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "O macOS não desbloqueou automaticamente este volume APFS cifrado. O Ejectify não consegue aceder às palavras-passe guardadas pelo Utilitário de Discos. Introduza a palavra-passe do volume para que o Ejectify a possa transmitir ao macOS e voltar a montar o volume.";
 "Password" = "Palavra-passe";
 "Save password in Keychain" = "Guardar palavra-passe no Porta-chaves";
 "Enter a password to unlock this volume." = "Introduza uma palavra-passe para desbloquear este volume.";

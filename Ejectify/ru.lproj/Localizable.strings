@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Извлекать вместо размонтирования";
 "Unlock encrypted volume" = "Разблокировать зашифрованный том";
 "Unlock" = "Разблокировать";
+"Unlock \"%@\"?" = "Разблокировать «%@»?";
+"Not Now" = "Не сейчас";
+"Don’t Ask Again" = "Больше не спрашивать";
+"Save this password in Keychain for future automatic unlocking" = "Сохранить этот пароль в Связке ключей для автоматической разблокировки в будущем";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS не разблокировала этот зашифрованный том APFS автоматически. Ejectify не имеет доступа к паролям, сохраненным Дисковой утилитой. Введите пароль тома, чтобы Ejectify передал его macOS и повторно смонтировал том.";
 "Password" = "Пароль";
 "Save password in Keychain" = "Сохранить пароль в Связке ключей";
 "Enter a password to unlock this volume." = "Введите пароль, чтобы разблокировать этот том.";

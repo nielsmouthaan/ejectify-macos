@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "마운트 해제 대신 추출";
 "Unlock encrypted volume" = "암호화된 볼륨 잠금 해제";
 "Unlock" = "잠금 해제";
+"Unlock \"%@\"?" = "“%@”의 잠금을 해제하겠습니까?";
+"Not Now" = "지금 안 함";
+"Don’t Ask Again" = "다시 묻지 않기";
+"Save this password in Keychain for future automatic unlocking" = "나중에 자동으로 잠금 해제할 수 있도록 이 암호를 키체인에 저장";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS가 이 암호화된 APFS 볼륨의 잠금을 자동으로 해제하지 않았습니다. Ejectify는 디스크 유틸리티가 저장한 암호에 접근할 수 없습니다. 볼륨 암호를 입력하면 Ejectify가 이를 macOS에 전달하고 볼륨을 다시 마운트합니다.";
 "Password" = "암호";
 "Save password in Keychain" = "키체인에 암호 저장";
 "Enter a password to unlock this volume." = "이 볼륨의 잠금을 해제할 암호를 입력하십시오.";

@@ -318,6 +318,12 @@ final class StatusBarMenu: NSMenu {
         }
         let newEnabledValue = toggledValue(for: menuItem.state)
         volume.enabled = newEnabledValue
+
+        if newEnabledValue,
+           EncryptedVolumePromptSuppressionStore.shared.clearSuppression(for: volume.id) {
+            Log.volumeOperations.log("Encrypted APFS prompt suppression reset after volume re-enabled; \(volume.logLabel)")
+        }
+
         Log.volumeOperations.log("Volume auto-unmount toggled; \(volume.logLabel); enabled=\(newEnabledValue)")
         updateMenu()
     }

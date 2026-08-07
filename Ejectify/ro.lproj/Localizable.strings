@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Ejectează în loc să demontezi";
 "Unlock encrypted volume" = "Deblochează volumul criptat";
 "Unlock" = "Deblochează";
+"Unlock \"%@\"?" = "Deblochezi „%@”?";
+"Not Now" = "Nu acum";
+"Don’t Ask Again" = "Nu mai întreba";
+"Save this password in Keychain for future automatic unlocking" = "Salvează această parolă în Portchei pentru deblocări automate viitoare";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS nu a deblocat automat acest volum APFS criptat. Ejectify nu poate accesa parolele salvate de Utilitar Disc. Introdu parola volumului pentru ca Ejectify să o transmită către macOS și să remonteze volumul.";
 "Password" = "Parolă";
 "Save password in Keychain" = "Salvează parola în Portchei";
 "Enter a password to unlock this volume." = "Introdu o parolă pentru a debloca acest volum.";

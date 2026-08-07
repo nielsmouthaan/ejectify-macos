@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "退出而非卸載";
 "Unlock encrypted volume" = "解鎖加密卷宗";
 "Unlock" = "解鎖";
+"Unlock \"%@\"?" = "要解鎖「%@」嗎？";
+"Not Now" = "現在不要";
+"Don’t Ask Again" = "不再詢問";
+"Save this password in Keychain for future automatic unlocking" = "將此密碼儲存到鑰匙圈，以便日後自動解鎖";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS 未自動解鎖此加密 APFS 卷宗。Ejectify 無法存取「磁碟工具程式」儲存的密碼。請輸入卷宗密碼，Ejectify 會將密碼傳遞給 macOS 並重新裝載卷宗。";
 "Password" = "密碼";
 "Save password in Keychain" = "將密碼儲存到鑰匙圈";
 "Enter a password to unlock this volume." = "輸入密碼以解鎖此卷宗。";

@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "अनमाउंट करने के बजाय बाहर निकालें";
 "Unlock encrypted volume" = "एन्क्रिप्टेड वॉल्यूम अनलॉक करें";
 "Unlock" = "अनलॉक करें";
+"Unlock \"%@\"?" = "“%@” को अनलॉक करें?";
+"Not Now" = "अभी नहीं";
+"Don’t Ask Again" = "फिर न पूछें";
+"Save this password in Keychain for future automatic unlocking" = "भविष्य में अपने आप अनलॉक करने के लिए यह पासवर्ड कीचेन में सेव करें";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS ने इस एन्क्रिप्टेड APFS वॉल्यूम को अपने आप अनलॉक नहीं किया। Ejectify डिस्क यूटिलिटी द्वारा सेव किए गए पासवर्ड ऐक्सेस नहीं कर सकता। वॉल्यूम का पासवर्ड डालें, ताकि Ejectify उसे macOS को दे सके और वॉल्यूम को फिर से माउंट कर सके।";
 "Password" = "पासवर्ड";
 "Save password in Keychain" = "कीचेन में पासवर्ड सेव करें";
 "Enter a password to unlock this volume." = "इस वॉल्यूम को अनलॉक करने के लिए पासवर्ड डालें।";

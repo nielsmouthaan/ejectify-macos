@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "เลิกเชื่อมต่อแทนการเลิกเมานต์";
 "Unlock encrypted volume" = "ปลดล็อกโวลุ่มที่เข้ารหัส";
 "Unlock" = "ปลดล็อก";
+"Unlock \"%@\"?" = "ปลดล็อก “%@” หรือไม่";
+"Not Now" = "ไม่ใช่ตอนนี้";
+"Don’t Ask Again" = "ไม่ต้องถามอีก";
+"Save this password in Keychain for future automatic unlocking" = "บันทึกรหัสผ่านนี้ในพวงกุญแจเพื่อปลดล็อกอัตโนมัติในอนาคต";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS ไม่ได้ปลดล็อกโวลุ่ม APFS ที่เข้ารหัสนี้โดยอัตโนมัติ Ejectify ไม่สามารถเข้าถึงรหัสผ่านที่ยูทิลิตี้ดิสก์บันทึกไว้ได้ ป้อนรหัสผ่านของโวลุ่มเพื่อให้ Ejectify ส่งต่อไปยัง macOS และเมานต์โวลุ่มอีกครั้ง";
 "Password" = "รหัสผ่าน";
 "Save password in Keychain" = "บันทึกรหัสผ่านในพวงกุญแจ";
 "Enter a password to unlock this volume." = "ป้อนรหัสผ่านเพื่อปลดล็อกโวลุ่มนี้";

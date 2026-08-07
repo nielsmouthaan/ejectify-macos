@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Bağlantıyı Kesmek Yerine Çıkar";
 "Unlock encrypted volume" = "Şifreli Birimin Kilidini Aç";
 "Unlock" = "Kilidi Aç";
+"Unlock \"%@\"?" = "“%@” Kilidi Açılsın mı?";
+"Not Now" = "Şimdi Değil";
+"Don’t Ask Again" = "Bir Daha Sorma";
+"Save this password in Keychain for future automatic unlocking" = "Gelecekte otomatik kilit açma için bu parolayı Anahtar Zinciri’ne kaydet";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS bu şifreli APFS biriminin kilidini otomatik olarak açmadı. Ejectify, Disk İzlencesi tarafından kaydedilen parolalara erişemez. Ejectify’ın parolayı macOS’e iletip birimi yeniden bağlayabilmesi için birim parolasını girin.";
 "Password" = "Parola";
 "Save password in Keychain" = "Parolayı Anahtar Zinciri’ne Kaydet";
 "Enter a password to unlock this volume." = "Bu birimin kilidini açmak için bir parola girin.";

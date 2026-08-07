@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Poista irrottamisen sijaan";
 "Unlock encrypted volume" = "Avaa salatun taltion lukitus";
 "Unlock" = "Avaa lukitus";
+"Unlock \"%@\"?" = "Avataanko taltion ”%@” lukitus?";
+"Not Now" = "Ei nyt";
+"Don’t Ask Again" = "Älä kysy uudelleen";
+"Save this password in Keychain for future automatic unlocking" = "Tallenna tämä salasana Avainnippuun tulevaa automaattista lukituksen avaamista varten";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS ei avannut tämän salatun APFS-taltion lukitusta automaattisesti. Ejectify ei voi käyttää Levytyökalun tallentamia salasanoja. Syötä taltion salasana, jotta Ejectify voi välittää sen macOS:lle ja liittää taltion uudelleen.";
 "Password" = "Salasana";
 "Save password in Keychain" = "Tallenna salasana Avainnippuun";
 "Enter a password to unlock this volume." = "Syötä salasana tämän taltion lukituksen avaamista varten.";

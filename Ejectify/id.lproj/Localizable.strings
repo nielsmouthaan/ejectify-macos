@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Keluarkan alih-alih melepas";
 "Unlock encrypted volume" = "Buka kunci volume terenkripsi";
 "Unlock" = "Buka Kunci";
+"Unlock \"%@\"?" = "Buka kunci “%@”?";
+"Not Now" = "Jangan Sekarang";
+"Don’t Ask Again" = "Jangan Tanya Lagi";
+"Save this password in Keychain for future automatic unlocking" = "Simpan kata sandi ini di Rantai Kunci untuk membuka kunci otomatis di masa mendatang";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "macOS tidak membuka kunci volume APFS terenkripsi ini secara otomatis. Ejectify tidak dapat mengakses kata sandi yang disimpan oleh Utilitas Disk. Masukkan kata sandi volume agar Ejectify dapat meneruskannya ke macOS dan memasang kembali volume tersebut.";
 "Password" = "Kata Sandi";
 "Save password in Keychain" = "Simpan kata sandi di Rantai Kunci";
 "Enter a password to unlock this volume." = "Masukkan kata sandi untuk membuka kunci volume ini.";

@@ -458,6 +458,11 @@ private enum EjectifyDiagnosticsReportFactory {
         )
         try Task.checkCancellation()
         reporters.append(UnifiedLogsReporter(collection: diskArbitrationLogCollection))
+
+        let apfsUnlockLogCollection = try UnifiedLogCollector.collect(kind: .apfsUnlock(startDate: logStartDate))
+        reporters.append(UnifiedLogsReporter(collection: apfsUnlockLogCollection))
+        try Task.checkCancellation()
+
         reporters.append(DiagnosticsReporter.DefaultReporter.smartInsights.reporter)
 
         let report = await DiagnosticsReporter.create(
@@ -677,6 +682,7 @@ private enum UnifiedLogCollector {
         case privilegedHelper(startDate: Date)
         case launchdServiceManagement(startDate: Date)
         case diskArbitration(filterTerms: [String], startDate: Date)
+        case apfsUnlock(startDate: Date)
     }
 
     /// Collects and formats unified log entries for a chapter.
@@ -833,6 +839,8 @@ private extension UnifiedLogCollector.Kind {
             return "Launchd and ServiceManagement Logs"
         case .diskArbitration:
             return "Disk Arbitration Logs"
+        case .apfsUnlock:
+            return "APFS Unlock Logs"
         }
     }
 
@@ -848,13 +856,23 @@ private extension UnifiedLogCollector.Kind {
             return launchdServiceManagementPredicate()
         case .diskArbitration(let filterTerms, _):
             return diskArbitrationPredicate(filterTerms: filterTerms)
+        case .apfsUnlock:
+            return NSPredicate(
+                format: "process == %@ AND (subsystem == %@ OR subsystem == %@)",
+                "APFSUserAgent",
+                "com.apple.apfs",
+                "com.apple.diskunlock"
+            )
         }
     }
 
     /// Start position for unified-log enumeration.
     func startPosition(in store: OSLogStore) -> OSLogPosition? {
         switch self {
-        case .privilegedHelper(let startDate), .launchdServiceManagement(let startDate), .diskArbitration(_, let startDate):
+        case .privilegedHelper(let startDate),
+             .launchdServiceManagement(let startDate),
+             .diskArbitration(_, let startDate),
+             .apfsUnlock(let startDate):
             return store.position(date: startDate)
         }
     }

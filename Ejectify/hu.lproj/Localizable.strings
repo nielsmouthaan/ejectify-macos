@@ -53,6 +53,11 @@
 "Eject instead of unmount" = "Kiadás lecsatolás helyett";
 "Unlock encrypted volume" = "Titkosított kötet feloldása";
 "Unlock" = "Feloldás";
+"Unlock \"%@\"?" = "Feloldja a(z) „%@” kötetet?";
+"Not Now" = "Most nem";
+"Don’t Ask Again" = "Ne kérdezze újra";
+"Save this password in Keychain for future automatic unlocking" = "A jelszó mentése a Kulcskarikába a későbbi automatikus feloldáshoz";
+"macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume." = "A macOS nem oldotta fel automatikusan ezt a titkosított APFS-kötetet. Az Ejectify nem fér hozzá a Lemezkezelő által mentett jelszavakhoz. Adja meg a kötet jelszavát, hogy az Ejectify átadhassa azt a macOS-nek, és újból csatolhassa a kötetet.";
 "Password" = "Jelszó";
 "Save password in Keychain" = "Jelszó mentése a Kulcskarikába";
 "Enter a password to unlock this volume." = "Adjon meg egy jelszót a kötet feloldásához.";
