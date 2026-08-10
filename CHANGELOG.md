@@ -3,7 +3,7 @@
 ## 2.1.0
 
 - Added an opt-in whole-disk eject mode for automatically and manually ejecting selected devices without attempting to remount them.
-- Added automatic unlocking and remounting of encrypted APFS volumes using a saved Keychain password or a secure password prompt.
+- Added native-first unlocking and remounting of encrypted APFS volumes, with an optional Ejectify Keychain password fallback that can be disabled from the menu.
 
 ## 2.0.7
 

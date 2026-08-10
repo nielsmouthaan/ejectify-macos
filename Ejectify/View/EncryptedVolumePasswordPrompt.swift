@@ -15,7 +15,6 @@ final class EncryptedVolumePasswordPrompt {
     enum Outcome {
         case unlock(Response)
         case notNow
-        case doNotAskAgain
     }
 
     /// User input returned from the unlock prompt.
@@ -29,17 +28,16 @@ final class EncryptedVolumePasswordPrompt {
     }
 
     /// Presents the prompt and returns the selected action.
-    func requestPassword(for volume: Volume, previousFailure: String?) -> Outcome {
-        var currentFailure = previousFailure
-
+    func requestPassword(for volume: Volume) -> Outcome {
         while true {
             let alert = NSAlert()
             alert.alertStyle = .informational
             alert.messageText = String(localized: "Unlock \"\(volume.name)\"?")
-            alert.informativeText = informativeText(for: volume, previousFailure: currentFailure)
+            alert.informativeText = String(
+                localized: "The volume couldn’t be unlocked automatically. Enter the volume password to unlock and remount it."
+            )
             alert.addButton(withTitle: String(localized: "Unlock"))
             alert.addButton(withTitle: String(localized: "Not Now"))
-            alert.addButton(withTitle: String(localized: "Don’t Ask Again"))
             alert.accessoryView = makeAccessoryView()
 
             NSApp.activate(ignoringOtherApps: true)
@@ -48,8 +46,6 @@ final class EncryptedVolumePasswordPrompt {
             switch result {
             case .alertSecondButtonReturn:
                 return .notNow
-            case .alertThirdButtonReturn:
-                return .doNotAskAgain
             case .alertFirstButtonReturn:
                 break
             default:
@@ -64,7 +60,6 @@ final class EncryptedVolumePasswordPrompt {
 
             let password = passwordField.stringValue
             guard !password.isEmpty else {
-                currentFailure = String(localized: "Enter a password to unlock this volume.")
                 continue
             }
 
@@ -74,24 +69,13 @@ final class EncryptedVolumePasswordPrompt {
         }
     }
 
-    /// Builds the prompt explanatory copy.
-    private func informativeText(for volume: Volume, previousFailure: String?) -> String {
-        let baseMessage = String(localized: "macOS did not unlock this encrypted APFS volume automatically. Ejectify cannot access passwords stored by Disk Utility. Enter the volume password to let Ejectify pass it to macOS and remount the volume.")
-
-        guard let previousFailure, !previousFailure.isEmpty else {
-            return baseMessage
-        }
-
-        return "\(previousFailure)\n\n\(baseMessage)"
-    }
-
     /// Creates the secure password field and Keychain checkbox.
     private func makeAccessoryView() -> NSView {
         let passwordField = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
         passwordField.placeholderString = String(localized: "Password")
 
         let saveCheckbox = NSButton(
-            checkboxWithTitle: String(localized: "Save this password in Keychain for future automatic unlocking"),
+            checkboxWithTitle: String(localized: "Save password in Keychain"),
             target: nil,
             action: nil
         )

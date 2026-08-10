@@ -66,6 +66,12 @@ enum VolumeOperationOutcomePolicy {
         case deferUntilLater
     }
 
+    /// Describes whether Ejectify should enter its own encrypted-volume password fallback.
+    enum EncryptedAPFSFallbackDecision: Equatable, Sendable {
+        case useFallback
+        case endRecovery
+    }
+
     /// Delays used after consecutive retryable automatic remount failures.
     static let automaticRemountRetryDelays: [Duration] = [
         .seconds(3),
@@ -183,6 +189,13 @@ enum VolumeOperationOutcomePolicy {
         case .unknown, .unavailable:
             return .resumeNormalRetryPolicy
         }
+    }
+
+    /// Selects whether a confirmed locked volume should use Ejectify-managed password handling.
+    static func encryptedAPFSFallbackDecision(
+        unlockVolumesWhenNeeded: Bool
+    ) -> EncryptedAPFSFallbackDecision {
+        unlockVolumesWhenNeeded ? .useFallback : .endRecovery
     }
 
     /// Selects whether a revalidated encrypted APFS workflow should unlock, retry mounting, or preserve its candidate.

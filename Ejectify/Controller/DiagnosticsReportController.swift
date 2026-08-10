@@ -181,6 +181,9 @@ private struct EjectifyDiagnosticsSnapshot: Sendable {
     /// Current force-unmount preference.
     let forceUnmount: Bool
 
+    /// Whether Ejectify-managed encrypted-volume password fallback is enabled.
+    let unlockVolumesWhenNeeded: Bool
+
     /// Current privileged helper daemon status.
     let privilegedHelperStatus: String
 
@@ -211,6 +214,7 @@ private struct EjectifyDiagnosticsSnapshot: Sendable {
             launchAtLogin: Preference.launchAtLogin,
             unmountWhen: Preference.unmountWhen.rawValue,
             forceUnmount: Preference.forceUnmount,
+            unlockVolumesWhenNeeded: Preference.unlockVolumesWhenNeeded,
             privilegedHelperStatus: PrivilegedHelperLifecycleManager.shared.daemonStatus.statusDescription,
             volumeOperationMode: VolumeOperationRouter.shared.executionMode.rawValue,
             isUsingPrivilegedHelper: VolumeOperationRouter.shared.isUsingPrivilegedHelper,
@@ -514,6 +518,7 @@ private struct EjectifyStateReporter: DiagnosticsReporting {
             ("Launch at login", snapshot.launchAtLogin.diagnosticsDescription),
             ("Unmount when", snapshot.unmountWhen),
             ("Force unmount", snapshot.forceUnmount.diagnosticsDescription),
+            ("Unlock volumes when needed", snapshot.unlockVolumesWhenNeeded.diagnosticsDescription),
             ("Privileged helper status", snapshot.privilegedHelperStatus),
             ("Volume operation mode", snapshot.volumeOperationMode),
             ("Using privileged helper", snapshot.isUsingPrivilegedHelper.diagnosticsDescription),

@@ -37,9 +37,6 @@ final class ActivityController {
     /// Store used for encrypted APFS volume unlock passwords.
     private let encryptedVolumeCredentialStore = EncryptedVolumeCredentialStore.shared
 
-    /// Store used to suppress Ejectify password prompts for selected encrypted volumes.
-    private let encryptedVolumePromptSuppressionStore: EncryptedVolumePromptSuppressionStore
-
     /// Probe used to confirm that an encrypted APFS volume is locked after a normal mount failure.
     private let encryptedVolumeLockStateProbe = APFSVolumeLockStateProbe.shared
 
@@ -107,11 +104,8 @@ final class ActivityController {
     /// Distributed notification posted when the screen saver stops.
     private static let screensaverDidStopNotificationName = Notification.Name("com.apple.screensaver.didstop")
 
-    /// Initializes observers and injectable encrypted-volume prompt suppression storage.
-    init(
-        encryptedVolumePromptSuppressionStore: EncryptedVolumePromptSuppressionStore = .shared
-    ) {
-        self.encryptedVolumePromptSuppressionStore = encryptedVolumePromptSuppressionStore
+    /// Initializes disk and power event observers.
+    init() {
         startMonitoring()
     }
 
@@ -563,6 +557,17 @@ final class ActivityController {
                     }
 
                     if shouldUseEncryptedFallback {
+                        switch VolumeOperationOutcomePolicy.encryptedAPFSFallbackDecision(
+                            unlockVolumesWhenNeeded: Preference.unlockVolumesWhenNeeded
+                        ) {
+                        case .useFallback:
+                            break
+                        case .endRecovery:
+                            Log.volumeOperations.log("Encrypted APFS fallback skipped; reason=preference_disabled; \(volume.logLabel)")
+                            self.applyRemountCandidateDisposition(after: .terminalRemountFailure, volumeID: volumeID)
+                            return
+                        }
+
                         switch await self.unlockEncryptedVolume(for: volume) {
                         case .succeeded:
                             self.applyRemountCandidateDisposition(after: .remountSucceeded, volumeID: volumeID)
@@ -653,10 +658,7 @@ final class ActivityController {
                 case .invalidPassword:
                     Log.volumeOperations.warning("Saved encrypted APFS password was rejected for \(volume.logLabel)")
                     deleteEncryptedVolumePassword(for: volume)
-                    return await promptForEncryptedVolumePasswordIfAllowed(
-                        for: volume,
-                        previousFailure: String(localized: "The saved password for \"\(volume.name)\" no longer works.")
-                    )
+                    return await promptForEncryptedVolumePassword(for: volume)
                 case .failed(let message):
                     showEncryptedVolumeUnlockFailure(for: volume, details: message)
                     return .failed
@@ -664,50 +666,22 @@ final class ActivityController {
             }
         } catch {
             Log.volumeOperations.error(error, message: "Encrypted APFS password could not be read from Keychain for \(volume.logLabel)")
-            return await promptForEncryptedVolumePasswordIfAllowed(
-                for: volume,
-                previousFailure: String(localized: "Ejectify could not read the saved password from Keychain.")
-            )
+            return await promptForEncryptedVolumePassword(for: volume)
         }
 
-        return await promptForEncryptedVolumePasswordIfAllowed(for: volume, previousFailure: nil)
-    }
-
-    /// Enters the password-prompt fallback unless the user suppressed prompts for this volume.
-    private func promptForEncryptedVolumePasswordIfAllowed(
-        for volume: Volume,
-        previousFailure: String?
-    ) async -> EncryptedVolumeUnlockOutcome {
-        guard !encryptedVolumePromptSuppressionStore.isSuppressed(for: volume.id) else {
-            Log.volumeOperations.log("Encrypted APFS fallback selected; source=prompt_suppression; status=honored; action=end_current_cycle; \(volume.logLabel)")
-            return .failed
-        }
-
-        Log.volumeOperations.log("Encrypted APFS fallback selected; source=prompt; \(volume.logLabel)")
-        return await promptForEncryptedVolumePassword(for: volume, previousFailure: previousFailure)
+        return await promptForEncryptedVolumePassword(for: volume)
     }
 
     /// Prompts for an encrypted APFS password until unlock succeeds or the user ends the recovery cycle.
-    private func promptForEncryptedVolumePassword(
-        for volume: Volume,
-        previousFailure: String?
-    ) async -> EncryptedVolumeUnlockOutcome {
-        var promptFailure = previousFailure
-
+    private func promptForEncryptedVolumePassword(for volume: Volume) async -> EncryptedVolumeUnlockOutcome {
+        Log.volumeOperations.log("Encrypted APFS fallback selected; source=prompt; \(volume.logLabel)")
         while !Preference.ejectInsteadOfUnmount {
             Log.volumeOperations.log("Encrypted APFS password prompt presented for \(volume.logLabel)")
-            let outcome = encryptedVolumePasswordPrompt.requestPassword(
-                for: volume,
-                previousFailure: promptFailure
-            )
+            let outcome = encryptedVolumePasswordPrompt.requestPassword(for: volume)
 
             switch outcome {
             case .notNow:
                 Log.volumeOperations.info("Encrypted APFS password prompt action selected; action=not_now; \(volume.logLabel)")
-                return .failed
-            case .doNotAskAgain:
-                encryptedVolumePromptSuppressionStore.suppressPrompts(for: volume.id)
-                Log.volumeOperations.log("Encrypted APFS password prompt action selected; action=do_not_ask_again; suppression=enabled; \(volume.logLabel)")
                 return .failed
             case .unlock(let response):
                 Log.volumeOperations.info("Encrypted APFS password prompt action selected; action=unlock; saveRequested=\(response.shouldSaveInKeychain); \(volume.logLabel)")
@@ -738,7 +712,6 @@ final class ActivityController {
                     return .succeeded
                 case .invalidPassword:
                     Log.volumeOperations.warning("Entered encrypted APFS password was rejected for \(volume.logLabel)")
-                    promptFailure = String(localized: "Could not unlock \"\(volume.name)\". Check the password and try again.")
                 case .failed(let message):
                     showEncryptedVolumeUnlockFailure(for: volume, details: message)
                     return .failed

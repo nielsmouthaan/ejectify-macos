@@ -215,6 +215,15 @@ final class StatusBarMenu: NSMenu {
         forceUnmountItem.isEnabled = !Preference.ejectInsteadOfUnmount
         addItem(forceUnmountItem)
 
+        let unlockVolumesWhenNeededItem = NSMenuItem(
+            title: String(localized: "Unlock volumes when needed"),
+            action: #selector(unlockVolumesWhenNeededClicked(menuItem:)),
+            keyEquivalent: ""
+        )
+        unlockVolumesWhenNeededItem.target = self
+        unlockVolumesWhenNeededItem.state = Preference.unlockVolumesWhenNeeded ? .on : .off
+        addItem(unlockVolumesWhenNeededItem)
+
         let elevatedPermissionsItem = NSMenuItem(title: String(localized: "Use elevated permissions"), action: #selector(elevatedPermissionsClicked(menuItem:)), keyEquivalent: "")
         elevatedPermissionsItem.target = self
         elevatedPermissionsItem.state = elevatedPermissionsMenuState
@@ -319,11 +328,6 @@ final class StatusBarMenu: NSMenu {
         let newEnabledValue = toggledValue(for: menuItem.state)
         volume.enabled = newEnabledValue
 
-        if newEnabledValue,
-           EncryptedVolumePromptSuppressionStore.shared.clearSuppression(for: volume.id) {
-            Log.volumeOperations.log("Encrypted APFS prompt suppression reset after volume re-enabled; \(volume.logLabel)")
-        }
-
         Log.volumeOperations.log("Volume auto-unmount toggled; \(volume.logLabel); enabled=\(newEnabledValue)")
         updateMenu()
     }
@@ -380,6 +384,12 @@ final class StatusBarMenu: NSMenu {
     /// Toggles force-unmount preference from the menu.
     @objc private func forceUnmountClicked(menuItem: NSMenuItem) {
         Preference.forceUnmount = toggledValue(for: menuItem.state)
+        updateMenu()
+    }
+
+    /// Toggles Ejectify-managed encrypted-volume password fallback from the menu.
+    @objc private func unlockVolumesWhenNeededClicked(menuItem: NSMenuItem) {
+        Preference.unlockVolumesWhenNeeded = toggledValue(for: menuItem.state)
         updateMenu()
     }
 

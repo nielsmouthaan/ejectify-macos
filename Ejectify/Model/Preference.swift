@@ -72,6 +72,17 @@ enum Preference {
         }
     }
 
+    /// Controls whether Ejectify may use its own saved credentials or password prompt to unlock volumes.
+    static var unlockVolumesWhenNeeded: Bool {
+        get {
+            UnlockVolumesWhenNeededPreference.value(in: .standard)
+        }
+        set {
+            UnlockVolumesWhenNeededPreference.set(newValue, in: .standard)
+            Log.preferences.log("Preference changed: unlockVolumesWhenNeeded=\(newValue)")
+        }
+    }
+
     /// Controls whether automatic and manual disk handling ejects whole disks instead of unmounting volumes.
     static var ejectInsteadOfUnmount: Bool {
         get {

@@ -350,4 +350,21 @@ struct VolumeOperationOutcomePolicyTests {
 
         #expect(continuation == .deferUntilLater)
     }
+
+    @Test(arguments: [
+        (isEnabled: true, expected: VolumeOperationOutcomePolicy.EncryptedAPFSFallbackDecision.useFallback),
+        (isEnabled: false, expected: VolumeOperationOutcomePolicy.EncryptedAPFSFallbackDecision.endRecovery)
+    ])
+    func encryptedFallbackPreferenceSelectsExpectedDecision(
+        fixture: (
+            isEnabled: Bool,
+            expected: VolumeOperationOutcomePolicy.EncryptedAPFSFallbackDecision
+        )
+    ) {
+        let decision = VolumeOperationOutcomePolicy.encryptedAPFSFallbackDecision(
+            unlockVolumesWhenNeeded: fixture.isEnabled
+        )
+
+        #expect(decision == fixture.expected)
+    }
 }
