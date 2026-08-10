@@ -902,7 +902,7 @@ final class ActivityController {
         }
         pendingSystemSleepToken = nil
         cancelPendingSystemSleepTasks()
-        Log.powerEvents.log("System sleep allowed; token=\(token); reason=\(reason)")
+        Log.powerEvents.log("System sleep release requested; token=\(token); reason=\(reason)")
         systemSleepPowerObserver?.allowPowerChange(for: token)
     }
 

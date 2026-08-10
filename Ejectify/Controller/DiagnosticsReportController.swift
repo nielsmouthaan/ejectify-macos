@@ -463,6 +463,10 @@ private enum EjectifyDiagnosticsReportFactory {
         reporters.append(UnifiedLogsReporter(collection: apfsUnlockLogCollection))
         try Task.checkCancellation()
 
+        let powerManagementLogCollection = try UnifiedLogCollector.collect(kind: .powerManagement(startDate: logStartDate))
+        reporters.append(UnifiedLogsReporter(collection: powerManagementLogCollection))
+        try Task.checkCancellation()
+
         reporters.append(DiagnosticsReporter.DefaultReporter.smartInsights.reporter)
 
         let report = await DiagnosticsReporter.create(
@@ -683,6 +687,7 @@ private enum UnifiedLogCollector {
         case launchdServiceManagement(startDate: Date)
         case diskArbitration(filterTerms: [String], startDate: Date)
         case apfsUnlock(startDate: Date)
+        case powerManagement(startDate: Date)
     }
 
     /// Collects and formats unified log entries for a chapter.
@@ -694,7 +699,7 @@ private enum UnifiedLogCollector {
             let store = try OSLogStore(scope: .system)
             let entries = try store.getEntries(with: [], at: kind.startPosition(in: store), matching: kind.predicate)
             let dateFormatter = DiagnosticsDateFormatter.make()
-            let lines = try formatEntries(entries, dateFormatter: dateFormatter)
+            let lines = try formatEntries(entries, kind: kind, dateFormatter: dateFormatter)
             try Task.checkCancellation()
 
             guard !lines.isEmpty else {
@@ -722,6 +727,7 @@ private enum UnifiedLogCollector {
     /// Formats matching log entries.
     private static func formatEntries(
         _ entries: AnySequence<OSLogEntry>,
+        kind: Kind,
         dateFormatter: ISO8601DateFormatter
     ) throws -> String {
         var lines: [String] = []
@@ -730,6 +736,10 @@ private enum UnifiedLogCollector {
             try Task.checkCancellation()
 
             guard let logEntry = entry as? OSLogEntryLog else {
+                continue
+            }
+
+            guard kind.includes(logEntry) else {
                 continue
             }
 
@@ -841,6 +851,8 @@ private extension UnifiedLogCollector.Kind {
             return "Disk Arbitration Logs"
         case .apfsUnlock:
             return "APFS Unlock Logs"
+        case .powerManagement:
+            return "Power Management Logs"
         }
     }
 
@@ -863,6 +875,14 @@ private extension UnifiedLogCollector.Kind {
                 "com.apple.apfs",
                 "com.apple.diskunlock"
             )
+        case .powerManagement:
+            let messagePredicates = Array(
+                repeating: "eventMessage CONTAINS[c] %@",
+                count: PowerManagementLogPolicy.ejectifyIdentifiers.count
+            ).joined(separator: " OR ")
+            let format = "process == %@ AND (\(messagePredicates))"
+            let arguments = (["powerd"] + PowerManagementLogPolicy.ejectifyIdentifiers) as [Any]
+            return NSPredicate(format: format, argumentArray: arguments)
         }
     }
 
@@ -872,8 +892,19 @@ private extension UnifiedLogCollector.Kind {
         case .privilegedHelper(let startDate),
              .launchdServiceManagement(let startDate),
              .diskArbitration(_, let startDate),
-             .apfsUnlock(let startDate):
+             .apfsUnlock(let startDate),
+             .powerManagement(let startDate):
             return store.position(date: startDate)
+        }
+    }
+
+    /// Returns whether a unified-log entry remains relevant after retrieval.
+    func includes(_ entry: OSLogEntryLog) -> Bool {
+        switch self {
+        case .powerManagement:
+            return PowerManagementLogPolicy.includes(message: entry.composedMessage)
+        case .privilegedHelper, .launchdServiceManagement, .diskArbitration, .apfsUnlock:
+            return true
         }
     }
 

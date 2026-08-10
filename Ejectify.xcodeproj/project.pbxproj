@@ -56,6 +56,9 @@
 		E7C710030000000000000003 /* VolumeOperationOutcomePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C710040000000000000004 /* VolumeOperationOutcomePolicyTests.swift */; };
 		E7C710050000000000000005 /* VolumeOperationOutcomePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C710020000000000000002 /* VolumeOperationOutcomePolicy.swift */; };
 		E7C710060000000000000006 /* DAReturn+StatusDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D625C0AA1100ABC001 /* DAReturn+StatusDescription.swift */; };
+		F01400010000000000000001 /* PowerManagementLogPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01400020000000000000002 /* PowerManagementLogPolicy.swift */; };
+		F01400030000000000000003 /* PowerManagementLogPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01400020000000000000002 /* PowerManagementLogPolicy.swift */; };
+		F01400040000000000000004 /* PowerManagementLogPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01400050000000000000005 /* PowerManagementLogPolicyTests.swift */; };
 		E8A100010000000000000001 /* APFSEncryptedVolumeUnlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100040000000000000004 /* APFSEncryptedVolumeUnlocker.swift */; };
 		E8A100020000000000000002 /* EncryptedVolumeCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100050000000000000005 /* EncryptedVolumeCredentialStore.swift */; };
 		E8A100030000000000000003 /* EncryptedVolumePasswordPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100060000000000000006 /* EncryptedVolumePasswordPrompt.swift */; };
@@ -187,6 +190,8 @@
 		E9B200050000000000000005 /* APFSVolumeLockStateProbeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APFSVolumeLockStateProbeTests.swift; sourceTree = "<group>"; };
 		EA7100040000000000000004 /* EncryptedVolumePromptSuppressionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncryptedVolumePromptSuppressionStore.swift; sourceTree = "<group>"; };
 		EA7100050000000000000005 /* EncryptedVolumePromptSuppressionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncryptedVolumePromptSuppressionStoreTests.swift; sourceTree = "<group>"; };
+		F01400020000000000000002 /* PowerManagementLogPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerManagementLogPolicy.swift; sourceTree = "<group>"; };
+		F01400050000000000000005 /* PowerManagementLogPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerManagementLogPolicyTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -310,6 +315,7 @@
 				EA7100040000000000000004 /* EncryptedVolumePromptSuppressionStore.swift */,
 				C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */,
 				C0A100000000000000000073 /* Log.swift */,
+				F01400020000000000000002 /* PowerManagementLogPolicy.swift */,
 				C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */,
 				D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */,
 				E7C710020000000000000002 /* VolumeOperationOutcomePolicy.swift */,
@@ -346,6 +352,7 @@
 				E9B200050000000000000005 /* APFSVolumeLockStateProbeTests.swift */,
 				EA7100050000000000000005 /* EncryptedVolumePromptSuppressionStoreTests.swift */,
 				E7C700060000000000000006 /* LogTests.swift */,
+				F01400050000000000000005 /* PowerManagementLogPolicyTests.swift */,
 				E7C710040000000000000004 /* VolumeOperationOutcomePolicyTests.swift */,
 				E7C700070000000000000007 /* VolumeLogLabelFormatterTests.swift */,
 			);
@@ -571,6 +578,7 @@
 				D1E700AD2F8A000100C0D001 /* OnboardingApprovalMonitor.swift in Sources */,
 				D1E700AB2F8A000100C0D001 /* StopNotificationView.swift in Sources */,
 				D4A100A12FB0000100D0A001 /* DiagnosticsReportController.swift in Sources */,
+				F01400010000000000000001 /* PowerManagementLogPolicy.swift in Sources */,
 				B8DFADBA256D0565009E9296 /* ActivityController.swift in Sources */,
 				D1E700A12F8A000100C0D001 /* SystemSleepPowerObserver.swift in Sources */,
 				B82E12D32570FF0F004547C7 /* Preference.swift in Sources */,
@@ -613,6 +621,8 @@
 				E8A1000F000000000000000F /* DiskArbitrationVolumeOperator.swift in Sources */,
 				E7C710060000000000000006 /* DAReturn+StatusDescription.swift in Sources */,
 				E7C700030000000000000003 /* Log.swift in Sources */,
+				F01400030000000000000003 /* PowerManagementLogPolicy.swift in Sources */,
+				F01400040000000000000004 /* PowerManagementLogPolicyTests.swift in Sources */,
 				E7C710050000000000000005 /* VolumeOperationOutcomePolicy.swift in Sources */,
 				E7C700040000000000000004 /* VolumeLogLabelFormatter.swift in Sources */,
 				E7C700010000000000000001 /* LogTests.swift in Sources */,

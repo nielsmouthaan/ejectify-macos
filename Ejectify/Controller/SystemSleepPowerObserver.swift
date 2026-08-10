@@ -92,12 +92,21 @@ final class SystemSleepPowerObserver {
         }
     }
 
-    /// Signals to powerd that sleep may proceed for the given token.
-    func allowPowerChange(for token: Int) {
+    /// Signals to powerd that sleep may proceed for the given token and returns the IOKit result.
+    @discardableResult
+    func allowPowerChange(for token: Int) -> IOReturn {
         guard rootPort != 0 else {
-            return
+            Log.powerEvents.error("System sleep acknowledgement failed; token=\(token); status=\(kIOReturnNotOpen)")
+            return kIOReturnNotOpen
         }
-        IOAllowPowerChange(rootPort, token)
+
+        let status = IOAllowPowerChange(rootPort, token)
+        if status == kIOReturnSuccess {
+            Log.powerEvents.log("System sleep acknowledgement succeeded; token=\(token); status=\(status)")
+        } else {
+            Log.powerEvents.error("System sleep acknowledgement failed; token=\(token); status=\(status)")
+        }
+        return status
     }
 
     /// Raw IOKit callback that forwards incoming messages to an observer instance.
@@ -116,6 +125,7 @@ final class SystemSleepPowerObserver {
         guard messageType == Self.systemWillSleepMessage else {
             return
         }
+        Log.powerEvents.log("System sleep callback received; token=\(token)")
         let handler = onSystemWillSleep
         Task { @MainActor in
             handler(token)
