@@ -181,6 +181,9 @@ private struct EjectifyDiagnosticsSnapshot: Sendable {
     /// Current force-unmount preference.
     let forceUnmount: Bool
 
+    /// Whether whole disks are ejected instead of remountable volumes being unmounted.
+    let ejectInsteadOfUnmount: Bool
+
     /// Whether Ejectify-managed encrypted-volume password fallback is enabled.
     let unlockVolumesWhenNeeded: Bool
 
@@ -214,6 +217,7 @@ private struct EjectifyDiagnosticsSnapshot: Sendable {
             launchAtLogin: Preference.launchAtLogin,
             unmountWhen: Preference.unmountWhen.rawValue,
             forceUnmount: Preference.forceUnmount,
+            ejectInsteadOfUnmount: Preference.ejectInsteadOfUnmount,
             unlockVolumesWhenNeeded: Preference.unlockVolumesWhenNeeded,
             privilegedHelperStatus: PrivilegedHelperLifecycleManager.shared.daemonStatus.statusDescription,
             volumeOperationMode: VolumeOperationRouter.shared.executionMode.rawValue,
@@ -518,6 +522,7 @@ private struct EjectifyStateReporter: DiagnosticsReporting {
             ("Launch at login", snapshot.launchAtLogin.diagnosticsDescription),
             ("Unmount when", snapshot.unmountWhen),
             ("Force unmount", snapshot.forceUnmount.diagnosticsDescription),
+            ("Eject instead of unmount", snapshot.ejectInsteadOfUnmount.diagnosticsDescription),
             ("Unlock volumes when needed", snapshot.unlockVolumesWhenNeeded.diagnosticsDescription),
             ("Privileged helper status", snapshot.privilegedHelperStatus),
             ("Volume operation mode", snapshot.volumeOperationMode),

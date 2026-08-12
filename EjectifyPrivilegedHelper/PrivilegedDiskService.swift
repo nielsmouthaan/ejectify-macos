@@ -45,9 +45,9 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         perform(operation: .unmount(force: force), volumeUUID: volumeUUID.map { $0 as UUID }, volumeName: volumeName, bsdName: bsdName, reply: reply)
     }
 
-    /// Performs a privileged eject for the parent whole disk of the provided volume metadata.
-    func eject(volumeUUID: NSUUID?, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
-        perform(operation: .eject, volumeUUID: volumeUUID.map { $0 as UUID }, volumeName: volumeName, bsdName: bsdName, reply: reply)
+    /// Performs a privileged eject, optionally force-unmounting the whole disk first.
+    func eject(volumeUUID: NSUUID?, volumeName: String, bsdName: String, forceUnmount: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
+        perform(operation: .eject(forceUnmount: forceUnmount), volumeUUID: volumeUUID.map { $0 as UUID }, volumeName: volumeName, bsdName: bsdName, reply: reply)
     }
 
     /// Updates Disk Arbitration eject-notification muting through `defaults`.

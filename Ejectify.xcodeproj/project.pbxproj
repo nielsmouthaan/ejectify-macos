@@ -59,6 +59,7 @@
 		F01400010000000000000001 /* PowerManagementLogPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01400020000000000000002 /* PowerManagementLogPolicy.swift */; };
 		F01400030000000000000003 /* PowerManagementLogPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01400020000000000000002 /* PowerManagementLogPolicy.swift */; };
 		F01400040000000000000004 /* PowerManagementLogPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01400050000000000000005 /* PowerManagementLogPolicyTests.swift */; };
+		F0CE00010000000000000001 /* DiskArbitrationVolumeOperatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0CE00020000000000000002 /* DiskArbitrationVolumeOperatorTests.swift */; };
 		E8A100010000000000000001 /* APFSEncryptedVolumeUnlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100040000000000000004 /* APFSEncryptedVolumeUnlocker.swift */; };
 		E8A100020000000000000002 /* EncryptedVolumeCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100050000000000000005 /* EncryptedVolumeCredentialStore.swift */; };
 		E8A100030000000000000003 /* EncryptedVolumePasswordPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100060000000000000006 /* EncryptedVolumePasswordPrompt.swift */; };
@@ -192,6 +193,7 @@
 		EB8200050000000000000005 /* UnlockVolumesWhenNeededPreferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockVolumesWhenNeededPreferenceTests.swift; sourceTree = "<group>"; };
 		F01400020000000000000002 /* PowerManagementLogPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerManagementLogPolicy.swift; sourceTree = "<group>"; };
 		F01400050000000000000005 /* PowerManagementLogPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerManagementLogPolicyTests.swift; sourceTree = "<group>"; };
+		F0CE00020000000000000002 /* DiskArbitrationVolumeOperatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskArbitrationVolumeOperatorTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -350,6 +352,7 @@
 			children = (
 				E8A1000C000000000000000C /* APFSEncryptedVolumeUnlockerTests.swift */,
 				E9B200050000000000000005 /* APFSVolumeLockStateProbeTests.swift */,
+				F0CE00020000000000000002 /* DiskArbitrationVolumeOperatorTests.swift */,
 				E7C700060000000000000006 /* LogTests.swift */,
 				F01400050000000000000005 /* PowerManagementLogPolicyTests.swift */,
 				E7C710040000000000000004 /* VolumeOperationOutcomePolicyTests.swift */,
@@ -619,6 +622,7 @@
 				EB8200030000000000000003 /* UnlockVolumesWhenNeededPreferenceTests.swift in Sources */,
 				E8A1000B000000000000000B /* VolumeTests.swift in Sources */,
 				E8A1000F000000000000000F /* DiskArbitrationVolumeOperator.swift in Sources */,
+				F0CE00010000000000000001 /* DiskArbitrationVolumeOperatorTests.swift in Sources */,
 				E7C710060000000000000006 /* DAReturn+StatusDescription.swift in Sources */,
 				E7C700030000000000000003 /* Log.swift in Sources */,
 				F01400030000000000000003 /* PowerManagementLogPolicy.swift in Sources */,

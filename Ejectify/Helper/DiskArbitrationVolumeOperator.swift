@@ -62,7 +62,7 @@ enum DiskArbitrationVolumeOperator {
     enum Operation {
         case mount
         case unmount(force: Bool)
-        case eject
+        case eject(forceUnmount: Bool)
 
         /// Human-readable operation name used in logs and error messages.
         var operationName: String {
@@ -71,8 +71,8 @@ enum DiskArbitrationVolumeOperator {
                 return "mount"
             case .unmount(let force):
                 return force ? "forced unmount" : "unmount"
-            case .eject:
-                return "eject"
+            case .eject(let forceUnmount):
+                return forceUnmount ? "eject with forced unmount" : "eject"
             }
         }
     }
@@ -100,6 +100,22 @@ enum DiskArbitrationVolumeOperator {
         var result = OperationResult(success: false, message: "No response from Disk Arbitration callback", status: nil)
     }
 
+    /// Callback signature shared by Disk Arbitration mount, unmount, and eject requests.
+    private typealias DiskOperationCallback = @convention(c) (DADisk, DADissenter?, UnsafeMutableRawPointer?) -> Void
+
+    /// Completes a pending synchronous wait with the result of a Disk Arbitration callback.
+    private static let diskOperationCallback: DiskOperationCallback = { _, dissenter, context in
+        guard let context else {
+            return
+        }
+
+        let callbackState = Unmanaged<CallbackState>.fromOpaque(context).takeRetainedValue()
+        callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter)
+        callbackState.semaphore.signal()
+    }
+
+    /// Options matching `diskutil eject force` preparation by force-unmounting every volume on the whole disk.
+    static let forcedEjectUnmountOptions = DADiskUnmountOptions(kDADiskUnmountOptionForce | kDADiskUnmountOptionWhole)
 
     /// Shared callback queue used by the shared Disk Arbitration session.
     private static let callbackQueue = DispatchQueue(
@@ -107,10 +123,10 @@ enum DiskArbitrationVolumeOperator {
         qos: .userInitiated
     )
 
-    /// Shared Disk Arbitration session for mount/unmount operations.
+    /// Shared Disk Arbitration session for mount-state operations.
     nonisolated(unsafe) private static let diskArbitrationSession: DASession? = DiskArbitrationSessionFactory.makeSession(dispatchQueue: callbackQueue)
 
-    /// Executes a Disk Arbitration mount/unmount operation and waits for callback completion, using the BSD name as a fast-path resolve hint before UUID scanning.
+    /// Executes a Disk Arbitration mount-state operation and waits for callback completion, using the BSD name as a fast-path resolve hint before UUID scanning.
     static func perform(
         volumeUUID: UUID?,
         volumeName: String,
@@ -133,23 +149,13 @@ enum DiskArbitrationVolumeOperator {
             return OperationResult(success: true, message: "Volume already unmounted", status: nil)
         }
 
-        let callbackState = CallbackState()
-        let callbackContext = Unmanaged.passRetained(callbackState).toOpaque()
-
         switch operation {
         case .mount:
-            DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), { _, dissenter, context in
-                guard let context else {
-                    return
-                }
-
-                let callbackState = Unmanaged<CallbackState>.fromOpaque(context).takeRetainedValue()
-                callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter)
-                callbackState.semaphore.signal()
-            }, callbackContext)
-        case .eject:
+            return performRequest(operationName: operation.operationName, timeout: timeout) { callback, context in
+                DADiskMount(disk, nil, DADiskMountOptions(kDADiskMountOptionDefault), callback, context)
+            }
+        case .eject(let forceUnmount):
             guard let wholeDisk = DADiskCopyWholeDisk(disk) else {
-                Unmanaged<CallbackState>.fromOpaque(callbackContext).release()
                 return OperationResult(
                     success: false,
                     message: "Whole disk for requested volume not found",
@@ -157,31 +163,67 @@ enum DiskArbitrationVolumeOperator {
                 )
             }
 
-            DADiskEject(wholeDisk, DADiskEjectOptions(kDADiskEjectOptionDefault), { _, dissenter, context in
-                guard let context else {
-                    return
+            return performEjectSequence(
+                forceUnmount: forceUnmount,
+                unmountWholeDisk: {
+                    performRequest(operationName: "forced whole-disk unmount", timeout: timeout) { callback, context in
+                        DADiskUnmount(wholeDisk, forcedEjectUnmountOptions, callback, context)
+                    }
+                },
+                eject: {
+                    performRequest(operationName: "eject", timeout: timeout) { callback, context in
+                        DADiskEject(wholeDisk, DADiskEjectOptions(kDADiskEjectOptionDefault), callback, context)
+                    }
                 }
-
-                let callbackState = Unmanaged<CallbackState>.fromOpaque(context).takeRetainedValue()
-                callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter)
-                callbackState.semaphore.signal()
-            }, callbackContext)
+            )
         case .unmount(let force):
             let option = force ? kDADiskUnmountOptionForce : kDADiskUnmountOptionDefault
-            DADiskUnmount(disk, DADiskUnmountOptions(option), { _, dissenter, context in
-                guard let context else {
-                    return
-                }
-
-                let callbackState = Unmanaged<CallbackState>.fromOpaque(context).takeRetainedValue()
-                callbackState.result = DiskArbitrationVolumeOperator.callbackResult(for: dissenter)
-                callbackState.semaphore.signal()
-            }, callbackContext)
+            return performRequest(operationName: operation.operationName, timeout: timeout) { callback, context in
+                DADiskUnmount(disk, DADiskUnmountOptions(option), callback, context)
+            }
         }
+    }
+
+    /// Performs optional forced-unmount preparation followed by a normal eject request.
+    static func performEjectSequence(
+        forceUnmount: Bool,
+        unmountWholeDisk: () -> OperationResult,
+        eject: () -> OperationResult
+    ) -> OperationResult {
+        guard forceUnmount else {
+            return eject()
+        }
+
+        let unmountResult = unmountWholeDisk()
+        guard unmountResult.success else {
+            return unmountResult.withMessagePrefix("Forced whole-disk unmount before eject failed")
+        }
+
+        let ejectResult = eject()
+        guard ejectResult.success else {
+            return ejectResult.withMessagePrefix("Eject after forced whole-disk unmount failed")
+        }
+
+        return OperationResult(
+            success: true,
+            message: "Forced whole-disk unmount completed before eject",
+            status: nil
+        )
+    }
+
+    /// Starts one Disk Arbitration request and waits synchronously for its callback or timeout.
+    private static func performRequest(
+        operationName: String,
+        timeout: TimeInterval,
+        request: (DiskOperationCallback, UnsafeMutableRawPointer) -> Void
+    ) -> OperationResult {
+        let callbackState = CallbackState()
+        let callbackContext = Unmanaged.passRetained(callbackState).toOpaque()
+        request(diskOperationCallback, callbackContext)
 
         let waitResult = callbackState.semaphore.wait(timeout: .now() + timeout)
         if waitResult == .timedOut {
-            return OperationResult(success: false, message: "\(operation.operationName) timed out", status: nil)
+            return OperationResult(success: false, message: "\(operationName) timed out", status: nil)
         }
 
         return callbackState.result
@@ -332,5 +374,14 @@ enum DiskArbitrationVolumeOperator {
         }
 
         return OperationResult(success: false, message: message, status: status)
+    }
+}
+
+private extension DiskArbitrationVolumeOperator.OperationResult {
+
+    /// Returns this result with stage context prepended to its diagnostic message.
+    func withMessagePrefix(_ prefix: String) -> Self {
+        let details = message.map { "\(prefix): \($0)" } ?? prefix
+        return Self(success: success, message: details, status: status)
     }
 }

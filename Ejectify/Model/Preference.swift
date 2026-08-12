@@ -61,7 +61,7 @@ enum Preference {
         }
     }
 
-    /// Controls whether unmount requests should use the force option.
+    /// Controls whether unmount requests, including eject preparation, should use the force option.
     static var forceUnmount: Bool {
         get {
             return UserDefaults.standard.bool(forKey: "preference.forceUnmount")

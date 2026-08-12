@@ -88,7 +88,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 VolumeOperationRouter.shared.eject(
                     volumeUUID: volume.diskUUID.map { $0 as NSUUID },
                     volumeName: volume.name,
-                    bsdName: volume.bsdName
+                    bsdName: volume.bsdName,
+                    forceUnmount: Preference.forceUnmount
                 ) { _, _, _ in }
             }
 

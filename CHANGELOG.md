@@ -2,7 +2,7 @@
 
 ## 2.1.0
 
-- Added an opt-in whole-disk eject mode for automatically and manually ejecting selected devices without attempting to remount them.
+- Added an opt-in whole-disk eject mode for automatically and manually ejecting selected devices without attempting to remount them, including forced-unmount preparation when Force Unmount is enabled.
 - Added native-first unlocking and remounting of encrypted APFS volumes, with an optional Ejectify Keychain password fallback that can be disabled from the menu.
 
 ## 2.0.7

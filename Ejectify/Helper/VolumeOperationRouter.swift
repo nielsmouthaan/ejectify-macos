@@ -396,7 +396,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
 
             if success {
                 self.setExecutionMode(.privilegedHelper, reason: "startup privileged helper ping succeeded")
-                Log.privilegedHelper.log("Privileged helper is available and will be used for mount and unmount operations")
+                Log.privilegedHelper.log("Privileged helper is available and will be used for mount, unmount, and eject operations")
             } else {
                 let details = message ?? "No additional details"
                 Log.privilegedHelper.warning("Privileged helper startup ping failed: \(details)")
@@ -474,16 +474,16 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
-    /// Requests a whole-disk eject operation with a BSD-name hint and returns optional operation details.
-    func eject(volumeUUID: NSUUID?, volumeName: String, bsdName: String, completion: @escaping (Bool, String?, DAReturn?) -> Void) {
+    /// Requests a whole-disk eject, optionally force-unmounting its volumes first.
+    func eject(volumeUUID: NSUUID?, volumeName: String, bsdName: String, forceUnmount: Bool, completion: @escaping (Bool, String?, DAReturn?) -> Void) {
         routeOperation(
-            operation: .eject,
+            operation: .eject(forceUnmount: forceUnmount),
             volumeUUID: volumeUUID,
             volumeName: volumeName,
             bsdName: bsdName,
             completion: completion
         ) { proxy, reply in
-            proxy.eject(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, withReply: reply)
+            proxy.eject(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, forceUnmount: forceUnmount, withReply: reply)
         }
     }
 

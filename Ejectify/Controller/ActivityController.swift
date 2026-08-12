@@ -968,7 +968,8 @@ final class ActivityController {
         VolumeOperationRouter.shared.eject(
             volumeUUID: volume.diskUUID.map { $0 as NSUUID },
             volumeName: volume.name,
-            bsdName: volume.bsdName
+            bsdName: volume.bsdName,
+            forceUnmount: Preference.forceUnmount
         ) { [weak self] success, _, _ in
             Task { @MainActor [weak self] in
                 guard let self else {

@@ -212,7 +212,6 @@ final class StatusBarMenu: NSMenu {
         let forceUnmountItem = NSMenuItem(title: String(localized: "Force unmount"), action: #selector(forceUnmountClicked(menuItem:)), keyEquivalent: "")
         forceUnmountItem.target = self
         forceUnmountItem.state = Preference.forceUnmount ? .on : .off
-        forceUnmountItem.isEnabled = !Preference.ejectInsteadOfUnmount
         addItem(forceUnmountItem)
 
         let unlockVolumesWhenNeededItem = NSMenuItem(
@@ -338,7 +337,7 @@ final class StatusBarMenu: NSMenu {
         updateMenu()
     }
 
-    /// Toggles privileged helper registration for elevated mount and unmount attempts.
+    /// Toggles privileged helper registration for elevated mount, unmount, and eject attempts.
     @MainActor
     @objc private func elevatedPermissionsClicked(menuItem: NSMenuItem) {
         let shouldEnable = toggledValue(for: menuItem.state)
