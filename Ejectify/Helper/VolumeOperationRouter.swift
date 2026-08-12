@@ -678,6 +678,16 @@ final class VolumeOperationRouter: @unchecked Sendable {
                 success: success,
                 message: message
             )
+
+            if VolumeOperationOutcomePolicy.shouldRetryHelperOperationLocally(
+                operation: operation,
+                success: success,
+                status: status
+            ) {
+                completeWithLocalFallback()
+                return
+            }
+
             complete(success, message, status)
         }
     }

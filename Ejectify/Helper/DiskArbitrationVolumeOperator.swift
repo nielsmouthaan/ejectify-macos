@@ -195,7 +195,8 @@ enum DiskArbitrationVolumeOperator {
         }
 
         let unmountResult = unmountWholeDisk()
-        guard unmountResult.success else {
+        let isAlreadyUnmounted = unmountResult.status == Int32(kDAReturnNotMounted)
+        guard unmountResult.success || isAlreadyUnmounted else {
             return unmountResult.withMessagePrefix("Forced whole-disk unmount before eject failed")
         }
 

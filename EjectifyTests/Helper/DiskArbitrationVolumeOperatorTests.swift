@@ -64,10 +64,32 @@ struct DiskArbitrationVolumeOperatorTests {
             }
         )
 
-        #expect(!result.success)
-        #expect(!didRequestEject)
+        #expect(result.success == false)
+        #expect(didRequestEject == false)
         #expect(result.message == "Forced whole-disk unmount before eject failed: Disk is busy")
         #expect(result.status == busyStatus)
+    }
+
+    @Test func alreadyUnmountedForceEjectPreparationContinuesWithEject() {
+        var didRequestEject = false
+
+        let result = DiskArbitrationVolumeOperator.performEjectSequence(
+            forceUnmount: true,
+            unmountWholeDisk: {
+                operationResult(
+                    success: false,
+                    message: "Disk is not mounted",
+                    status: Int32(kDAReturnNotMounted)
+                )
+            },
+            eject: {
+                didRequestEject = true
+                return successfulResult()
+            }
+        )
+
+        #expect(result.success)
+        #expect(didRequestEject)
     }
 
     @Test func forcedUnmountTimeoutPreventsEject() {
@@ -84,8 +106,8 @@ struct DiskArbitrationVolumeOperatorTests {
             }
         )
 
-        #expect(!result.success)
-        #expect(!didRequestEject)
+        #expect(result.success == false)
+        #expect(didRequestEject == false)
         #expect(result.message == "Forced whole-disk unmount before eject failed: forced whole-disk unmount timed out")
         #expect(result.status == nil)
     }
@@ -101,7 +123,7 @@ struct DiskArbitrationVolumeOperatorTests {
             }
         )
 
-        #expect(!result.success)
+        #expect(result.success == false)
         #expect(result.message == "Eject after forced whole-disk unmount failed: Eject was rejected")
         #expect(result.status == unsupportedStatus)
     }

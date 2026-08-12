@@ -43,6 +43,53 @@ struct VolumeOperationOutcomePolicyTests {
         #expect(status == nil)
     }
 
+    @Test func notPrivilegedHelperResultRetriesLocallyForEveryDiskOperation() {
+        let operations: [DiskArbitrationVolumeOperator.Operation] = [
+            .mount,
+            .unmount(force: false),
+            .unmount(force: true),
+            .eject(forceUnmount: false),
+            .eject(forceUnmount: true)
+        ]
+
+        for operation in operations {
+            let shouldRetry = VolumeOperationOutcomePolicy.shouldRetryHelperOperationLocally(
+                operation: operation,
+                success: false,
+                status: Int32(kDAReturnNotPrivileged)
+            )
+
+            #expect(shouldRetry)
+        }
+    }
+
+    @Test func successfulHelperResultDoesNotRetryLocally() {
+        let shouldRetry = VolumeOperationOutcomePolicy.shouldRetryHelperOperationLocally(
+            operation: .mount,
+            success: true,
+            status: Int32(kDAReturnNotPrivileged)
+        )
+
+        #expect(shouldRetry == false)
+    }
+
+    @Test(arguments: [
+        nil,
+        Int32(kDAReturnBusy),
+        Int32(kDAReturnNotPermitted),
+        Int32(kDAReturnNotFound),
+        Int32(kDAReturnUnsupported)
+    ] as [DAReturn?])
+    func otherHelperFailuresDoNotRetryLocally(_ status: DAReturn?) {
+        let shouldRetry = VolumeOperationOutcomePolicy.shouldRetryHelperOperationLocally(
+            operation: .mount,
+            success: false,
+            status: status
+        )
+
+        #expect(shouldRetry == false)
+    }
+
     @Test(arguments: [
         UnmountCompletion(success: true, status: nil),
         UnmountCompletion(success: false, status: nil),

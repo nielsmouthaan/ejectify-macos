@@ -91,6 +91,22 @@ enum VolumeOperationOutcomePolicy {
         return rawStatus
     }
 
+    /// Returns whether a helper authorization failure should retry once in the app process.
+    static func shouldRetryHelperOperationLocally(
+        operation: DiskArbitrationVolumeOperator.Operation,
+        success: Bool,
+        status: DAReturn?
+    ) -> Bool {
+        guard !success, status == Int32(kDAReturnNotPrivileged) else {
+            return false
+        }
+
+        switch operation {
+        case .mount, .unmount, .eject:
+            return true
+        }
+    }
+
     /// Returns whether an automatic remount candidate should remain after a workflow event.
     static func automaticRemountCandidateDisposition(
         after event: AutomaticRemountCandidateEvent
