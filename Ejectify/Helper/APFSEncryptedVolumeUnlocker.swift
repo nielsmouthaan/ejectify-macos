@@ -84,14 +84,15 @@ final class APFSEncryptedVolumeUnlocker: @unchecked Sendable {
             output: output,
             errorOutput: errorOutput
         )
+        let diagnosticMetadata = unlockDiagnosticMetadata(from: output)
 
         switch result {
         case .success:
             Log.volumeOperations.log("Encrypted APFS unlock succeeded for \(request.logLabel)")
         case .invalidPassword:
-            Log.volumeOperations.warning("Encrypted APFS unlock rejected the supplied password for \(request.logLabel)")
+            Log.volumeOperations.warning("Encrypted APFS unlock rejected the supplied password; terminationStatus=\(process.terminationStatus); \(diagnosticMetadata); \(request.logLabel)")
         case .failed:
-            Log.volumeOperations.error("Encrypted APFS unlock failed; terminationStatus=\(process.terminationStatus); \(request.logLabel)")
+            Log.volumeOperations.error("Encrypted APFS unlock failed; terminationStatus=\(process.terminationStatus); \(diagnosticMetadata); \(request.logLabel)")
         }
 
         return result
@@ -109,19 +110,36 @@ final class APFSEncryptedVolumeUnlocker: @unchecked Sendable {
             return .failed(message: message)
         }
 
+        let errorCode = plist["DiskManagementErrorCode"] as? Int
+
         if plist["Success"] as? Bool == true {
             return .success
         }
 
-        let rateLimitBackoff = (plist["RateLimitStateBackoff"] as? Bool) ?? false
-        let rateLimitLockout = (plist["RateLimitStateLockout"] as? Bool) ?? false
-        let errorCode = plist["DiskManagementErrorCode"] as? Int
+        let isRateLimited = (plist["RateLimitStateBackoff"] as? Bool) == true
+            || (plist["RateLimitStateLockout"] as? Bool) == true
 
-        if errorCode == authenticationRejectedErrorCode && !rateLimitBackoff && !rateLimitLockout {
+        if errorCode == authenticationRejectedErrorCode && !isRateLimited {
             return .invalidPassword
         }
 
         return .failed(message: unlockFailureMessage(from: plist, terminationStatus: terminationStatus))
+    }
+
+    /// Returns the minimal privacy-safe metadata needed to diagnose an unlock failure.
+    static func unlockDiagnosticMetadata(from output: Data) -> String {
+        guard let plist = unlockPlist(from: output) else {
+            return "diskManagementErrorCode=unavailable; rateLimitBackoff=unavailable; rateLimitLockout=unavailable"
+        }
+
+        let errorCode = plist["DiskManagementErrorCode"] as? Int
+        let rateLimitBackoff = plist["RateLimitStateBackoff"] as? Bool
+        let rateLimitLockout = plist["RateLimitStateLockout"] as? Bool
+        return [
+            "diskManagementErrorCode=\(errorCode.map(String.init) ?? "unavailable")",
+            "rateLimitBackoff=\(rateLimitBackoff.map(String.init) ?? "unavailable")",
+            "rateLimitLockout=\(rateLimitLockout.map(String.init) ?? "unavailable")"
+        ].joined(separator: "; ")
     }
 
     /// Parses the plist emitted by `diskutil apfs unlockVolume -plist`.

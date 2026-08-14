@@ -101,4 +101,26 @@ struct APFSEncryptedVolumeUnlockerTests {
 
         #expect(result == .failed(message: "not plist"))
     }
+
+    @Test func preservesPrivacySafeStructuredDiagnostics() throws {
+        let output = try PropertyListSerialization.data(
+            fromPropertyList: [
+                "DiskManagementErrorCode": -69591,
+                "LocalizedUnlockDispositionMessage": "Your account is locked.",
+                "RateLimitStateBackoff": true,
+                "RateLimitStateLockout": false,
+                "Success": false
+            ],
+            format: .xml,
+            options: 0
+        )
+
+        #expect(APFSEncryptedVolumeUnlocker.unlockDiagnosticMetadata(from: output) == "diskManagementErrorCode=-69591; rateLimitBackoff=true; rateLimitLockout=false")
+    }
+
+    @Test func reportsUnavailableDiagnosticsForMalformedOutput() {
+        let metadata = APFSEncryptedVolumeUnlocker.unlockDiagnosticMetadata(from: Data("not plist".utf8))
+
+        #expect(metadata == "diskManagementErrorCode=unavailable; rateLimitBackoff=unavailable; rateLimitLockout=unavailable")
+    }
 }
