@@ -71,47 +71,106 @@ final class StatusBarMenu: NSMenu {
 
     /// Handles mount notifications and logs mount metadata provided by NSWorkspace.
     @objc private func volumeDidMount(notification: Notification) {
-        if let volume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
-            Log.volumeOperations.log("Volume did mount: \(volume.logLabel)")
+        guard Thread.isMainThread else {
+            performSelector(onMainThread: #selector(volumeDidMount(notification:)), with: notification, waitUntilDone: false)
+            return
         }
-        refreshVolumesMenu()
+
+        guard let volume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) else {
+            return
+        }
+
+        Log.volumeOperations.log("Volume did mount: \(volume.logLabel)")
+        upsertCachedVolume(volume)
+        updateMenu()
     }
 
     /// Handles unmount notifications and logs unmount metadata provided by NSWorkspace.
     @objc private func volumeDidUnmount(notification: Notification) {
-        if let volume = cachedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
-            Log.volumeOperations.log("Volume did unmount: \(volume.logLabel)")
+        guard Thread.isMainThread else {
+            performSelector(onMainThread: #selector(volumeDidUnmount(notification:)), with: notification, waitUntilDone: false)
+            return
         }
-        refreshVolumesMenu()
+
+        guard let url = notificationURL(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey),
+              let volumeIndex = cachedVolumeIndex(for: url) else {
+            return
+        }
+
+        let volume = volumes.remove(at: volumeIndex)
+        Log.volumeOperations.log("Volume did unmount: \(volume.logLabel)")
+        updateMenu()
     }
 
     /// Handles rename notifications and logs stable volume correlation metadata.
     @objc private func volumeDidRename(notification: Notification) {
-        if let volume = cachedVolume(from: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey) {
-            Log.volumeOperations.log("Volume did rename; \(volume.logLabel)")
+        guard Thread.isMainThread else {
+            performSelector(onMainThread: #selector(volumeDidRename(notification:)), with: notification, waitUntilDone: false)
+            return
         }
-        refreshVolumesMenu()
-    }
 
-    /// Refreshes the in-memory volume list and rebuilds the status menu.
-    private func refreshVolumesMenu() {
-        volumes = Volume.mountedVolumes()
+        let oldVolumeIndex = notificationURL(from: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey)
+            .flatMap(cachedVolumeIndex(for:))
+        let renamedVolume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey)
+
+        if let oldVolumeIndex {
+            Log.volumeOperations.log("Volume did rename; \(volumes[oldVolumeIndex].logLabel)")
+        }
+
+        switch (oldVolumeIndex, renamedVolume) {
+        case let (oldVolumeIndex?, renamedVolume?):
+            replaceCachedVolume(at: oldVolumeIndex, with: renamedVolume)
+        case let (oldVolumeIndex?, nil):
+            volumes.remove(at: oldVolumeIndex)
+        case let (nil, renamedVolume?):
+            upsertCachedVolume(renamedVolume)
+        case (nil, nil):
+            return
+        }
+
         updateMenu()
     }
 
-    /// Rebuilds the menu using the latest mounted volume snapshot.
-    func refreshMenu() {
-        refreshVolumesMenu()
+    /// Returns the volume URL stored under a workspace notification user-info key.
+    private func notificationURL(from notification: Notification, urlKey: String) -> URL? {
+        notification.userInfo?[urlKey] as? URL
     }
 
-    /// Returns a volume from cached `volumes` by matching a notification URL path.
-    private func cachedVolume(from notification: Notification, urlKey: String) -> Volume? {
-        guard let url = notification.userInfo?[urlKey] as? URL else {
-            return nil
+    /// Returns the cached index whose normalized mounted path matches `url`.
+    private func cachedVolumeIndex(for url: URL) -> Int? {
+        let targetPath = url.standardizedFileURL.path
+        return volumes.firstIndex(where: { $0.url.standardizedFileURL.path == targetPath })
+    }
+
+    /// Returns the cached index matching a volume's stable identifier or normalized mounted path.
+    private func cachedVolumeIndex(matching volume: Volume, excluding excludedIndex: Int? = nil) -> Int? {
+        let targetPath = volume.url.standardizedFileURL.path
+        return volumes.indices.first { index in
+            index != excludedIndex
+                && (volumes[index].id == volume.id || volumes[index].url.standardizedFileURL.path == targetPath)
+        }
+    }
+
+    /// Replaces a matching cached volume or appends a newly mounted volume.
+    private func upsertCachedVolume(_ volume: Volume) {
+        if let volumeIndex = cachedVolumeIndex(matching: volume) {
+            volumes[volumeIndex] = volume
+        } else {
+            volumes.append(volume)
+        }
+    }
+
+    /// Replaces a renamed cache entry while removing any duplicate entry for the resolved volume.
+    private func replaceCachedVolume(at oldVolumeIndex: Int, with renamedVolume: Volume) {
+        var replacementIndex = oldVolumeIndex
+        if let duplicateIndex = cachedVolumeIndex(matching: renamedVolume, excluding: oldVolumeIndex) {
+            volumes.remove(at: duplicateIndex)
+            if duplicateIndex < replacementIndex {
+                replacementIndex -= 1
+            }
         }
 
-        let targetPath = url.standardizedFileURL.path
-        return volumes.first(where: { $0.url.standardizedFileURL.path == targetPath })
+        volumes[replacementIndex] = renamedVolume
     }
 
     /// Resolves a notification URL to a managed volume using the same filter as `mountedVolumes`.

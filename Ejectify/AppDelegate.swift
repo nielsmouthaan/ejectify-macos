@@ -93,7 +93,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 ) { _, _, _ in }
             }
 
-            statusBar?.refreshMenu()
             return
         }
 
@@ -107,8 +106,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 force: Preference.forceUnmount
             ) { _, _, _ in }
         }
-
-        statusBar?.refreshMenu()
     }
 
     /// Sends a best-effort helper shutdown request when the app is quitting.
