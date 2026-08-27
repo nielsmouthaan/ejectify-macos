@@ -90,6 +90,31 @@ struct VolumeOperationOutcomePolicyTests {
         #expect(shouldRetry == false)
     }
 
+    @Test func initialHelperRoutingFailureMayFallBackLocally() {
+        #expect(VolumeOperationOutcomePolicy.shouldFallBackLocallyAfterHelperRoutingFailure(requiredExecutor: nil))
+    }
+
+    @Test(arguments: [VolumeOperationExecutor.local, .privilegedHelper])
+    func pinnedRecoveryExecutorNeverFallsBackLocally(_ executor: VolumeOperationExecutor) {
+        let shouldFallBack = VolumeOperationOutcomePolicy.shouldFallBackLocallyAfterHelperRoutingFailure(
+            requiredExecutor: executor
+        )
+
+        #expect(shouldFallBack == false)
+    }
+
+    @Test(arguments: [VolumeOperationExecutor.local, .privilegedHelper])
+    func routedMountResultPreservesActualExecutor(_ executor: VolumeOperationExecutor) {
+        let result = RoutedVolumeOperationResult(
+            success: false,
+            message: "Failed",
+            status: Int32(kDAReturnBusy),
+            executor: executor
+        )
+
+        #expect(result.executor == executor)
+    }
+
     @Test(arguments: [
         UnmountCompletion(success: true, status: nil),
         UnmountCompletion(success: false, status: nil),

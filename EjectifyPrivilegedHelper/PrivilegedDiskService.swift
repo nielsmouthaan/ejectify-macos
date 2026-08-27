@@ -22,6 +22,30 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         }
     }
 
+    /// Stores encrypted recovery replies so they can safely cross sendable dispatch boundaries.
+    private final class EncryptedRecoveryReplyBox: @unchecked Sendable {
+        let reply: (Int32, String?, Int32, Bool, Bool, Bool, Bool) -> Void
+
+        /// Wraps one encrypted recovery reply closure.
+        init(reply: @escaping (Int32, String?, Int32, Bool, Bool, Bool, Bool) -> Void) {
+            self.reply = reply
+        }
+    }
+
+    /// Owns the helper's short-lived mutable passphrase buffer until recovery finishes.
+    private final class PassphraseBox: @unchecked Sendable {
+        var data: Data
+
+        /// Takes ownership of passphrase bytes received over XPC.
+        init(data: Data) {
+            self.data = data
+        }
+
+        /// Best-effort clears the helper-owned passphrase bytes.
+        func clear() {
+            data.resetBytes(in: data.indices)
+        }
+    }
 
     /// Queue used to execute disk-operation requests concurrently.
     private let operationQueue = DispatchQueue(
@@ -48,6 +72,65 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
     /// Performs a privileged eject, optionally force-unmounting the whole disk first.
     func eject(volumeUUID: NSUUID?, volumeName: String, bsdName: String, forceUnmount: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
         perform(operation: .eject(forceUnmount: forceUnmount), volumeUUID: volumeUUID.map { $0 as UUID }, volumeName: volumeName, bsdName: bsdName, reply: reply)
+    }
+
+    /// Revalidates, unlocks, and mounts an encrypted APFS volume inside the helper process.
+    func unlockAndMountEncryptedAPFS(
+        volumeUUID: NSUUID?,
+        volumeName: String,
+        bsdName: String,
+        passphraseData: Data,
+        withReply reply: @escaping (Int32, String?, Int32, Bool, Bool, Bool, Bool) -> Void
+    ) {
+        let uuid = volumeUUID.map { $0 as UUID }
+        let logLabel = VolumeLogLabelFormatter.label(uuid: uuid, bsdName: bsdName)
+        let request = APFSEncryptedVolumeUnlocker.UnlockRequest(
+            volumeUUID: uuid,
+            volumeName: volumeName,
+            bsdName: bsdName,
+            logLabel: logLabel,
+            executor: .privilegedHelper
+        )
+        let replyBox = EncryptedRecoveryReplyBox(reply: reply)
+        let passphraseBox = PassphraseBox(data: passphraseData)
+
+        operationQueue.async {
+            defer {
+                passphraseBox.clear()
+            }
+
+            let result = APFSEncryptedVolumeUnlocker.performRecovery(
+                request: request,
+                passphraseData: passphraseBox.data
+            )
+            let outcome: PrivilegedEncryptedAPFSUnlockOutcome
+            let message: String?
+
+            switch result.outcome {
+            case .success:
+                outcome = .success
+                message = nil
+            case .invalidPassword:
+                outcome = .invalidPassword
+                message = nil
+            case .failed(let details):
+                outcome = .failed
+                message = details
+            }
+
+            let errorCode = result.diagnostics.diskManagementErrorCode
+            let hasRateLimitState = result.diagnostics.rateLimitBackoff != nil
+                || result.diagnostics.rateLimitLockout != nil
+            replyBox.reply(
+                outcome.rawValue,
+                message,
+                Int32(errorCode ?? 0),
+                errorCode != nil,
+                hasRateLimitState,
+                result.diagnostics.rateLimitBackoff ?? false,
+                result.diagnostics.rateLimitLockout ?? false
+            )
+        }
     }
 
     /// Updates Disk Arbitration eject-notification muting through `defaults`.

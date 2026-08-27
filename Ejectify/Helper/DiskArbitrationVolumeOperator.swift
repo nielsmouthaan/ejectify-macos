@@ -90,6 +90,14 @@ enum DiskArbitrationVolumeOperator {
         let status: DAReturn?
     }
 
+    /// Live metadata for a resolved volume used to validate encrypted APFS recovery requests.
+    struct ResolvedVolumeMetadata: Equatable, Sendable {
+        let bsdName: String
+        let isMounted: Bool
+        let isEncrypted: Bool
+        let isAPFS: Bool
+    }
+
     /// Holds callback completion state for a single asynchronous Disk Arbitration request.
     private final class CallbackState {
 
@@ -239,6 +247,32 @@ enum DiskArbitrationVolumeOperator {
         return resolveDisk(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, session: session, logFailures: false) != nil
     }
 
+    /// Resolves one volume and returns the current metadata needed by encrypted APFS recovery.
+    static func resolvedVolumeMetadata(
+        volumeUUID: UUID?,
+        volumeName: String,
+        bsdName: String
+    ) -> ResolvedVolumeMetadata? {
+        guard let session = diskArbitrationSession,
+              let disk = resolveDisk(
+                  volumeUUID: volumeUUID,
+                  volumeName: volumeName,
+                  bsdName: bsdName,
+                  session: session
+              ),
+              let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any],
+              let resolvedBSDName = diskInfo[kDADiskDescriptionMediaBSDNameKey] as? String else {
+            return nil
+        }
+
+        return ResolvedVolumeMetadata(
+            bsdName: resolvedBSDName,
+            isMounted: diskInfo[kDADiskDescriptionVolumePathKey] != nil,
+            isEncrypted: (diskInfo[kDADiskDescriptionMediaEncryptedKey] as? Bool) == true,
+            isAPFS: (diskInfo[kDADiskDescriptionVolumeKindKey] as? String) == "apfs"
+        )
+    }
+
     /// Returns whether Disk Arbitration currently reports a mounted volume path for this disk.
     private static func isMounted(disk: DADisk) -> Bool {
         guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
@@ -280,6 +314,18 @@ enum DiskArbitrationVolumeOperator {
                 fallbackBSDName: bsdName
             )
             Log.volumeOperations.info("Disk resolved for \(resolvedVolumeLabel) by scanning devices")
+            return disk
+        }
+
+        if volumeUUID == nil,
+           targetVolumeNameIsUsable(volumeName),
+           let disk = resolveUniqueDiskByVolumeNameScan(volumeName: volumeName, session: session) {
+            let resolvedVolumeLabel = resolvedVolumeLabel(
+                for: disk,
+                fallbackUUID: nil,
+                fallbackBSDName: bsdName
+            )
+            Log.volumeOperations.info("Disk resolved for \(resolvedVolumeLabel) by unique volume-name fallback")
             return disk
         }
 
@@ -356,6 +402,38 @@ enum DiskArbitrationVolumeOperator {
         }
 
         return nil
+    }
+
+    /// Resolves an exact volume-name fallback only when it identifies one unique disk.
+    private static func resolveUniqueDiskByVolumeNameScan(volumeName targetVolumeName: String, session: DASession) -> DADisk? {
+        let devURL = URL(fileURLWithPath: "/dev", isDirectory: true)
+        let deviceNames = (try? FileManager.default.contentsOfDirectory(atPath: devURL.path)) ?? []
+        var resolvedDisk: DADisk?
+
+        for deviceName in deviceNames where deviceName.range(of: "^disk[0-9]+(s[0-9]+)?$", options: .regularExpression) != nil {
+            let matchedDisk = deviceName.withCString { bsdName in
+                DADiskCreateFromBSDName(kCFAllocatorDefault, session, bsdName)
+            }
+
+            guard let disk = matchedDisk,
+                  let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any],
+                  let resolvedName = diskInfo[kDADiskDescriptionVolumeNameKey] as? String,
+                  resolvedName == targetVolumeName else {
+                continue
+            }
+
+            guard resolvedDisk == nil else {
+                return nil
+            }
+            resolvedDisk = disk
+        }
+
+        return resolvedDisk
+    }
+
+    /// Rejects empty names before using the least stable disk-identity fallback.
+    private static func targetVolumeNameIsUsable(_ volumeName: String) -> Bool {
+        volumeName.isEmpty == false
     }
 
     /// Converts a Disk Arbitration dissenter into an operation result.

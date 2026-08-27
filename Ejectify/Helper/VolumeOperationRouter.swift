@@ -23,14 +23,14 @@ final class VolumeOperationRouter: @unchecked Sendable {
         case privilegedHelper
     }
 
-    /// Wraps completion closures with optional operation details so they can cross Dispatch sendable boundaries safely.
+    /// Wraps routed operation completions so they can cross Dispatch sendable boundaries safely.
     private final class OperationCompletionBox: @unchecked Sendable {
 
-        /// Completion closure invoked with operation success state, optional message and optional status.
-        let completion: (Bool, String?, DAReturn?) -> Void
+        /// Completion closure invoked with the routed operation result.
+        let completion: (RoutedVolumeOperationResult) -> Void
 
         /// Stores a completion closure for deferred execution on main queue.
-        init(completion: @escaping (Bool, String?, DAReturn?) -> Void) {
+        init(completion: @escaping (RoutedVolumeOperationResult) -> Void) {
             self.completion = completion
         }
     }
@@ -315,6 +315,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
     /// Creates and stores a helper connection used for startup ping and future helper operations.
     private func makeAndStoreHelperConnection() -> NSXPCConnection {
         let connection = NSXPCConnection(machServiceName: PrivilegedHelperConfiguration.machServiceName, options: .privileged)
+        connection.setCodeSigningRequirement(PrivilegedHelperConfiguration.helperCodeSigningRequirement)
         connection.remoteObjectInterface = NSXPCInterface(with: PrivilegedDiskServiceProtocol.self)
         connection.interruptionHandler = { [weak self, weak connection] in
             guard let self else {
@@ -448,13 +449,20 @@ final class VolumeOperationRouter: @unchecked Sendable {
         return didDisable
     }
 
-    /// Requests a mount operation with a BSD-name hint and returns optional operation details.
-    func mount(volumeUUID: NSUUID?, volumeName: String, bsdName: String, completion: @escaping (Bool, String?, DAReturn?) -> Void) {
+    /// Requests a mount and reports the process that actually executed it.
+    func mount(
+        volumeUUID: NSUUID?,
+        volumeName: String,
+        bsdName: String,
+        requiredExecutor: VolumeOperationExecutor? = nil,
+        completion: @escaping (RoutedVolumeOperationResult) -> Void
+    ) {
         routeOperation(
             operation: .mount,
             volumeUUID: volumeUUID,
             volumeName: volumeName,
             bsdName: bsdName,
+            requiredExecutor: requiredExecutor,
             completion: completion
         ) { proxy, reply in
             proxy.mount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, withReply: reply)
@@ -468,7 +476,9 @@ final class VolumeOperationRouter: @unchecked Sendable {
             volumeUUID: volumeUUID,
             volumeName: volumeName,
             bsdName: bsdName,
-            completion: completion
+            completion: { result in
+                completion(result.success, result.message, result.status)
+            }
         ) { proxy, reply in
             proxy.unmount(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, force: force, withReply: reply)
         }
@@ -481,10 +491,86 @@ final class VolumeOperationRouter: @unchecked Sendable {
             volumeUUID: volumeUUID,
             volumeName: volumeName,
             bsdName: bsdName,
-            completion: completion
+            completion: { result in
+                completion(result.success, result.message, result.status)
+            }
         ) { proxy, reply in
             proxy.eject(volumeUUID: volumeUUID, volumeName: volumeName, bsdName: bsdName, forceUnmount: forceUnmount, withReply: reply)
         }
+    }
+
+    /// Performs encrypted APFS recovery through the already-captured privileged-helper executor.
+    func unlockAndMountEncryptedAPFS(
+        request: APFSEncryptedVolumeUnlocker.UnlockRequest,
+        passphraseData: Data
+    ) async -> APFSEncryptedVolumeUnlocker.AttemptResult {
+        await withCheckedContinuation { continuation in
+            let completionGate = CompletionGate()
+            let complete: (APFSEncryptedVolumeUnlocker.AttemptResult) -> Void = { result in
+                completionGate.runOnce {
+                    continuation.resume(returning: result)
+                }
+            }
+
+            guard request.executor == .privilegedHelper else {
+                complete(Self.encryptedRecoveryRoutingFailure("Encrypted APFS recovery was not assigned to the privileged helper."))
+                return
+            }
+
+            guard let connection = withStateLock({ helperConnection }) else {
+                Log.privilegedHelper.error("Privileged helper connection unavailable during encrypted APFS recovery for \(request.logLabel)")
+                complete(Self.encryptedRecoveryRoutingFailure("Privileged helper connection unavailable."))
+                return
+            }
+
+            guard let proxy = helperProxy(
+                for: connection,
+                operationDescription: "encrypted APFS recovery \(request.logLabel)",
+                onRoutingFailure: { error in
+                    complete(Self.encryptedRecoveryRoutingFailure(error.localizedDescription))
+                }
+            ) else {
+                complete(Self.encryptedRecoveryRoutingFailure("Privileged helper proxy unavailable."))
+                return
+            }
+
+            proxy.unlockAndMountEncryptedAPFS(
+                volumeUUID: request.volumeUUID.map { $0 as NSUUID },
+                volumeName: request.volumeName,
+                bsdName: request.bsdName,
+                passphraseData: passphraseData
+            ) { outcomeRawValue, message, errorCode, hasErrorCode, hasRateLimitState, rateLimitBackoff, rateLimitLockout in
+                let diagnostics = APFSEncryptedVolumeUnlocker.Diagnostics(
+                    diskManagementErrorCode: hasErrorCode ? Int(errorCode) : nil,
+                    rateLimitBackoff: hasRateLimitState ? rateLimitBackoff : nil,
+                    rateLimitLockout: hasRateLimitState ? rateLimitLockout : nil
+                )
+
+                let outcome: APFSEncryptedVolumeUnlocker.UnlockResult
+                switch PrivilegedEncryptedAPFSUnlockOutcome(rawValue: outcomeRawValue) {
+                case .success:
+                    outcome = .success
+                case .invalidPassword:
+                    outcome = .invalidPassword
+                case .failed:
+                    outcome = .failed(message: message)
+                case nil:
+                    outcome = .failed(message: "Privileged helper returned an unknown encrypted APFS recovery result.")
+                }
+
+                complete(APFSEncryptedVolumeUnlocker.AttemptResult(outcome: outcome, diagnostics: diagnostics))
+            }
+        }
+    }
+
+    /// Builds a structured terminal result for helper routing failures without local fallback.
+    private nonisolated static func encryptedRecoveryRoutingFailure(
+        _ message: String
+    ) -> APFSEncryptedVolumeUnlocker.AttemptResult {
+        APFSEncryptedVolumeUnlocker.AttemptResult(
+            outcome: .failed(message: message),
+            diagnostics: .unavailable
+        )
     }
 
     /// Updates the system setting that controls "Disk Not Ejected Properly" notifications.
@@ -575,10 +661,13 @@ final class VolumeOperationRouter: @unchecked Sendable {
         volumeUUID: NSUUID?,
         volumeName: String,
         bsdName: String,
-        completion: @escaping (Bool, String?, DAReturn?) -> Void,
+        requiredExecutor: VolumeOperationExecutor? = nil,
+        completion: @escaping (RoutedVolumeOperationResult) -> Void,
         request: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?, Int32) -> Void) -> Void
     ) {
-        switch executionMode {
+        let executor = requiredExecutor ?? (executionMode == .privilegedHelper ? .privilegedHelper : .local)
+
+        switch executor {
         case .local:
             performLocalDiskOperation(
                 operation: operation,
@@ -600,6 +689,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
                 volumeUUID: volumeUUID,
                 volumeName: volumeName,
                 bsdName: bsdName,
+                requiredExecutor: requiredExecutor,
                 completion: completion,
                 request: request
             )
@@ -612,7 +702,8 @@ final class VolumeOperationRouter: @unchecked Sendable {
         volumeUUID: NSUUID?,
         volumeName: String,
         bsdName: String,
-        completion: @escaping (Bool, String?, DAReturn?) -> Void,
+        requiredExecutor: VolumeOperationExecutor?,
+        completion: @escaping (RoutedVolumeOperationResult) -> Void,
         request: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?, Int32) -> Void) -> Void
     ) {
         let completionGate = CompletionGate()
@@ -623,16 +714,21 @@ final class VolumeOperationRouter: @unchecked Sendable {
             }
         }
 
-        let complete: (Bool, String?, DAReturn?) -> Void = { success, message, status in
+        let complete: (RoutedVolumeOperationResult) -> Void = { result in
             completeOnce {
-                completion(success, message, status)
+                completion(result)
             }
         }
 
         let completeWithLocalFallback = {
             completeOnce { [weak self] in
                 guard let self else {
-                    completion(false, "Router unavailable while falling back to local execution", nil)
+                    completion(RoutedVolumeOperationResult(
+                        success: false,
+                        message: "Router unavailable while falling back to local execution",
+                        status: nil,
+                        executor: .local
+                    ))
                     return
                 }
 
@@ -647,20 +743,50 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
 
         guard let connection = withStateLock({ helperConnection }) else {
-            Log.privilegedHelper.warning("Privileged helper connection unavailable while \(operation.operationName); falling back to local execution")
+            let mayFallBack = VolumeOperationOutcomePolicy.shouldFallBackLocallyAfterHelperRoutingFailure(
+                requiredExecutor: requiredExecutor
+            )
+            Log.privilegedHelper.warning("Privileged helper connection unavailable while \(operation.operationName); localFallback=\(mayFallBack)")
             setExecutionMode(.local, reason: "privileged helper connection missing")
-            completeWithLocalFallback()
+            if mayFallBack {
+                completeWithLocalFallback()
+            } else {
+                complete(RoutedVolumeOperationResult(
+                    success: false,
+                    message: "Privileged helper connection unavailable",
+                    status: nil,
+                    executor: .privilegedHelper
+                ))
+            }
             return
         }
 
         guard let proxy = helperProxy(
             for: connection,
             operationDescription: "\(operation.operationName) \(VolumeLogLabelFormatter.label(uuid: volumeUUID.map { $0 as UUID }, bsdName: bsdName))",
-            onRoutingFailure: { _ in
-                completeWithLocalFallback()
+            onRoutingFailure: { error in
+                if VolumeOperationOutcomePolicy.shouldFallBackLocallyAfterHelperRoutingFailure(requiredExecutor: requiredExecutor) {
+                    completeWithLocalFallback()
+                } else {
+                    complete(RoutedVolumeOperationResult(
+                        success: false,
+                        message: error.localizedDescription,
+                        status: nil,
+                        executor: .privilegedHelper
+                    ))
+                }
             }
         ) else {
-            completeWithLocalFallback()
+            if VolumeOperationOutcomePolicy.shouldFallBackLocallyAfterHelperRoutingFailure(requiredExecutor: requiredExecutor) {
+                completeWithLocalFallback()
+            } else {
+                complete(RoutedVolumeOperationResult(
+                    success: false,
+                    message: "Privileged helper proxy unavailable",
+                    status: nil,
+                    executor: .privilegedHelper
+                ))
+            }
             return
         }
 
@@ -683,12 +809,17 @@ final class VolumeOperationRouter: @unchecked Sendable {
                 operation: operation,
                 success: success,
                 status: status
-            ) {
+            ), VolumeOperationOutcomePolicy.shouldFallBackLocallyAfterHelperRoutingFailure(requiredExecutor: requiredExecutor) {
                 completeWithLocalFallback()
                 return
             }
 
-            complete(success, message, status)
+            complete(RoutedVolumeOperationResult(
+                success: success,
+                message: message,
+                status: status,
+                executor: .privilegedHelper
+            ))
         }
     }
 
@@ -698,7 +829,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         volumeUUID: NSUUID?,
         volumeName: String,
         bsdName: String,
-        completion: @escaping (Bool, String?, DAReturn?) -> Void
+        completion: @escaping (RoutedVolumeOperationResult) -> Void
     ) {
         let uuid = volumeUUID.map { $0 as UUID }
         let completionBox = OperationCompletionBox(completion: completion)
@@ -726,7 +857,12 @@ final class VolumeOperationRouter: @unchecked Sendable {
                     success: success,
                     message: message
                 )
-                completionBox.completion(success, message, status)
+                completionBox.completion(RoutedVolumeOperationResult(
+                    success: success,
+                    message: message,
+                    status: status,
+                    executor: .local
+                ))
             }
         }
     }

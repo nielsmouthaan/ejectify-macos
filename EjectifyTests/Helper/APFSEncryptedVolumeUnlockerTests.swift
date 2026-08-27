@@ -10,6 +10,12 @@ import Testing
 
 struct APFSEncryptedVolumeUnlockerTests {
 
+    struct RecoveryFixture: Sendable {
+        let metadata: DiskArbitrationVolumeOperator.ResolvedVolumeMetadata?
+        let lockState: APFSVolumeLockStateProbe.LockState?
+        let expectedAction: APFSEncryptedVolumeUnlocker.RecoveryAction
+    }
+
     struct ClassificationFixture: Sendable {
         let terminationStatus: Int32
         let plist: [String: PlistValue]
@@ -99,7 +105,7 @@ struct APFSEncryptedVolumeUnlockerTests {
             errorOutput: Data()
         )
 
-        #expect(result == .failed(message: "not plist"))
+        #expect(result == .failed(message: "diskutil exited with status 1"))
     }
 
     @Test func preservesPrivacySafeStructuredDiagnostics() throws {
@@ -122,5 +128,148 @@ struct APFSEncryptedVolumeUnlockerTests {
         let metadata = APFSEncryptedVolumeUnlocker.unlockDiagnosticMetadata(from: Data("not plist".utf8))
 
         #expect(metadata == "diskManagementErrorCode=unavailable; rateLimitBackoff=unavailable; rateLimitLockout=unavailable")
+    }
+
+    @Test func preservesPrivacyRestrictionDiagnostics() throws {
+        let output = try PropertyListSerialization.data(
+            fromPropertyList: [
+                "DiskManagementErrorCode": -69464,
+                "LocalizedUnlockDispositionMessage": "The operation is restricted by privacy settings.",
+                "RateLimitStateBackoff": false,
+                "RateLimitStateLockout": false,
+                "Success": false
+            ],
+            format: .xml,
+            options: 0
+        )
+
+        let result = APFSEncryptedVolumeUnlocker.classifyAttemptResult(
+            terminationStatus: 1,
+            output: output,
+            errorOutput: Data()
+        )
+
+        #expect(result.outcome == .failed(message: "The operation is restricted by privacy settings."))
+        #expect(result.diagnostics == APFSEncryptedVolumeUnlocker.Diagnostics(
+            diskManagementErrorCode: -69464,
+            rateLimitBackoff: false,
+            rateLimitLockout: false
+        ))
+    }
+
+    @Test(arguments: [
+        RecoveryFixture(
+            metadata: nil,
+            lockState: nil,
+            expectedAction: .fail(message: "Volume is no longer available.")
+        ),
+        RecoveryFixture(
+            metadata: DiskArbitrationVolumeOperator.ResolvedVolumeMetadata(
+                bsdName: "disk4s1",
+                isMounted: false,
+                isEncrypted: false,
+                isAPFS: true
+            ),
+            lockState: .locked,
+            expectedAction: .fail(message: "Volume is not an encrypted APFS volume.")
+        ),
+        RecoveryFixture(
+            metadata: DiskArbitrationVolumeOperator.ResolvedVolumeMetadata(
+                bsdName: "disk4s1",
+                isMounted: false,
+                isEncrypted: true,
+                isAPFS: false
+            ),
+            lockState: .locked,
+            expectedAction: .fail(message: "Volume is not an encrypted APFS volume.")
+        ),
+        RecoveryFixture(
+            metadata: DiskArbitrationVolumeOperator.ResolvedVolumeMetadata(
+                bsdName: "disk4s1",
+                isMounted: true,
+                isEncrypted: true,
+                isAPFS: true
+            ),
+            lockState: nil,
+            expectedAction: .succeed
+        ),
+        RecoveryFixture(
+            metadata: DiskArbitrationVolumeOperator.ResolvedVolumeMetadata(
+                bsdName: "disk4s1",
+                isMounted: false,
+                isEncrypted: true,
+                isAPFS: true
+            ),
+            lockState: .unlocked,
+            expectedAction: .mount
+        ),
+        RecoveryFixture(
+            metadata: DiskArbitrationVolumeOperator.ResolvedVolumeMetadata(
+                bsdName: "disk4s1",
+                isMounted: false,
+                isEncrypted: true,
+                isAPFS: true
+            ),
+            lockState: .locked,
+            expectedAction: .unlock
+        ),
+        RecoveryFixture(
+            metadata: DiskArbitrationVolumeOperator.ResolvedVolumeMetadata(
+                bsdName: "disk4s1",
+                isMounted: false,
+                isEncrypted: true,
+                isAPFS: true
+            ),
+            lockState: .unknown,
+            expectedAction: .fail(message: "The encrypted volume state could not be determined.")
+        )
+    ])
+    func selectsRecoveryAction(_ fixture: RecoveryFixture) {
+        let action = APFSEncryptedVolumeUnlocker.recoveryAction(
+            metadata: fixture.metadata,
+            lockState: fixture.lockState
+        )
+
+        #expect(action == fixture.expectedAction)
+    }
+
+    @Test func processLaunchFailureBecomesStructuredFailure() {
+        let result = APFSEncryptedVolumeUnlocker.performUnlockCommand(
+            bsdName: "disk4s1",
+            passphraseData: Data("secret".utf8),
+            executableURL: URL(fileURLWithPath: "/path/that/does/not/exist")
+        )
+
+        guard case .failed(let message) = result.outcome else {
+            Issue.record("Expected process launch failure.")
+            return
+        }
+
+        #expect(message?.isEmpty == false)
+        #expect(result.diagnostics == .unavailable)
+    }
+
+    @Test func privilegedExecutorUsesInjectedHelperRecovery() async {
+        let request = APFSEncryptedVolumeUnlocker.UnlockRequest(
+            volumeUUID: UUID(),
+            volumeName: "Encrypted",
+            bsdName: "disk4s1",
+            logLabel: "bsd_name=disk4s1",
+            executor: .privilegedHelper
+        )
+
+        let result = await APFSEncryptedVolumeUnlocker.shared.unlockAndMount(
+            request: request,
+            password: "secret"
+        ) { receivedRequest, passphraseData in
+            #expect(receivedRequest.executor == .privilegedHelper)
+            #expect(passphraseData == Data("secret".utf8))
+            return APFSEncryptedVolumeUnlocker.AttemptResult(
+                outcome: .success,
+                diagnostics: .unavailable
+            )
+        }
+
+        #expect(result.outcome == .success)
     }
 }

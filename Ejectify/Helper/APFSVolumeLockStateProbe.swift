@@ -26,6 +26,7 @@ final class APFSVolumeLockStateProbe: @unchecked Sendable {
         /// Privacy-safe correlation label used in diagnostics.
         let logLabel: String
 
+        #if !EJECTIFY_PRIVILEGED_HELPER
         /// Creates a request that prefers the stable volume UUID and falls back to the BSD name.
         init(volume: Volume) {
             var identifiers: [String] = []
@@ -41,6 +42,7 @@ final class APFSVolumeLockStateProbe: @unchecked Sendable {
             self.identifiers = identifiers
             logLabel = volume.logLabel
         }
+        #endif
     }
 
     /// Shared probe used by automatic remount handling.
@@ -61,30 +63,40 @@ final class APFSVolumeLockStateProbe: @unchecked Sendable {
         }
     }
 
+    /// Reads the lock state synchronously for callers already running on a background operation queue.
+    static func lockState(identifiers: [String], logLabel: String) -> LockState {
+        performProbe(identifiers: identifiers, logLabel: logLabel)
+    }
+
     /// Tries each identifier until structured volume state can be classified.
     private static func performProbe(request: Request) -> LockState {
-        for (index, identifier) in request.identifiers.enumerated() {
+        performProbe(identifiers: request.identifiers, logLabel: request.logLabel)
+    }
+
+    /// Tries each identifier until structured volume state can be classified.
+    private static func performProbe(identifiers: [String], logLabel: String) -> LockState {
+        for (index, identifier) in identifiers.enumerated() {
             let result = runDiskutilInfo(identifier: identifier)
 
             switch result {
             case .locked:
                 if index > 0 {
-                    Log.volumeOperations.info("Encrypted APFS lock-state probe used BSD-name fallback for \(request.logLabel)")
+                    Log.volumeOperations.info("Encrypted APFS lock-state probe used BSD-name fallback for \(logLabel)")
                 }
-                Log.volumeOperations.log("Encrypted APFS volume is locked after mount failure for \(request.logLabel)")
+                Log.volumeOperations.log("Encrypted APFS volume is locked after mount failure for \(logLabel)")
                 return .locked
             case .unlocked:
                 if index > 0 {
-                    Log.volumeOperations.info("Encrypted APFS lock-state probe used BSD-name fallback for \(request.logLabel)")
+                    Log.volumeOperations.info("Encrypted APFS lock-state probe used BSD-name fallback for \(logLabel)")
                 }
-                Log.volumeOperations.info("Encrypted APFS volume is already unlocked after mount failure for \(request.logLabel)")
+                Log.volumeOperations.info("Encrypted APFS volume is already unlocked after mount failure for \(logLabel)")
                 return .unlocked
             case .unknown:
                 continue
             }
         }
 
-        Log.volumeOperations.warning("Encrypted APFS lock state could not be determined after mount failure for \(request.logLabel)")
+        Log.volumeOperations.warning("Encrypted APFS lock state could not be determined after mount failure for \(logLabel)")
         return .unknown
     }
 

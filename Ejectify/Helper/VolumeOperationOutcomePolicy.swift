@@ -8,6 +8,14 @@
 import Foundation
 @preconcurrency import DiskArbitration
 
+/// Captures a routed volume operation outcome together with its actual executor.
+struct RoutedVolumeOperationResult: Equatable, Sendable {
+    let success: Bool
+    let message: String?
+    let status: DAReturn?
+    let executor: VolumeOperationExecutor
+}
+
 /// Normalizes routed operation results and defines automatic remount retry decisions.
 enum VolumeOperationOutcomePolicy {
 
@@ -105,6 +113,13 @@ enum VolumeOperationOutcomePolicy {
         case .mount, .unmount, .eject:
             return true
         }
+    }
+
+    /// Returns whether a helper routing failure may fall back locally without crossing a pinned recovery boundary.
+    static func shouldFallBackLocallyAfterHelperRoutingFailure(
+        requiredExecutor: VolumeOperationExecutor?
+    ) -> Bool {
+        requiredExecutor == nil
     }
 
     /// Returns whether an automatic remount candidate should remain after a workflow event.

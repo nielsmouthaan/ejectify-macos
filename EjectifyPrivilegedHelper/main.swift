@@ -15,6 +15,7 @@ private final class PrivilegedHelperListenerDelegate: NSObject, NSXPCListenerDel
 
     /// Configures and accepts incoming XPC connections for the privileged service.
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
+        newConnection.setCodeSigningRequirement(PrivilegedHelperConfiguration.appCodeSigningRequirement)
         newConnection.exportedInterface = NSXPCInterface(with: PrivilegedDiskServiceProtocol.self)
         newConnection.exportedObject = service
         newConnection.resume()
