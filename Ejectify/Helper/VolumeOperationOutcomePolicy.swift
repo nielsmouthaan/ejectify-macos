@@ -6,7 +6,6 @@
 //
 
 import Foundation
-@preconcurrency import DiskArbitration
 
 /// Normalizes routed operation results and defines automatic remount retry decisions.
 enum VolumeOperationOutcomePolicy {
@@ -19,7 +18,7 @@ enum VolumeOperationOutcomePolicy {
 
     /// Represents an event that can change whether an automatic remount candidate remains pending.
     enum AutomaticRemountCandidateEvent: Equatable, Sendable {
-        case unmountCompleted(success: Bool, status: DAReturn?)
+        case unmountCompleted(success: Bool)
         case ejectModeEnabled
         case remountSucceeded
         case terminalRemountFailure
@@ -31,7 +30,7 @@ enum VolumeOperationOutcomePolicy {
     enum AutomaticRemountAttemptResult: Equatable, Sendable {
         case diskUnavailable
         case mountSucceeded
-        case mountFailed(status: DAReturn?)
+        case mountFailed(outcome: DiskutilOperator.Outcome)
     }
 
     /// Describes how the automatic remount workflow should proceed after one attempt.
@@ -82,31 +81,6 @@ enum VolumeOperationOutcomePolicy {
     /// Time allowed for macOS to unlock an encrypted APFS volume using its native credential handling.
     static let nativeUnlockGraceDelay: Duration = .seconds(5)
 
-    /// Converts the helper's non-optional raw status into the optional status used by app routing.
-    static func normalizedHelperStatus(success: Bool, rawStatus: Int32) -> DAReturn? {
-        guard !success, rawStatus != Int32(kDAReturnSuccess) else {
-            return nil
-        }
-
-        return rawStatus
-    }
-
-    /// Returns whether a helper authorization failure should retry once in the app process.
-    static func shouldRetryHelperOperationLocally(
-        operation: DiskArbitrationVolumeOperator.Operation,
-        success: Bool,
-        status: DAReturn?
-    ) -> Bool {
-        guard !success, status == Int32(kDAReturnNotPrivileged) else {
-            return false
-        }
-
-        switch operation {
-        case .mount, .unmount, .eject:
-            return true
-        }
-    }
-
     /// Returns whether an automatic remount candidate should remain after a workflow event.
     static func automaticRemountCandidateDisposition(
         after event: AutomaticRemountCandidateEvent
@@ -132,17 +106,15 @@ enum VolumeOperationOutcomePolicy {
             return .retryableFailure
         case .mountSucceeded:
             return .succeeded
-        case .mountFailed(let status):
-            guard let status else {
+        case .mountFailed(let outcome):
+            switch outcome {
+            case .invalidTarget, .targetAmbiguous:
+                return .terminalFailure
+            case .succeeded, .satisfiedAfterReconciliation:
+                return .succeeded
+            case .failed, .timedOut, .launchFailed, .targetUnavailable:
                 return .retryableFailure
             }
-
-            // A disk can disappear after the availability check and return while the retry sequence is still active.
-            if status == Int32(kDAReturnNotFound) {
-                return .retryableFailure
-            }
-
-            return status.shouldRetryAutomaticRemount ? .retryableFailure : .terminalFailure
         }
     }
 

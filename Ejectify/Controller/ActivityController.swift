@@ -6,9 +6,8 @@
 //
 
 import AppKit
-@preconcurrency import DiskArbitration
 
-/// Responds to sleep/lock/display events by unmounting or ejecting enabled volumes and remounting when applicable.
+/// Responds to sleep, lock, and display events by unmounting or ejecting enabled volumes.
 @MainActor
 final class ActivityController {
 
@@ -19,7 +18,7 @@ final class ActivityController {
     /// Volume identifiers currently processing an unmount request.
     private var inFlightUnmounts: Set<String> = []
 
-    /// Whole-disk BSD names currently processing an eject request.
+    /// Volume identifiers currently processing an eject request.
     private var inFlightEjects: Set<String> = []
 
     /// Pending mount tasks keyed by volume identifier.
@@ -31,7 +30,7 @@ final class ActivityController {
     /// Pending completion handlers for each in-flight unmount keyed by volume identifier.
     private var pendingUnmountCompletions: [String: [(Bool) -> Void]] = [:]
 
-    /// Pending completion handlers for each in-flight eject keyed by whole-disk BSD name.
+    /// Pending completion handlers for each in-flight eject keyed by volume identifier.
     private var pendingEjectCompletions: [String: [(Bool) -> Void]] = [:]
 
     /// Store used for encrypted APFS volume unlock passwords.
@@ -65,6 +64,9 @@ final class ActivityController {
 
     /// Disk-operation task started for the pending system sleep token.
     private var pendingSystemSleepDiskOperationTask: Task<Void, Never>?
+
+    /// Number of volume operations still running after a system-sleep request.
+    private var pendingSystemSleepOperationCount = 0
 
     /// Tracks whether the machine is currently awake enough to permit remounting.
     private var systemAwake = true
@@ -122,18 +124,19 @@ final class ActivityController {
         Log.powerEvents.log("Monitoring configured; trigger=\(Preference.unmountWhen.rawValue)")
     }
 
-    /// Handles all currently enabled volumes using the configured automatic disk operation.
+    /// Handles all currently enabled volumes using the configured automatic operation.
     @objc func unmountVolumes(notification: Notification) {
         Log.powerEvents.log("Disk operation trigger received; notification=\(notification.name.rawValue)")
+
+        let trigger = operationTrigger(for: notification)
         let enabledVolumes = Volume.mountedVolumes().filter(\.enabled)
 
         guard !Preference.ejectInsteadOfUnmount else {
             clearRemountStateForEjectMode()
-            let representatives = Volume.uniqueWholeDiskRepresentatives(from: enabledVolumes)
-            Log.volumeOperations.log("Automatic eject batch started: \(representatives.count) whole disk(s) for \(enabledVolumes.count) enabled volume(s)")
+            Log.volumeOperations.log("Automatic eject batch started: \(enabledVolumes.count) enabled volume(s)")
 
-            for volume in representatives {
-                requestEject(for: volume) { _ in }
+            for volume in enabledVolumes {
+                requestEject(for: volume, trigger: trigger) { _ in }
             }
             return
         }
@@ -141,8 +144,19 @@ final class ActivityController {
         mergeRemountCandidates(with: enabledVolumes, reason: "Unmount trigger received")
 
         for volume in enabledVolumes {
-            requestUnmount(for: volume) { _ in }
+            requestUnmount(for: volume, trigger: trigger) { _ in }
         }
+    }
+
+    /// Maps workspace and distributed notifications to stable diagnostic trigger values.
+    private func operationTrigger(for notification: Notification) -> VolumeOperationTrigger {
+        if notification.name == NSWorkspace.screensDidSleepNotification {
+            return .display
+        }
+        if notification.name == NSWorkspace.willSleepNotification {
+            return .systemSleep
+        }
+        return .session
     }
 
     /// Cancels pending mounts and clears remount candidates because ejected disks cannot be remounted automatically.
@@ -434,10 +448,15 @@ final class ActivityController {
 
                 let attemptResult: VolumeOperationOutcomePolicy.AutomaticRemountAttemptResult
 
-                if DiskArbitrationVolumeOperator.canResolveDisk(volumeUUID: volume.diskUUID, volumeName: volume.name, bsdName: volume.bsdName) {
-                    let result: (success: Bool, message: String?, status: DAReturn?) = await withCheckedContinuation { continuation in
-                        VolumeOperationRouter.shared.mount(volumeUUID: volume.diskUUID.map { $0 as NSUUID }, volumeName: volume.name, bsdName: volume.bsdName) { success, message, status in
-                            continuation.resume(returning: (success, message, status))
+                if DiskutilOperator.canResolve(identityUUID: volume.identityUUID, bsdName: volume.bsdName) {
+                    let result: DiskutilOperator.OperationResult = await withCheckedContinuation { continuation in
+                        VolumeOperationRouter.shared.mount(
+                            identityUUID: volume.identityUUID.map { $0 as NSUUID },
+                            bsdName: volume.bsdName,
+                            logLabel: volume.logLabel,
+                            trigger: .automaticRemount
+                        ) { result in
+                            continuation.resume(returning: result)
                         }
                     }
 
@@ -448,13 +467,7 @@ final class ActivityController {
                     if result.success {
                         attemptResult = .mountSucceeded
                     } else {
-                        if let message = result.message, !message.isEmpty {
-                            Log.volumeOperations.error("Mount failed for \(volume.logLabel): \(message)")
-                        } else {
-                            Log.volumeOperations.error("Mount failed for \(volume.logLabel)")
-                        }
-
-                        attemptResult = .mountFailed(status: result.status)
+                        attemptResult = .mountFailed(outcome: result.outcome)
                     }
                 } else {
                     let attemptNumber = attemptIndex + 1
@@ -506,11 +519,7 @@ final class ActivityController {
                         let postGraceState: VolumeOperationOutcomePolicy.NativeUnlockPostGraceState
                         if self.isVolumeMounted(withID: volumeID) {
                             postGraceState = .externallyMounted
-                        } else if !DiskArbitrationVolumeOperator.canResolveDisk(
-                            volumeUUID: volume.diskUUID,
-                            volumeName: volume.name,
-                            bsdName: volume.bsdName
-                        ) {
+                        } else if !DiskutilOperator.canResolve(identityUUID: volume.identityUUID, bsdName: volume.bsdName) {
                             postGraceState = .unavailable
                         } else {
                             let postGraceLockState = await self.encryptedVolumeLockStateProbe.lockState(
@@ -840,19 +849,20 @@ final class ActivityController {
             guard pendingSystemSleepToken == token else {
                 return
             }
-            Log.powerEvents.warning("System sleep delay reached cap; maximumDelaySeconds=\(Self.maximumSystemSleepDelaySeconds)")
+            Log.powerEvents.warning("System sleep delay reached cap; maximumDelaySeconds=\(Self.maximumSystemSleepDelaySeconds); pendingCount=\(pendingSystemSleepOperationCount)")
             allowSystemSleepIfNeeded(for: token, reason: "\(Self.maximumSystemSleepDelaySeconds)-second timeout reached")
         }
 
-        pendingSystemSleepDiskOperationTask?.cancel()
         pendingSystemSleepDiskOperationTask = Task { @MainActor [weak self] in
             guard let self else {
                 return
             }
 
-            let batchResult = await handleEnabledVolumesAndWait()
+            let batchResult = await handleEnabledStorageAndWait()
+            pendingSystemSleepOperationCount = 0
+            pendingSystemSleepDiskOperationTask = nil
             guard pendingSystemSleepToken == token else {
-                Log.powerEvents.info("Stale system sleep disk operation completion ignored; token=\(token)")
+                Log.powerEvents.log("System sleep disk operation batch finished after power token release; succeededCount=\(batchResult.succeededCount); requestedCount=\(batchResult.requestedCount)")
                 return
             }
             Log.powerEvents.log("System sleep disk operation batch finished; succeededCount=\(batchResult.succeededCount); requestedCount=\(batchResult.requestedCount)")
@@ -874,7 +884,8 @@ final class ActivityController {
             return
         }
         pendingSystemSleepToken = nil
-        cancelPendingSystemSleepTasks()
+        pendingSystemSleepTimeoutTask?.cancel()
+        pendingSystemSleepTimeoutTask = nil
         Log.powerEvents.log("System sleep release requested; token=\(token); reason=\(reason)")
         systemSleepPowerObserver?.allowPowerChange(for: token)
     }
@@ -898,37 +909,37 @@ final class ActivityController {
     }
 
     /// Handles all enabled volumes using the configured operation and waits for every callback.
-    private func handleEnabledVolumesAndWait() async -> DiskOperationBatchResult {
-        let enabledVolumes = Volume.mountedVolumes().filter { $0.enabled }
+    private func handleEnabledStorageAndWait() async -> DiskOperationBatchResult {
+        let enabledVolumes = Volume.mountedVolumes().filter(\.enabled)
+        pendingSystemSleepOperationCount = enabledVolumes.count
 
         guard !Preference.ejectInsteadOfUnmount else {
             clearRemountStateForEjectMode()
-            let representatives = Volume.uniqueWholeDiskRepresentatives(from: enabledVolumes)
-            Log.volumeOperations.log("System sleep eject batch started: \(representatives.count) whole disk(s) for \(enabledVolumes.count) enabled volume(s)")
+            Log.volumeOperations.log("System sleep eject batch started: \(enabledVolumes.count) enabled volume(s)")
 
-            return await performDiskOperationBatch(volumes: representatives) { volume, completion in
-                self.requestEject(for: volume, completion: completion)
+            return await performDiskOperationBatch(items: enabledVolumes) { volume, completion in
+                self.requestEject(for: volume, trigger: .systemSleep, completion: completion)
             }
         }
 
         mergeRemountCandidates(with: enabledVolumes, reason: "Starting new system sleep unmount batch")
 
-        return await performDiskOperationBatch(volumes: enabledVolumes) { volume, completion in
-            self.requestUnmount(for: volume, completion: completion)
+        return await performDiskOperationBatch(items: enabledVolumes) { volume, completion in
+            self.requestUnmount(for: volume, trigger: .systemSleep, completion: completion)
         }
     }
 
-    /// Performs one asynchronous disk operation per volume and summarizes callback results.
-    private func performDiskOperationBatch(
-        volumes: [Volume],
-        operation: (Volume, @escaping (Bool) -> Void) -> Void
+    /// Performs one asynchronous disk operation per supplied model and summarizes callback results.
+    private func performDiskOperationBatch<Item>(
+        items: [Item],
+        operation: (Item, @escaping (Bool) -> Void) -> Void
     ) async -> DiskOperationBatchResult {
-        guard !volumes.isEmpty else {
+        guard !items.isEmpty else {
             return DiskOperationBatchResult(requestedCount: 0, succeededCount: 0)
         }
 
         return await withCheckedContinuation { continuation in
-            var pendingCallbacks = volumes.count
+            var pendingCallbacks = items.count
             var succeededCount = 0
             var didResume = false
 
@@ -937,11 +948,12 @@ final class ActivityController {
                     return
                 }
                 didResume = true
-                continuation.resume(returning: DiskOperationBatchResult(requestedCount: volumes.count, succeededCount: succeededCount))
+                continuation.resume(returning: DiskOperationBatchResult(requestedCount: items.count, succeededCount: succeededCount))
             }
 
-            for volume in volumes {
-                operation(volume) { success in
+            for item in items {
+                operation(item) { success in
+                    self.pendingSystemSleepOperationCount = max(0, self.pendingSystemSleepOperationCount - 1)
                     if success {
                         succeededCount += 1
                     }
@@ -954,38 +966,39 @@ final class ActivityController {
         }
     }
 
-    /// Enqueues a routed eject request for one whole disk and tracks in-flight state.
-    private func requestEject(for volume: Volume, completion: @escaping (Bool) -> Void) {
-        let wholeDiskBSDName = volume.wholeDiskBSDName
-        pendingEjectCompletions[wholeDiskBSDName, default: []].append(completion)
+    /// Enqueues a routed eject request for one selected volume and tracks in-flight state.
+    private func requestEject(for volume: Volume, trigger: VolumeOperationTrigger, completion: @escaping (Bool) -> Void) {
+        let operationID = volume.id
+        pendingEjectCompletions[operationID, default: []].append(completion)
 
-        guard inFlightEjects.insert(wholeDiskBSDName).inserted else {
-            Log.volumeOperations.info("Eject request joined existing in-flight operation: wholeDiskBSDName=\(wholeDiskBSDName)")
+        guard inFlightEjects.insert(operationID).inserted else {
+            Log.volumeOperations.info("Eject request joined existing in-flight operation: \(volume.logLabel)")
             return
         }
 
-        Log.volumeOperations.log("Eject request scheduled: wholeDiskBSDName=\(wholeDiskBSDName); \(volume.logLabel)")
+        Log.volumeOperations.log("Eject request scheduled for \(volume.logLabel)")
         VolumeOperationRouter.shared.eject(
-            volumeUUID: volume.diskUUID.map { $0 as NSUUID },
-            volumeName: volume.name,
+            identityUUID: volume.identityUUID.map { $0 as NSUUID },
             bsdName: volume.bsdName,
-            forceUnmount: Preference.forceUnmount
-        ) { [weak self] success, _, _ in
+            logLabel: volume.logLabel,
+            force: Preference.forceUnmount,
+            trigger: trigger
+        ) { [weak self] result in
             Task { @MainActor [weak self] in
                 guard let self else {
-                    completion(success)
+                    completion(result.success)
                     return
                 }
 
-                self.inFlightEjects.remove(wholeDiskBSDName)
-                let completions = self.pendingEjectCompletions.removeValue(forKey: wholeDiskBSDName) ?? []
-                completions.forEach { $0(success) }
+                self.inFlightEjects.remove(operationID)
+                let completions = self.pendingEjectCompletions.removeValue(forKey: operationID) ?? []
+                completions.forEach { $0(result.success) }
             }
         }
     }
 
     /// Enqueues a routed unmount request for one volume and tracks in-flight state.
-    private func requestUnmount(for volume: Volume, completion: @escaping (Bool) -> Void) {
+    private func requestUnmount(for volume: Volume, trigger: VolumeOperationTrigger, completion: @escaping (Bool) -> Void) {
         let volumeID = volume.id
         cancelPendingMountTask(for: volumeID)
         pendingUnmountCompletions[volumeID, default: []].append(completion)
@@ -997,24 +1010,29 @@ final class ActivityController {
 
         inFlightUnmounts.insert(volumeID)
         Log.volumeOperations.log("Unmount request scheduled for \(volume.logLabel)")
-        VolumeOperationRouter.shared.unmount(volumeUUID: volume.diskUUID.map { $0 as NSUUID }, volumeName: volume.name, bsdName: volume.bsdName, force: Preference.forceUnmount) { [weak self] success, _, status in
+        VolumeOperationRouter.shared.unmount(
+            identityUUID: volume.identityUUID.map { $0 as NSUUID },
+            bsdName: volume.bsdName,
+            logLabel: volume.logLabel,
+            force: Preference.forceUnmount,
+            trigger: trigger
+        ) { [weak self] result in
             Task { @MainActor [weak self] in
                 guard let self else {
-                    completion(success)
+                    completion(result.success)
                     return
                 }
 
                 self.inFlightUnmounts.remove(volumeID)
                 self.applyRemountCandidateDisposition(
-                    after: .unmountCompleted(success: success, status: status),
+                    after: .unmountCompleted(success: result.success),
                     volumeID: volumeID
                 )
-                if !success {
-                    let statusDescription = status?.statusDescription ?? "none"
-                    Log.volumeOperations.info("Automatic unmount failed; preserving candidate for wake reconciliation; status=\(statusDescription); \(volume.logLabel)")
+                if !result.success {
+                    Log.volumeOperations.info("Automatic unmount failed; preserving candidate for wake reconciliation; outcome=\(result.outcome.rawValue); \(volume.logLabel)")
                 }
                 let completions = self.pendingUnmountCompletions.removeValue(forKey: volumeID) ?? []
-                completions.forEach { $0(success) }
+                completions.forEach { $0(result.success) }
             }
         }
     }

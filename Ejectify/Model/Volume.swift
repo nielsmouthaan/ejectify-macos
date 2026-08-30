@@ -8,11 +8,16 @@
 import Foundation
 @preconcurrency import DiskArbitration
 
+/// Notification posted after Disk Arbitration reports volume topology changes.
+extension Notification.Name {
+    static let volumeDiscoveryDidChange = Notification.Name("nl.nielsmouthaan.Ejectify.VolumeDiscovery.didChange")
+}
+
 /// Represents a mounted volume discovered from Disk Arbitration metadata.
 final class Volume {
 
     /// Describes how a volume should be grouped in the menu.
-    enum Category {
+    enum Category: Sendable {
         case internalVolume
         case external
         case diskImage
@@ -26,18 +31,34 @@ final class Volume {
 
     /// Shared Disk Arbitration session retained for the lifetime of the app so asynchronous callbacks are delivered reliably.
     nonisolated(unsafe) private static let diskArbitrationSession: DASession? = {
-        guard let session = DiskArbitrationVolumeOperator.DiskArbitrationSessionFactory.makeSession(dispatchQueue: DispatchQueue.main) else {
+        guard let session = DiskutilOperator.DiskArbitrationSessionFactory.makeSession(dispatchQueue: DispatchQueue.main) else {
             Log.volumeOperations.error("Failed to create Disk Arbitration session")
             return nil
         }
         return session
     }()
 
-    /// Identifier used for persisted per-volume settings, falling back to best-effort metadata when no disk UUID exists.
+    /// Tracks one-time Disk Arbitration callback registration.
+    nonisolated(unsafe) private static var discoveryStarted = false
+
+    /// Coalesces bursts of topology callbacks before consumers rescan mounted volumes.
+    nonisolated(unsafe) private static var pendingDiscoveryNotification: DispatchWorkItem?
+
+    /// Receives appeared and disappeared media notifications.
+    private static let diskChangedCallback: DADiskAppearedCallback = { _, _ in
+        scheduleDiscoveryNotification()
+    }
+
+    /// Receives mount path and volume name changes.
+    private static let diskDescriptionChangedCallback: DADiskDescriptionChangedCallback = { _, _, _ in
+        scheduleDiscoveryNotification()
+    }
+
+    /// Identifier used for persisted per-volume settings, falling back to best-effort metadata when no identity UUID exists.
     let id: String
 
-    /// Disk Arbitration UUID used to validate disk resolution when available.
-    let diskUUID: UUID?
+    /// Disk Arbitration UUID used to revalidate the live BSD target when available.
+    let identityUUID: UUID?
 
     /// Human-readable volume name displayed in UI and logs.
     let name: String
@@ -47,9 +68,6 @@ final class Volume {
 
     /// BSD disk identifier associated with this volume (for example `disk6s2`).
     let bsdName: String
-
-    /// BSD identifier for the parent whole disk used to deduplicate eject requests.
-    let wholeDiskBSDName: String
 
     /// Category used for grouping volumes in the status-bar menu.
     let category: Category
@@ -62,7 +80,7 @@ final class Volume {
 
     /// Privacy-safe volume correlation fields for logs.
     var logLabel: String {
-        VolumeLogLabelFormatter.label(uuid: diskUUID, bsdName: bsdName)
+        VolumeLogLabelFormatter.label(uuid: identityUUID, bsdName: bsdName)
     }
 
     /// Tracks whether this volume should be managed automatically, using a category-based default when no explicit user preference exists.
@@ -87,21 +105,19 @@ final class Volume {
     /// Creates a managed volume model from resolved Disk Arbitration metadata.
     init(
         id: String,
-        diskUUID: UUID?,
+        identityUUID: UUID?,
         name: String,
         url: URL,
         bsdName: String,
-        wholeDiskBSDName: String,
         category: Category,
         isEncrypted: Bool,
         isAPFS: Bool
     ) {
         self.id = id
-        self.diskUUID = diskUUID
+        self.identityUUID = identityUUID
         self.name = name
         self.url = url
         self.bsdName = bsdName
-        self.wholeDiskBSDName = wholeDiskBSDName
         self.category = category
         self.isEncrypted = isEncrypted
         self.isAPFS = isAPFS
@@ -116,6 +132,32 @@ final class Volume {
 
         return mountedVolumeURLs
             .compactMap(Volume.fromURL(url:))
+    }
+
+    /// Starts Disk Arbitration discovery notifications once for the application lifetime.
+    static func startDiscovery() {
+        guard !discoveryStarted, let session = diskArbitrationSession else {
+            return
+        }
+        discoveryStarted = true
+        DARegisterDiskAppearedCallback(session, nil, diskChangedCallback, nil)
+        DARegisterDiskDisappearedCallback(session, nil, diskChangedCallback, nil)
+        let watchedKeys = [
+            kDADiskDescriptionVolumePathKey,
+            kDADiskDescriptionVolumeNameKey
+        ] as CFArray
+        DARegisterDiskDescriptionChangedCallback(session, nil, watchedKeys, diskDescriptionChangedCallback, nil)
+        Log.volumeOperations.log("Disk Arbitration volume discovery started")
+    }
+
+    /// Posts one coalesced inventory notification on the main queue.
+    private static func scheduleDiscoveryNotification() {
+        pendingDiscoveryNotification?.cancel()
+        let workItem = DispatchWorkItem {
+            NotificationCenter.default.post(name: .volumeDiscoveryDidChange, object: nil)
+        }
+        pendingDiscoveryNotification = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: workItem)
     }
 
     /// Resolves a mounted volume URL to a `Volume` model when eligible.
@@ -144,8 +186,8 @@ final class Volume {
             return nil
         }
 
-        let diskUUID = DiskArbitrationVolumeOperator.DiskUUIDResolver.diskUUID(from: diskInfo)
-        let id = diskUUID?.uuidString ?? fallbackID(name: name, bsdName: bsdName, diskInfo: diskInfo)
+        let identityUUID = DiskutilOperator.IdentityUUIDResolver.identityUUID(from: diskInfo)
+        let id = identityUUID?.uuidString ?? fallbackID(name: name, bsdName: bsdName, diskInfo: diskInfo)
 
         let category: Category
         if disk.isDiskImage() {
@@ -165,42 +207,20 @@ final class Volume {
             return nil
         }
 
-        if diskUUID == nil {
+        if identityUUID == nil {
             Log.volumeOperations.info("Managing volume without Disk Arbitration UUID; \(VolumeLogLabelFormatter.label(uuid: nil, bsdName: bsdName))")
         }
 
         return Volume(
             id: id,
-            diskUUID: diskUUID,
+            identityUUID: identityUUID,
             name: name,
             url: url,
             bsdName: bsdName,
-            wholeDiskBSDName: wholeDiskBSDName(for: disk, fallbackBSDName: bsdName),
             category: category,
             isEncrypted: isEncrypted,
             isAPFS: isAPFS
         )
-    }
-
-    /// Returns one representative volume per parent whole disk, preserving input order.
-    static func uniqueWholeDiskRepresentatives(from volumes: [Volume]) -> [Volume] {
-        var seenWholeDiskBSDNames: Set<String> = []
-
-        return volumes.filter { volume in
-            seenWholeDiskBSDNames.insert(volume.wholeDiskBSDName).inserted
-        }
-    }
-
-    /// Resolves the parent whole-disk BSD identifier for a Disk Arbitration disk.
-    private static func wholeDiskBSDName(for disk: DADisk, fallbackBSDName: String) -> String {
-        guard let wholeDisk = DADiskCopyWholeDisk(disk),
-              let wholeDiskInfo = DADiskCopyDescription(wholeDisk) as? [NSString: Any],
-              let wholeDiskBSDName = wholeDiskInfo[kDADiskDescriptionMediaBSDNameKey] as? String,
-              !wholeDiskBSDName.isEmpty else {
-            return fallbackBSDName
-        }
-
-        return wholeDiskBSDName
     }
 
     /// Returns the best user-visible name for a mounted volume.

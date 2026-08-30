@@ -287,7 +287,7 @@ private struct MountedVolumeDiscoverySnapshot: Sendable {
             return []
         }
 
-        let session = DiskArbitrationVolumeOperator.DiskArbitrationSessionFactory.makeSession(dispatchQueue: DispatchQueue.main)
+        let session = DiskutilOperator.DiskArbitrationSessionFactory.makeSession(dispatchQueue: DispatchQueue.main)
         return mountedVolumeURLs.map { Self(url: $0, session: session) }
     }
 
@@ -344,37 +344,9 @@ private struct MountedVolumeDiscoverySnapshot: Sendable {
         return description.isEmpty ? unavailable : description
     }
 
-    /// Returns a printable UUID value for a Disk Arbitration description key.
-    private static func uuidValue(for key: CFString, in diskInfo: [NSString: Any]) -> String {
-        guard let value = diskInfo[key] else {
-            return unavailable
-        }
-
-        if let uuid = value as? UUID {
-            return uuid.uuidString
-        }
-
-        if let uuidString = value as? String, !uuidString.isEmpty {
-            return uuidString
-        }
-
-        let rawCoreFoundationValue = value as CFTypeRef
-        if CFGetTypeID(rawCoreFoundationValue) == CFUUIDGetTypeID() {
-            let coreFoundationUUID = rawCoreFoundationValue as! CFUUID
-            return CFUUIDCreateString(kCFAllocatorDefault, coreFoundationUUID) as String
-        }
-
-        return stringValue(for: key, in: diskInfo)
-    }
-
     /// Returns the same UUID value Ejectify uses when it can identify a volume through Disk Arbitration.
     private static func bestAvailableUUID(in diskInfo: [NSString: Any]) -> String {
-        let volumeUUID = uuidValue(for: kDADiskDescriptionVolumeUUIDKey, in: diskInfo)
-        if volumeUUID != unavailable {
-            return volumeUUID
-        }
-
-        return uuidValue(for: kDADiskDescriptionMediaUUIDKey, in: diskInfo)
+        DiskutilOperator.IdentityUUIDResolver.identityUUID(from: diskInfo)?.uuidString ?? unavailable
     }
 
     /// Returns a printable Boolean value for a Disk Arbitration description key.
@@ -402,7 +374,7 @@ private struct EjectifyVolumeDiagnosticsSnapshot: Sendable {
     let id: String
 
     /// Disk Arbitration UUID used for resolution when available.
-    let diskUUID: String
+    let identityUUID: String
 
     /// User-visible volume name.
     let name: String
@@ -422,7 +394,7 @@ private struct EjectifyVolumeDiagnosticsSnapshot: Sendable {
     /// Creates a diagnostics snapshot for a mounted volume.
     init(volume: Volume) {
         id = volume.id
-        diskUUID = volume.diskUUID?.uuidString ?? "-"
+        identityUUID = volume.identityUUID?.uuidString ?? "-"
         name = volume.name
         path = volume.url.path
         bsdName = volume.bsdName
@@ -625,7 +597,7 @@ private struct VolumeDiagnosticsRow: Sendable {
     init(discoveredVolume: MountedVolumeDiscoverySnapshot, ejectifyVolume: EjectifyVolumeDiagnosticsSnapshot?) {
         sortKey = discoveredVolume.mountPath
         name = Self.preferredValue(discoveredVolume.volumeName, fallback: ejectifyVolume?.name)
-        uuid = Self.preferredValue(discoveredVolume.uuid, fallback: ejectifyVolume?.diskUUID)
+        uuid = Self.preferredValue(discoveredVolume.uuid, fallback: ejectifyVolume?.identityUUID)
         bsdName = Self.preferredValue(discoveredVolume.bsdName, fallback: ejectifyVolume?.bsdName)
         kind = discoveredVolume.volumeKind
         internalDevice = discoveredVolume.internalDevice
@@ -639,7 +611,7 @@ private struct VolumeDiagnosticsRow: Sendable {
     init(ejectifyVolume: EjectifyVolumeDiagnosticsSnapshot) {
         sortKey = ejectifyVolume.path
         name = ejectifyVolume.name
-        uuid = ejectifyVolume.diskUUID
+        uuid = ejectifyVolume.identityUUID
         bsdName = ejectifyVolume.bsdName
         kind = Self.unavailable
         internalDevice = Self.unavailable

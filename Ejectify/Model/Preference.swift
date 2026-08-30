@@ -61,7 +61,7 @@ enum Preference {
         }
     }
 
-    /// Controls whether unmount requests, including eject preparation, should use the force option.
+    /// Controls whether unmount and eject requests should use diskutil's force option.
     static var forceUnmount: Bool {
         get {
             return UserDefaults.standard.bool(forKey: "preference.forceUnmount")
@@ -83,7 +83,7 @@ enum Preference {
         }
     }
 
-    /// Controls whether automatic and manual disk handling ejects whole disks instead of unmounting volumes.
+    /// Controls whether automatic and manual handling passes selected volumes to diskutil eject instead of unmounting them.
     static var ejectInsteadOfUnmount: Bool {
         get {
             UserDefaults.standard.bool(forKey: "preference.ejectInsteadOfUnmount")

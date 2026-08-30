@@ -10,6 +10,9 @@ import Foundation
 /// Shared constants used by both the app and the privileged helper daemon.
 enum PrivilegedHelperConfiguration {
 
+    /// Capability level required for diskutil-backed helper operations.
+    static let diskutilCapabilityVersion = 2
+
     /// Mach service name used to connect app and privileged helper via XPC.
     static let machServiceName = "nl.nielsmouthaan.Ejectify.PrivilegedHelper"
 
@@ -27,4 +30,7 @@ enum PrivilegedHelperConfiguration {
 
     /// In-app notification sent when router state changes and UI should refresh.
     static let operationRouterDidChangeNotificationName = "nl.nielsmouthaan.Ejectify.VolumeOperationRouter.didChange"
+
+    /// Signing requirement accepted by the helper for XPC clients.
+    static let appSigningRequirement = "anchor apple generic and identifier \"nl.nielsmouthaan.Ejectify\" and certificate leaf[subject.OU] = \"DNG6HL3Y5G\""
 }

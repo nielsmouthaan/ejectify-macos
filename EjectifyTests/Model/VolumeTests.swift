@@ -6,57 +6,66 @@
 //
 
 import Foundation
+@preconcurrency import DiskArbitration
 import Testing
 
 struct VolumeTests {
 
-    @Test func wholeDiskSelectionKeepsOneRepresentativeForSiblingPartitions() {
-        let firstPartition = makeVolume(id: "first", bsdName: "disk7s1", wholeDiskBSDName: "disk7")
-        let secondPartition = makeVolume(id: "second", bsdName: "disk7s2", wholeDiskBSDName: "disk7")
-
-        let representatives = Volume.uniqueWholeDiskRepresentatives(from: [firstPartition, secondPartition])
-
-        #expect(representatives.map(\.id) == ["first"])
-    }
-
-    @Test func wholeDiskSelectionPreservesDistinctDisksAndInputOrder() {
-        let firstDisk = makeVolume(id: "first", bsdName: "disk7s1", wholeDiskBSDName: "disk7")
-        let secondDisk = makeVolume(id: "second", bsdName: "disk8s1", wholeDiskBSDName: "disk8")
-
-        let representatives = Volume.uniqueWholeDiskRepresentatives(from: [secondDisk, firstDisk])
-
-        #expect(representatives.map(\.id) == ["second", "first"])
-    }
-
-    @Test func wholeDiskSelectionSupportsVolumesWithoutUUIDs() {
-        let volume = makeVolume(
-            id: "fallback|disk9s1",
-            diskUUID: nil,
-            bsdName: "disk9s1",
-            wholeDiskBSDName: "disk9"
+    @Test func diskArbitrationVolumeNameIsPreferredForDisplay() {
+        let displayName = Volume.displayName(
+            for: URL(fileURLWithPath: "/Volumes/Fallback"),
+            diskInfo: [kDADiskDescriptionVolumeNameKey: "Preferred"]
         )
 
-        let representatives = Volume.uniqueWholeDiskRepresentatives(from: [volume])
+        #expect(displayName == "Preferred")
+    }
 
-        #expect(representatives.count == 1)
-        #expect(representatives.first?.diskUUID == nil)
-        #expect(representatives.first?.wholeDiskBSDName == "disk9")
+    @Test(arguments: [
+        (Volume.Category.internalVolume, true),
+        (.external, true),
+        (.diskImage, false)
+    ])
+    func categoryProvidesExistingDefaultSelection(fixture: (Volume.Category, Bool)) {
+        let id = "test-default-\(UUID().uuidString)"
+        defer { UserDefaults.standard.removeObject(forKey: "volume.\(id)") }
+
+        let volume = makeVolume(id: id, category: fixture.0)
+        #expect(volume.enabled == fixture.1)
+    }
+
+    @Test func UUIDBackedSelectionSurvivesReconnectWithChangedBSDName() {
+        let identityUUID = UUID()
+        let id = identityUUID.uuidString
+        defer { UserDefaults.standard.removeObject(forKey: "volume.\(id)") }
+        let first = makeVolume(id: id, identityUUID: identityUUID, bsdName: "disk7s1", category: .external)
+        first.enabled = false
+
+        let reconnected = makeVolume(id: id, identityUUID: identityUUID, bsdName: "disk13s1", category: .external)
+        #expect(reconnected.enabled == false)
+        #expect(reconnected.identityUUID == identityUUID)
+        #expect(reconnected.bsdName == "disk13s1")
+    }
+
+    @Test func identityUUIDRemainsTheOperationIdentity() {
+        let identityUUID = UUID()
+        let volume = makeVolume(id: identityUUID.uuidString, identityUUID: identityUUID, category: .external)
+        #expect(volume.identityUUID == identityUUID)
+        #expect(volume.logLabel.contains(identityUUID.uuidString))
     }
 
     private func makeVolume(
         id: String,
-        diskUUID: UUID? = UUID(),
-        bsdName: String,
-        wholeDiskBSDName: String
+        identityUUID: UUID? = UUID(),
+        bsdName: String = "disk99s1",
+        category: Volume.Category
     ) -> Volume {
         Volume(
             id: id,
-            diskUUID: diskUUID,
+            identityUUID: identityUUID,
             name: "Test Volume",
             url: URL(fileURLWithPath: "/Volumes/Test"),
             bsdName: bsdName,
-            wholeDiskBSDName: wholeDiskBSDName,
-            category: .external,
+            category: category,
             isEncrypted: false,
             isAPFS: true
         )

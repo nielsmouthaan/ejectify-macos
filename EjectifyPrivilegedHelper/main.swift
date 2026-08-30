@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Security
 
 /// Accepts helper XPC connections and exports a single privileged volume-operation service instance.
 private final class PrivilegedHelperListenerDelegate: NSObject, NSXPCListenerDelegate {
@@ -15,10 +16,37 @@ private final class PrivilegedHelperListenerDelegate: NSObject, NSXPCListenerDel
 
     /// Configures and accepts incoming XPC connections for the privileged service.
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
+        guard Self.isAuthorized(connection: newConnection) else {
+            Log.privilegedHelper.error("Rejected unauthorized privileged helper XPC client")
+            return false
+        }
+
         newConnection.exportedInterface = NSXPCInterface(with: PrivilegedDiskServiceProtocol.self)
         newConnection.exportedObject = service
         newConnection.resume()
         return true
+    }
+
+    /// Validates the connecting process against Ejectify's designated signing identity.
+    private static func isAuthorized(connection: NSXPCConnection) -> Bool {
+        let attributes = [kSecGuestAttributePid: NSNumber(value: connection.processIdentifier)] as CFDictionary
+        var guestCode: SecCode?
+        guard SecCodeCopyGuestWithAttributes(nil, attributes, [], &guestCode) == errSecSuccess,
+              let guestCode else {
+            return false
+        }
+
+        var requirement: SecRequirement?
+        guard SecRequirementCreateWithString(
+            PrivilegedHelperConfiguration.appSigningRequirement as CFString,
+            [],
+            &requirement
+        ) == errSecSuccess,
+        let requirement else {
+            return false
+        }
+
+        return SecCodeCheckValidity(guestCode, [], requirement) == errSecSuccess
     }
 }
 

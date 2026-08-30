@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Changed eject mode to use the same volume list and saved selections as unmount mode. Selecting one volume can eject unchecked sibling volumes on the same disk.
+- Improved mount, unmount, eject, and encrypted APFS recovery by delegating dependency handling to macOS through `diskutil`, with timeout handling and state reconciliation when a command finishes late or reports failure.
+- Fixed stable volume identification and reconnect handling when Disk Arbitration supplies Core Foundation UUID values.
+- Improved privileged-helper validation and updates so incompatible installed helpers are replaced before disk operations, while keeping ejected volumes excluded from automatic remounting.
+
 ## 2.1.0
 
 - Added an opt-in whole-disk eject mode for automatically and manually ejecting selected devices without attempting to remount them, including forced-unmount preparation when Force Unmount is enabled.

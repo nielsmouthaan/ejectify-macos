@@ -7,59 +7,149 @@
 
 import Foundation
 
-/// Implements privileged XPC endpoints for disk and notification-muting operations.
+/// Implements authenticated privileged endpoints for fixed diskutil and notification-muting operations.
 final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
 
-    /// Stores XPC reply closures so they can safely cross sendable dispatch boundaries.
-    private final class ReplyBox: @unchecked Sendable {
-
-        /// Reply closure returning success, optional message, and optional status.
+    /// Stores XPC replies so they can cross sendable dispatch boundaries.
+    private final class OperationReplyBox: @unchecked Sendable {
         let reply: (Bool, String?, Int32) -> Void
 
-        /// Wraps one XPC reply closure.
         init(reply: @escaping (Bool, String?, Int32) -> Void) {
             self.reply = reply
         }
     }
 
+    /// Stores lock-state replies so they can cross sendable dispatch boundaries.
+    private final class LockStateReplyBox: @unchecked Sendable {
+        let reply: (String) -> Void
 
-    /// Queue used to execute disk-operation requests concurrently.
+        init(reply: @escaping (String) -> Void) {
+            self.reply = reply
+        }
+    }
+
+    /// Stores unlock replies so they can cross sendable dispatch boundaries.
+    private final class UnlockReplyBox: @unchecked Sendable {
+        let reply: (Bool, String, Int32, Int, NSNumber?, NSNumber?, NSNumber?) -> Void
+
+        init(reply: @escaping (Bool, String, Int32, Int, NSNumber?, NSNumber?, NSNumber?) -> Void) {
+            self.reply = reply
+        }
+    }
+
+    /// Queue used to execute diskutil requests concurrently.
     private let operationQueue = DispatchQueue(
-        label: "nl.nielsmouthaan.Ejectify.PrivilegedHelper.DiskOperation",
+        label: "nl.nielsmouthaan.Ejectify.PrivilegedHelper.Diskutil",
         qos: .userInitiated,
         attributes: .concurrent
     )
 
-    /// Confirms helper reachability for startup routing checks.
+    /// Confirms helper reachability.
     func ping(withReply reply: @escaping (Bool, String?) -> Void) {
         reply(true, nil)
     }
 
-    /// Performs a privileged mount for the provided volume metadata.
-    func mount(volumeUUID: NSUUID?, volumeName: String, bsdName: String, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
-        perform(operation: .mount, volumeUUID: volumeUUID.map { $0 as UUID }, volumeName: volumeName, bsdName: bsdName, reply: reply)
+    /// Reports support for the current fixed diskutil protocol.
+    func capabilityVersion(withReply reply: @escaping (Int) -> Void) {
+        reply(PrivilegedHelperConfiguration.diskutilCapabilityVersion)
     }
 
-    /// Performs a privileged unmount for the provided volume metadata.
-    func unmount(volumeUUID: NSUUID?, volumeName: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
-        perform(operation: .unmount(force: force), volumeUUID: volumeUUID.map { $0 as UUID }, volumeName: volumeName, bsdName: bsdName, reply: reply)
+    /// Runs diskutil mount for one validated volume identity.
+    func mount(volumeUUID: NSUUID?, volumeName _: String, bsdName: String, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
+        perform(operation: .mount, identityUUID: volumeUUID.map { $0 as UUID }, bsdName: bsdName, reply: reply)
     }
 
-    /// Performs a privileged eject, optionally force-unmounting the whole disk first.
-    func eject(volumeUUID: NSUUID?, volumeName: String, bsdName: String, forceUnmount: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
-        perform(operation: .eject(forceUnmount: forceUnmount), volumeUUID: volumeUUID.map { $0 as UUID }, volumeName: volumeName, bsdName: bsdName, reply: reply)
+    /// Runs diskutil unmount for one validated volume identity.
+    func unmount(volumeUUID: NSUUID?, volumeName _: String, bsdName: String, force: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
+        perform(operation: .unmount(force: force), identityUUID: volumeUUID.map { $0 as UUID }, bsdName: bsdName, reply: reply)
     }
 
-    /// Updates Disk Arbitration eject-notification muting through `defaults`.
+    /// Runs diskutil eject for one validated volume identity.
+    func eject(volumeUUID: NSUUID?, volumeName _: String, bsdName: String, forceUnmount: Bool, withReply reply: @escaping (Bool, String?, Int32) -> Void) {
+        perform(operation: .eject(force: forceUnmount), identityUUID: volumeUUID.map { $0 as UUID }, bsdName: bsdName, reply: reply)
+    }
+
+    /// Reads encrypted APFS lock state through the shared diskutil operator.
+    func inspectAPFSLockState(volumeUUID: NSUUID?, bsdName: String, withReply reply: @escaping (String) -> Void) {
+        let replyBox = LockStateReplyBox(reply: reply)
+        let identityUUID = volumeUUID.map { $0 as UUID }
+        guard DiskutilOperator.isValidBSDName(bsdName) else {
+            Log.privilegedHelper.error("Rejected APFS lock-state request with invalid BSD target")
+            reply(DiskutilOperator.LockState.unknown.rawValue)
+            return
+        }
+
+        operationQueue.async {
+            let state = DiskutilOperator.lockState(identityUUID: identityUUID, bsdName: bsdName)
+            Log.privilegedHelper.log("diskutil APFS lock-state completed; state=\(state.rawValue); \(VolumeLogLabelFormatter.label(uuid: identityUUID, bsdName: bsdName))")
+            replyBox.reply(state.rawValue)
+        }
+    }
+
+    /// Unlocks encrypted APFS through the shared diskutil operator.
+    func unlockAPFSVolume(
+        volumeUUID: NSUUID?,
+        bsdName: String,
+        password: String,
+        withReply reply: @escaping (Bool, String, Int32, Int, NSNumber?, NSNumber?, NSNumber?) -> Void
+    ) {
+        let replyBox = UnlockReplyBox(reply: reply)
+        let identityUUID = volumeUUID.map { $0 as UUID }
+        guard DiskutilOperator.isValidBSDName(bsdName) else {
+            Log.privilegedHelper.error("Rejected APFS unlock request with invalid BSD target")
+            reply(false, DiskutilOperator.UnlockOutcome.invalidTarget.rawValue, Int32.min, 0, nil, nil, nil)
+            return
+        }
+
+        operationQueue.async {
+            let result = DiskutilOperator.unlock(
+                identityUUID: identityUUID,
+                bsdName: bsdName,
+                password: password
+            )
+            let metadata = result.metadata
+            let label = VolumeLogLabelFormatter.label(uuid: identityUUID, bsdName: bsdName)
+            let details = "outcome=\(result.outcome.rawValue); exitCode=\(result.exitCode.map(String.init) ?? "none"); terminationReason=\(result.terminationReason.rawValue); durationMilliseconds=\(result.durationMilliseconds); timeout=\(result.timedOut); diskManagementErrorCode=\(metadata.diskManagementErrorCode.map(String.init) ?? "none"); rateLimitBackoff=\(metadata.rateLimitBackoff.map(String.init) ?? "none"); rateLimitLockout=\(metadata.rateLimitLockout.map(String.init) ?? "none"); \(label)"
+            if result.success {
+                Log.privilegedHelper.log("diskutil APFS unlock completed; \(details)")
+            } else {
+                Log.privilegedHelper.error("diskutil APFS unlock failed; \(details)")
+            }
+            replyBox.reply(
+                result.success,
+                result.outcome.rawValue,
+                result.exitCode ?? Int32.min,
+                result.durationMilliseconds,
+                metadata.diskManagementErrorCode.map(NSNumber.init(value:)),
+                metadata.rateLimitBackoff.map(NSNumber.init(value:)),
+                metadata.rateLimitLockout.map(NSNumber.init(value:))
+            )
+        }
+    }
+
+    /// Updates Disk Arbitration eject-notification muting through defaults.
     func setEjectNotificationsMuted(muted: Bool, withReply reply: @escaping (Bool, String?) -> Void) {
-        let plistPath = PrivilegedHelperConfiguration.diskArbitrationPreferencesPath
-        let key = PrivilegedHelperConfiguration.disableEjectNotificationKey
-        let defaultsArguments = muted
-            ? ["write", plistPath, key, "-bool", "YES"]
-            : ["write", plistPath, key, "-bool", "NO"]
-        let defaultsResult = runProcess(executableURL: URL(fileURLWithPath: "/usr/bin/defaults"), arguments: defaultsArguments)
-        if defaultsResult.exitCode != 0 {
-            reply(false, defaultsResult.output)
+        let arguments = muted
+            ? ["write", PrivilegedHelperConfiguration.diskArbitrationPreferencesPath, PrivilegedHelperConfiguration.disableEjectNotificationKey, "-bool", "YES"]
+            : ["write", PrivilegedHelperConfiguration.diskArbitrationPreferencesPath, PrivilegedHelperConfiguration.disableEjectNotificationKey, "-bool", "NO"]
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        process.arguments = arguments
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch {
+            Log.privilegedHelper.error(error, message: "Failed to launch defaults while changing eject notification setting")
+            reply(false, "launchFailed")
+            return
+        }
+
+        guard process.terminationReason == .exit, process.terminationStatus == 0 else {
+            Log.privilegedHelper.error("Failed to change Disk Arbitration eject notification setting; exitCode=\(process.terminationStatus)")
+            reply(false, "failed")
             return
         }
 
@@ -73,63 +163,35 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         exit(EXIT_SUCCESS)
     }
 
-    /// Executes a shared Disk Arbitration operation and returns the result through XPC.
+    /// Executes one fixed diskutil mutation and returns the compatible XPC reply.
     private func perform(
-        operation: DiskArbitrationVolumeOperator.Operation,
-        volumeUUID: UUID?,
-        volumeName: String,
+        operation: DiskutilOperator.Operation,
+        identityUUID: UUID?,
         bsdName: String,
         reply: @escaping (Bool, String?, Int32) -> Void
     ) {
-        let replyBox = ReplyBox(reply: reply)
-        let volumeLabel = VolumeLogLabelFormatter.label(uuid: volumeUUID, bsdName: bsdName)
-        Log.volumeOperations.log("Privileged helper \(operation.operationName) queued for \(volumeLabel)")
+        let replyBox = OperationReplyBox(reply: reply)
+        guard DiskutilOperator.isValidBSDName(bsdName) else {
+            Log.privilegedHelper.error("Rejected diskutil request with invalid BSD target")
+            reply(false, DiskutilOperator.Outcome.invalidTarget.rawValue, Int32.min)
+            return
+        }
 
+        let label = VolumeLogLabelFormatter.label(uuid: identityUUID, bsdName: bsdName)
+        Log.privilegedHelper.log("diskutil operation dispatched; operation=\(operation.operationName); force=\(operation.isForced); \(label)")
         operationQueue.async {
-            Log.volumeOperations.info("Privileged helper \(operation.operationName) started for \(volumeLabel)")
-            let result = DiskArbitrationVolumeOperator.perform(
-                volumeUUID: volumeUUID,
-                volumeName: volumeName,
+            let result = DiskutilOperator.perform(
+                identityUUID: identityUUID,
                 bsdName: bsdName,
                 operation: operation
             )
-
+            let details = "operation=\(operation.operationName); force=\(operation.isForced); outcome=\(result.outcome.rawValue); exitCode=\(result.exitCode.map(String.init) ?? "none"); terminationReason=\(result.terminationReason.rawValue); durationMilliseconds=\(result.durationMilliseconds); timeout=\(result.timedOut); reconciledState=\(result.reconciledState.rawValue); \(label)"
             if result.success {
-                if let message = result.message, !message.isEmpty {
-                    Log.volumeOperations.log("Privileged helper \(operation.operationName) finished for \(volumeLabel): \(message)")
-                } else {
-                    Log.volumeOperations.log("Privileged helper \(operation.operationName) finished for \(volumeLabel)")
-                }
+                Log.privilegedHelper.log("diskutil operation completed; \(details)")
             } else {
-                if let message = result.message, !message.isEmpty {
-                    Log.volumeOperations.error("Privileged helper \(operation.operationName) failed for \(volumeLabel): \(message)")
-                } else {
-                    Log.volumeOperations.error("Privileged helper \(operation.operationName) failed for \(volumeLabel)")
-                }
+                Log.privilegedHelper.error("diskutil operation failed; \(details)")
             }
-
-            replyBox.reply(result.success, result.message, result.status ?? 0)
-        }
-    }
-
-    /// Executes a system process and returns its exit status with any output.
-    private func runProcess(executableURL: URL, arguments: [String]) -> (exitCode: Int32, output: String) {
-        let process = Process()
-        process.executableURL = executableURL
-        process.arguments = arguments
-
-        let outputPipe = Pipe()
-        process.standardOutput = outputPipe
-        process.standardError = outputPipe
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-            let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return (process.terminationStatus, output)
-        } catch {
-            return (1, error.localizedDescription)
+            replyBox.reply(result.success, result.safeMessage, result.xpcStatus)
         }
     }
 }

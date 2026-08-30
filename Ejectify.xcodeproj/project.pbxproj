@@ -31,8 +31,8 @@
 		C0A100000000000000000005 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000015 /* main.swift */; };
 		C0A100000000000000000006 /* EjectifyPrivilegedHelper in CopyFiles */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000017 /* EjectifyPrivilegedHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		C0A100000000000000000007 /* nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000013 /* nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist */; };
-		C0A100000000000000000051 /* DiskArbitrationVolumeOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */; };
-		C0A100000000000000000052 /* DiskArbitrationVolumeOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */; };
+		C0A100000000000000000051 /* DiskutilOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskutilOperator.swift */; };
+		C0A100000000000000000052 /* DiskutilOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskutilOperator.swift */; };
 		C0A100000000000000000055 /* SMAppService+StatusDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000054 /* SMAppService+StatusDescription.swift */; };
 		C0A100000000000000000061 /* VolumeLogLabelFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */; };
 		C0A100000000000000000062 /* VolumeLogLabelFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */; };
@@ -59,7 +59,13 @@
 		F01400010000000000000001 /* PowerManagementLogPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01400020000000000000002 /* PowerManagementLogPolicy.swift */; };
 		F01400030000000000000003 /* PowerManagementLogPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01400020000000000000002 /* PowerManagementLogPolicy.swift */; };
 		F01400040000000000000004 /* PowerManagementLogPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01400050000000000000005 /* PowerManagementLogPolicyTests.swift */; };
-		F0CE00010000000000000001 /* DiskArbitrationVolumeOperatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0CE00020000000000000002 /* DiskArbitrationVolumeOperatorTests.swift */; };
+		F0CE00010000000000000001 /* DiskutilOperatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0CE00020000000000000002 /* DiskutilOperatorTests.swift */; };
+		F0CE00110000000000000011 /* VolumeOperationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000012 /* VolumeOperationRouter.swift */; };
+		F0CE00120000000000000012 /* PrivilegedDiskServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000011 /* PrivilegedDiskServiceProtocol.swift */; };
+		F0CE00130000000000000013 /* PrivilegedHelperConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */; };
+		F0CE00140000000000000014 /* PrivilegedHelperLifecycleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */; };
+		F0CE00150000000000000015 /* SMAppService+StatusDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000054 /* SMAppService+StatusDescription.swift */; };
+		F0CE00160000000000000016 /* VolumeOperationRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0CE00170000000000000017 /* VolumeOperationRouterTests.swift */; };
 		E8A100010000000000000001 /* APFSEncryptedVolumeUnlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100040000000000000004 /* APFSEncryptedVolumeUnlocker.swift */; };
 		E8A100020000000000000002 /* EncryptedVolumeCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100050000000000000005 /* EncryptedVolumeCredentialStore.swift */; };
 		E8A100030000000000000003 /* EncryptedVolumePasswordPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100060000000000000006 /* EncryptedVolumePasswordPrompt.swift */; };
@@ -68,7 +74,7 @@
 		E8A100090000000000000009 /* DADisk+DiskImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89F412425AC9D7200E0B8C1 /* DADisk+DiskImage.swift */; };
 		E8A1000A000000000000000A /* APFSEncryptedVolumeUnlockerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A1000C000000000000000C /* APFSEncryptedVolumeUnlockerTests.swift */; };
 		E8A1000B000000000000000B /* VolumeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A1000D000000000000000D /* VolumeTests.swift */; };
-		E8A1000F000000000000000F /* DiskArbitrationVolumeOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */; };
+		E8A1000F000000000000000F /* DiskutilOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskutilOperator.swift */; };
 		E9B200010000000000000001 /* APFSVolumeLockStateProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B200040000000000000004 /* APFSVolumeLockStateProbe.swift */; };
 		E9B200020000000000000002 /* APFSVolumeLockStateProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B200040000000000000004 /* APFSVolumeLockStateProbe.swift */; };
 		E9B200030000000000000003 /* APFSVolumeLockStateProbeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B200050000000000000005 /* APFSVolumeLockStateProbeTests.swift */; };
@@ -165,7 +171,7 @@
 		C0A100000000000000000015 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		C0A100000000000000000016 /* PrivilegedDiskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedDiskService.swift; sourceTree = "<group>"; };
 		C0A100000000000000000017 /* EjectifyPrivilegedHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = EjectifyPrivilegedHelper; sourceTree = BUILT_PRODUCTS_DIR; };
-		C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskArbitrationVolumeOperator.swift; sourceTree = "<group>"; };
+		C0A100000000000000000053 /* DiskutilOperator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskutilOperator.swift; sourceTree = "<group>"; };
 		C0A100000000000000000054 /* SMAppService+StatusDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SMAppService+StatusDescription.swift"; sourceTree = "<group>"; };
 		C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeLogLabelFormatter.swift; sourceTree = "<group>"; };
 		C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivilegedHelperConfiguration.swift; sourceTree = "<group>"; };
@@ -193,7 +199,8 @@
 		EB8200050000000000000005 /* UnlockVolumesWhenNeededPreferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockVolumesWhenNeededPreferenceTests.swift; sourceTree = "<group>"; };
 		F01400020000000000000002 /* PowerManagementLogPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerManagementLogPolicy.swift; sourceTree = "<group>"; };
 		F01400050000000000000005 /* PowerManagementLogPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerManagementLogPolicyTests.swift; sourceTree = "<group>"; };
-		F0CE00020000000000000002 /* DiskArbitrationVolumeOperatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskArbitrationVolumeOperatorTests.swift; sourceTree = "<group>"; };
+		F0CE00020000000000000002 /* DiskutilOperatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskutilOperatorTests.swift; sourceTree = "<group>"; };
+		F0CE00170000000000000017 /* VolumeOperationRouterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeOperationRouterTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -322,7 +329,7 @@
 				D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */,
 				E7C710020000000000000002 /* VolumeOperationOutcomePolicy.swift */,
 				C0A100000000000000000012 /* VolumeOperationRouter.swift */,
-				C0A100000000000000000053 /* DiskArbitrationVolumeOperator.swift */,
+				C0A100000000000000000053 /* DiskutilOperator.swift */,
 				C0A100000000000000000063 /* VolumeLogLabelFormatter.swift */,
 				C0A100000000000000000013 /* nl.nielsmouthaan.Ejectify.PrivilegedHelper.plist */,
 			);
@@ -352,7 +359,8 @@
 			children = (
 				E8A1000C000000000000000C /* APFSEncryptedVolumeUnlockerTests.swift */,
 				E9B200050000000000000005 /* APFSVolumeLockStateProbeTests.swift */,
-				F0CE00020000000000000002 /* DiskArbitrationVolumeOperatorTests.swift */,
+				F0CE00020000000000000002 /* DiskutilOperatorTests.swift */,
+				F0CE00170000000000000017 /* VolumeOperationRouterTests.swift */,
 				E7C700060000000000000006 /* LogTests.swift */,
 				F01400050000000000000005 /* PowerManagementLogPolicyTests.swift */,
 				E7C710040000000000000004 /* VolumeOperationOutcomePolicyTests.swift */,
@@ -565,7 +573,7 @@
 				C0A100000000000000000061 /* VolumeLogLabelFormatter.swift in Sources */,
 				E7C710010000000000000001 /* VolumeOperationOutcomePolicy.swift in Sources */,
 				C0A100000000000000000071 /* Log.swift in Sources */,
-				C0A100000000000000000051 /* DiskArbitrationVolumeOperator.swift in Sources */,
+				C0A100000000000000000051 /* DiskutilOperator.swift in Sources */,
 				A1B2C3D425C0AA1100ABC001 /* DAReturn+StatusDescription.swift in Sources */,
 				C0A100000000000000000064 /* PrivilegedHelperConfiguration.swift in Sources */,
 				C0A100000000000000000055 /* SMAppService+StatusDescription.swift in Sources */,
@@ -599,7 +607,7 @@
 			files = (
 				C0A100000000000000000062 /* VolumeLogLabelFormatter.swift in Sources */,
 				C0A100000000000000000072 /* Log.swift in Sources */,
-				C0A100000000000000000052 /* DiskArbitrationVolumeOperator.swift in Sources */,
+				C0A100000000000000000052 /* DiskutilOperator.swift in Sources */,
 				A1B2C3D525C0AA1100ABC001 /* DAReturn+StatusDescription.swift in Sources */,
 				C0A100000000000000000065 /* PrivilegedHelperConfiguration.swift in Sources */,
 				C0A100000000000000000003 /* PrivilegedDiskServiceProtocol.swift in Sources */,
@@ -621,8 +629,14 @@
 				E9B200030000000000000003 /* APFSVolumeLockStateProbeTests.swift in Sources */,
 				EB8200030000000000000003 /* UnlockVolumesWhenNeededPreferenceTests.swift in Sources */,
 				E8A1000B000000000000000B /* VolumeTests.swift in Sources */,
-				E8A1000F000000000000000F /* DiskArbitrationVolumeOperator.swift in Sources */,
-				F0CE00010000000000000001 /* DiskArbitrationVolumeOperatorTests.swift in Sources */,
+				E8A1000F000000000000000F /* DiskutilOperator.swift in Sources */,
+				F0CE00010000000000000001 /* DiskutilOperatorTests.swift in Sources */,
+				F0CE00110000000000000011 /* VolumeOperationRouter.swift in Sources */,
+				F0CE00120000000000000012 /* PrivilegedDiskServiceProtocol.swift in Sources */,
+				F0CE00130000000000000013 /* PrivilegedHelperConfiguration.swift in Sources */,
+				F0CE00140000000000000014 /* PrivilegedHelperLifecycleManager.swift in Sources */,
+				F0CE00150000000000000015 /* SMAppService+StatusDescription.swift in Sources */,
+				F0CE00160000000000000016 /* VolumeOperationRouterTests.swift in Sources */,
 				E7C710060000000000000006 /* DAReturn+StatusDescription.swift in Sources */,
 				E7C700030000000000000003 /* Log.swift in Sources */,
 				F01400030000000000000003 /* PowerManagementLogPolicy.swift in Sources */,
@@ -826,7 +840,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 25;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -835,7 +849,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 2.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.nielsmouthaan.Ejectify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -851,7 +865,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 25;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -860,7 +874,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 2.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.nielsmouthaan.Ejectify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

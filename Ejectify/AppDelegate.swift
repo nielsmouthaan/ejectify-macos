@@ -43,6 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         let isFirstLaunch = !Preference.hasSeenOnboarding
         VolumeOperationRouter.shared.configureExecutionMode()
+        Volume.startDiscovery()
 
         if isFirstLaunch {
             Preference.launchAtLogin = true
@@ -52,7 +53,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         globalHotKeyController = GlobalHotKeyController { [weak self] in
-            self?.performManualUnmountAll()
+            self?.performManualUnmountAll(trigger: .hotkey)
         }
         statusBar = StatusBar()
         activityController = ActivityController()
@@ -76,35 +77,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Handles all enabled volumes using the configured user-initiated action.
-    func performManualUnmountAll() {
+    func performManualUnmountAll(trigger: VolumeOperationTrigger = .manual) {
         let enabledVolumes = Volume.mountedVolumes().filter(\.enabled)
+        let operationName = Preference.ejectInsteadOfUnmount ? "eject" : "unmount"
+        Log.app.log("Manual volume operation triggered; trigger=\(trigger.rawValue); operation=\(operationName); count=\(enabledVolumes.count)")
 
-        guard !Preference.ejectInsteadOfUnmount else {
+        if Preference.ejectInsteadOfUnmount {
             activityController?.clearRemountStateForEjectMode()
-            let representatives = Volume.uniqueWholeDiskRepresentatives(from: enabledVolumes)
-            Log.app.log("Manual eject-all triggered: \(representatives.count) whole disk(s) for \(enabledVolumes.count) enabled volume(s)")
-
-            for volume in representatives {
-                VolumeOperationRouter.shared.eject(
-                    volumeUUID: volume.diskUUID.map { $0 as NSUUID },
-                    volumeName: volume.name,
-                    bsdName: volume.bsdName,
-                    forceUnmount: Preference.forceUnmount
-                ) { _, _, _ in }
-            }
-
-            return
         }
 
-        Log.app.log("Manual unmount-all triggered: \(enabledVolumes.count) enabled volumes")
-
         for volume in enabledVolumes {
-            VolumeOperationRouter.shared.unmount(
-                volumeUUID: volume.diskUUID.map { $0 as NSUUID },
-                volumeName: volume.name,
-                bsdName: volume.bsdName,
-                force: Preference.forceUnmount
-            ) { _, _, _ in }
+            if Preference.ejectInsteadOfUnmount {
+                VolumeOperationRouter.shared.eject(
+                    identityUUID: volume.identityUUID.map { $0 as NSUUID },
+                    bsdName: volume.bsdName,
+                    logLabel: volume.logLabel,
+                    force: Preference.forceUnmount,
+                    trigger: trigger
+                ) { _ in }
+            } else {
+                VolumeOperationRouter.shared.unmount(
+                    identityUUID: volume.identityUUID.map { $0 as NSUUID },
+                    bsdName: volume.bsdName,
+                    logLabel: volume.logLabel,
+                    force: Preference.forceUnmount,
+                    trigger: trigger
+                ) { _ in }
+            }
         }
     }
 

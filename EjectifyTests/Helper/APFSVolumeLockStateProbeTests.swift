@@ -114,28 +114,29 @@ struct APFSVolumeLockStateProbeTests {
     }
 
     @Test func requestPrefersUUIDBeforeBSDName() throws {
-        let diskUUID = try #require(UUID(uuidString: "96BA994F-3C29-413E-9FA9-36F86D938A51"))
-        let volume = makeVolume(diskUUID: diskUUID)
+        let identityUUID = try #require(UUID(uuidString: "96BA994F-3C29-413E-9FA9-36F86D938A51"))
+        let volume = makeVolume(identityUUID: identityUUID)
 
         let request = APFSVolumeLockStateProbe.Request(volume: volume)
 
-        #expect(request.identifiers == [diskUUID.uuidString, "disk15s1"])
+        #expect(request.identityUUID == identityUUID)
+        #expect(request.bsdName == "disk15s1")
     }
 
     @Test func requestUsesBSDNameWithoutUUID() {
-        let request = APFSVolumeLockStateProbe.Request(volume: makeVolume(diskUUID: nil))
+        let request = APFSVolumeLockStateProbe.Request(volume: makeVolume(identityUUID: nil))
 
-        #expect(request.identifiers == ["disk15s1"])
+        #expect(request.identityUUID == nil)
+        #expect(request.bsdName == "disk15s1")
     }
 
-    private func makeVolume(diskUUID: UUID?) -> Volume {
+    private func makeVolume(identityUUID: UUID?) -> Volume {
         Volume(
-            id: diskUUID?.uuidString ?? "fallback-id",
-            diskUUID: diskUUID,
+            id: identityUUID?.uuidString ?? "fallback-id",
+            identityUUID: identityUUID,
             name: "Test Volume",
             url: URL(fileURLWithPath: "/Volumes/Test Volume"),
             bsdName: "disk15s1",
-            wholeDiskBSDName: "disk14",
             category: .external,
             isEncrypted: true,
             isAPFS: true

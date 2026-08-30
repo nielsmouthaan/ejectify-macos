@@ -7,172 +7,76 @@
 
 import Foundation
 
-/// Unlocks encrypted APFS volumes by invoking `diskutil apfs unlockVolume` with the passphrase on standard input.
+/// Adapts encrypted APFS recovery to the shared routed diskutil implementation.
 final class APFSEncryptedVolumeUnlocker: @unchecked Sendable {
 
-    /// Result produced by one unlock attempt.
     enum UnlockResult: Equatable, Sendable {
         case success
         case invalidPassword
         case failed(message: String?)
     }
 
-    /// Immutable volume metadata safe to pass to the background unlock queue.
+    /// Immutable identity metadata passed across the asynchronous routing boundary.
     struct UnlockRequest: Sendable {
-
-        /// BSD disk identifier passed to `diskutil`.
+        let identityUUID: UUID?
         let bsdName: String
-
-        /// Privacy-safe correlation label used in diagnostics.
         let logLabel: String
 
-        /// Creates a sendable request from the main-thread volume model.
         init(volume: Volume) {
+            identityUUID = volume.identityUUID
             bsdName = volume.bsdName
             logLabel = volume.logLabel
         }
     }
 
-    /// Shared unlocker instance used by automatic remount handling.
     static let shared = APFSEncryptedVolumeUnlocker()
 
-    /// DiskManagement error code returned when APFS rejects the supplied authentication.
-    private static let authenticationRejectedErrorCode = -69591
-
-    /// Queue that keeps `diskutil` execution off the main actor.
-    private let queue = DispatchQueue(
-        label: "nl.nielsmouthaan.Ejectify.APFSEncryptedVolumeUnlocker",
-        qos: .userInitiated
-    )
-
-    /// Attempts to unlock and mount one encrypted APFS volume.
+    /// Unlocks one encrypted APFS volume through the active execution location.
     func unlock(request: UnlockRequest, password: String) async -> UnlockResult {
-        await withCheckedContinuation { continuation in
-            queue.async {
-                continuation.resume(returning: Self.performUnlock(request: request, password: password))
-            }
+        let result: DiskutilOperator.UnlockResult = await withCheckedContinuation { continuation in
+            VolumeOperationRouter.shared.unlockAPFSVolume(
+                identityUUID: request.identityUUID.map { $0 as NSUUID },
+                bsdName: request.bsdName,
+                logLabel: request.logLabel,
+                password: password,
+                completion: { continuation.resume(returning: $0) }
+            )
         }
-    }
-
-    /// Runs `diskutil apfs unlockVolume` and captures output for result classification.
-    private static func performUnlock(request: UnlockRequest, password: String) -> UnlockResult {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
-        process.arguments = ["apfs", "unlockVolume", request.bsdName, "-stdinpassphrase", "-plist"]
-
-        let inputPipe = Pipe()
-        let outputPipe = Pipe()
-        let errorPipe = Pipe()
-        process.standardInput = inputPipe
-        process.standardOutput = outputPipe
-        process.standardError = errorPipe
-
-        do {
-            try process.run()
-            inputPipe.fileHandleForWriting.write(Data("\(password)\n".utf8))
-            try inputPipe.fileHandleForWriting.close()
-            process.waitUntilExit()
-        } catch {
-            Log.volumeOperations.error(error, message: "Encrypted APFS unlock process failed to run for \(request.logLabel)")
-            return .failed(message: error.localizedDescription)
-        }
-
-        let output = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        let errorOutput = errorPipe.fileHandleForReading.readDataToEndOfFile()
-        let result = classifyUnlockResult(
-            terminationStatus: process.terminationStatus,
-            output: output,
-            errorOutput: errorOutput
-        )
-        let diagnosticMetadata = unlockDiagnosticMetadata(from: output)
-
-        switch result {
-        case .success:
-            Log.volumeOperations.log("Encrypted APFS unlock succeeded for \(request.logLabel)")
+        switch result.outcome {
+        case .succeeded:
+            return .success
         case .invalidPassword:
-            Log.volumeOperations.warning("Encrypted APFS unlock rejected the supplied password; terminationStatus=\(process.terminationStatus); \(diagnosticMetadata); \(request.logLabel)")
-        case .failed:
-            Log.volumeOperations.error("Encrypted APFS unlock failed; terminationStatus=\(process.terminationStatus); \(diagnosticMetadata); \(request.logLabel)")
+            return .invalidPassword
+        case .failed, .timedOut, .launchFailed, .targetUnavailable, .targetAmbiguous, .invalidTarget:
+            return .failed(message: result.outcome.rawValue)
         }
-
-        return result
     }
 
-    /// Classifies `diskutil` plist output without matching human-readable error text.
-    static func classifyUnlockResult(
-        terminationStatus: Int32,
-        output: Data,
-        errorOutput: Data
-    ) -> UnlockResult {
-        guard let plist = unlockPlist(from: output) else {
-            let message = sanitizedMessage(output: output, errorOutput: errorOutput)
-                ?? "diskutil exited with status \(terminationStatus)"
-            return .failed(message: message)
-        }
-
-        let errorCode = plist["DiskManagementErrorCode"] as? Int
-
-        if plist["Success"] as? Bool == true {
+    /// Classifies structured unlock output without using localized text.
+    static func classifyUnlockResult(terminationStatus: Int32, output: Data, errorOutput _: Data) -> UnlockResult {
+        let plist = DiskutilOperator.propertyList(from: output)
+        let metadata = DiskutilOperator.apfsMetadata(from: plist)
+        if terminationStatus == 0, (plist?["Success"] as? Bool) != false {
             return .success
         }
-
-        let isRateLimited = (plist["RateLimitStateBackoff"] as? Bool) == true
-            || (plist["RateLimitStateLockout"] as? Bool) == true
-
-        if errorCode == authenticationRejectedErrorCode && !isRateLimited {
+        if metadata.diskManagementErrorCode == -69591,
+           metadata.rateLimitBackoff != true,
+           metadata.rateLimitLockout != true {
             return .invalidPassword
         }
-
-        return .failed(message: unlockFailureMessage(from: plist, terminationStatus: terminationStatus))
+        if let errorCode = metadata.diskManagementErrorCode {
+            return .failed(message: "diskutil exited with status \(terminationStatus) and DiskManagementErrorCode \(errorCode)")
+        }
+        return .failed(message: "diskutil exited with status \(terminationStatus)")
     }
 
-    /// Returns the minimal privacy-safe metadata needed to diagnose an unlock failure.
+    /// Formats the structured APFS fields retained for diagnostics.
     static func unlockDiagnosticMetadata(from output: Data) -> String {
-        guard let plist = unlockPlist(from: output) else {
-            return "diskManagementErrorCode=unavailable; rateLimitBackoff=unavailable; rateLimitLockout=unavailable"
-        }
-
-        let errorCode = plist["DiskManagementErrorCode"] as? Int
-        let rateLimitBackoff = plist["RateLimitStateBackoff"] as? Bool
-        let rateLimitLockout = plist["RateLimitStateLockout"] as? Bool
+        let metadata = DiskutilOperator.apfsMetadata(from: DiskutilOperator.propertyList(from: output))
         return [
-            "diskManagementErrorCode=\(errorCode.map(String.init) ?? "unavailable")",
-            "rateLimitBackoff=\(rateLimitBackoff.map(String.init) ?? "unavailable")",
-            "rateLimitLockout=\(rateLimitLockout.map(String.init) ?? "unavailable")"
+            "diskManagementErrorCode=\(metadata.diskManagementErrorCode.map(String.init) ?? "unavailable")",
+            "rateLimitBackoff=\(metadata.rateLimitBackoff.map(String.init) ?? "unavailable")",
+            "rateLimitLockout=\(metadata.rateLimitLockout.map(String.init) ?? "unavailable")"
         ].joined(separator: "; ")
-    }
-
-    /// Parses the plist emitted by `diskutil apfs unlockVolume -plist`.
-    private static func unlockPlist(from output: Data) -> [String: Any]? {
-        guard !output.isEmpty else {
-            return nil
-        }
-
-        return (try? PropertyListSerialization.propertyList(from: output, options: [], format: nil)) as? [String: Any]
-    }
-
-    /// Builds a user-facing failure message from structured plist output.
-    private static func unlockFailureMessage(from plist: [String: Any], terminationStatus: Int32) -> String {
-        if let message = plist["LocalizedUnlockDispositionMessage"] as? String, !message.isEmpty {
-            return message
-        }
-
-        if let errorCode = plist["DiskManagementErrorCode"] as? Int {
-            return "diskutil exited with status \(terminationStatus) and DiskManagementErrorCode \(errorCode)"
-        }
-
-        return "diskutil exited with status \(terminationStatus)"
-    }
-
-    /// Combines command output while avoiding empty user-facing messages.
-    private static func sanitizedMessage(output: Data, errorOutput: Data) -> String? {
-        let outputString = String(data: output, encoding: .utf8) ?? ""
-        let errorString = String(data: errorOutput, encoding: .utf8) ?? ""
-        let message = [outputString, errorString]
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-            .joined(separator: "\n")
-
-        return message.isEmpty ? nil : message
     }
 }

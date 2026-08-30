@@ -58,7 +58,7 @@ struct APFSEncryptedVolumeUnlockerTests {
                 "RateLimitStateLockout": .bool(false),
                 "Success": .bool(false)
             ],
-            expectedResult: .failed(message: "Your account is locked.")
+            expectedResult: .failed(message: "diskutil exited with status 1 and DiskManagementErrorCode -69591")
         ),
         ClassificationFixture(
             terminationStatus: 1,
@@ -72,7 +72,7 @@ struct APFSEncryptedVolumeUnlockerTests {
                 "LocalizedUnlockDispositionMessage": .string("Something else failed."),
                 "Success": .bool(false)
             ],
-            expectedResult: .failed(message: "Something else failed.")
+            expectedResult: .failed(message: "diskutil exited with status 1 and DiskManagementErrorCode -1")
         )
     ])
     func classifiesStructuredUnlockResult(_ fixture: ClassificationFixture) throws {
@@ -99,7 +99,7 @@ struct APFSEncryptedVolumeUnlockerTests {
             errorOutput: Data()
         )
 
-        #expect(result == .failed(message: "not plist"))
+        #expect(result == .failed(message: "diskutil exited with status 1"))
     }
 
     @Test func preservesPrivacySafeStructuredDiagnostics() throws {

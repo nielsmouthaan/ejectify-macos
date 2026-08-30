@@ -6,108 +6,24 @@
 //
 
 import Foundation
-@preconcurrency import DiskArbitration
 import Testing
 
 struct VolumeOperationOutcomePolicyTests {
 
     struct UnmountCompletion: Sendable {
         let success: Bool
-        let status: DAReturn?
-    }
-
-    @Test func failedHelperResultWithoutStatusNormalizesToNil() {
-        let status = VolumeOperationOutcomePolicy.normalizedHelperStatus(
-            success: false,
-            rawStatus: Int32(kDAReturnSuccess)
-        )
-
-        #expect(status == nil)
-    }
-
-    @Test func failedHelperResultPreservesDiskArbitrationStatus() {
-        let status = VolumeOperationOutcomePolicy.normalizedHelperStatus(
-            success: false,
-            rawStatus: Int32(kDAReturnBusy)
-        )
-
-        #expect(status == Int32(kDAReturnBusy))
-    }
-
-    @Test func successfulHelperResultHasNoFailureStatus() {
-        let status = VolumeOperationOutcomePolicy.normalizedHelperStatus(
-            success: true,
-            rawStatus: Int32(kDAReturnBusy)
-        )
-
-        #expect(status == nil)
-    }
-
-    @Test func notPrivilegedHelperResultRetriesLocallyForEveryDiskOperation() {
-        let operations: [DiskArbitrationVolumeOperator.Operation] = [
-            .mount,
-            .unmount(force: false),
-            .unmount(force: true),
-            .eject(forceUnmount: false),
-            .eject(forceUnmount: true)
-        ]
-
-        for operation in operations {
-            let shouldRetry = VolumeOperationOutcomePolicy.shouldRetryHelperOperationLocally(
-                operation: operation,
-                success: false,
-                status: Int32(kDAReturnNotPrivileged)
-            )
-
-            #expect(shouldRetry)
-        }
-    }
-
-    @Test func successfulHelperResultDoesNotRetryLocally() {
-        let shouldRetry = VolumeOperationOutcomePolicy.shouldRetryHelperOperationLocally(
-            operation: .mount,
-            success: true,
-            status: Int32(kDAReturnNotPrivileged)
-        )
-
-        #expect(shouldRetry == false)
     }
 
     @Test(arguments: [
-        nil,
-        Int32(kDAReturnBusy),
-        Int32(kDAReturnNotPermitted),
-        Int32(kDAReturnNotFound),
-        Int32(kDAReturnUnsupported)
-    ] as [DAReturn?])
-    func otherHelperFailuresDoNotRetryLocally(_ status: DAReturn?) {
-        let shouldRetry = VolumeOperationOutcomePolicy.shouldRetryHelperOperationLocally(
-            operation: .mount,
-            success: false,
-            status: status
-        )
-
-        #expect(shouldRetry == false)
-    }
-
-    @Test(arguments: [
-        UnmountCompletion(success: true, status: nil),
-        UnmountCompletion(success: false, status: nil),
-        UnmountCompletion(success: false, status: Int32(kDAReturnBusy)),
-        UnmountCompletion(success: false, status: 49_168),
-        UnmountCompletion(success: false, status: Int32(kDAReturnNotPermitted)),
-        UnmountCompletion(success: false, status: Int32(kDAReturnUnsupported))
+        UnmountCompletion(success: true),
+        UnmountCompletion(success: false)
     ])
     func automaticUnmountCompletionAlwaysPreservesRemountCandidate(_ completion: UnmountCompletion) {
         let disposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(
-            after: .unmountCompleted(success: completion.success, status: completion.status)
+            after: .unmountCompleted(success: completion.success)
         )
 
         #expect(disposition == .preserve)
-    }
-
-    @Test func encodedUnixBusyStatusHasRecognizableDescription() {
-        #expect(DAReturn(49_168).statusDescription == "EBUSY (Resource busy)")
     }
 
     @Test func retryCancellationPreservesRemountCandidate() {
@@ -154,31 +70,31 @@ struct VolumeOperationOutcomePolicyTests {
 
     @Test func helperBackedMountTimeoutIsRetryable() {
         let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .mountFailed(status: nil)
+            for: .mountFailed(outcome: .timedOut)
         )
 
         #expect(outcome == .retryableFailure)
     }
 
-    @Test func retryableMountStatusIsRetryable() {
+    @Test func failedMountIsRetryable() {
         let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .mountFailed(status: Int32(kDAReturnBusy))
+            for: .mountFailed(outcome: .failed)
         )
 
         #expect(outcome == .retryableFailure)
     }
 
-    @Test func missingDiskMountStatusIsRetryable() {
+    @Test func missingDiskMountIsRetryable() {
         let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .mountFailed(status: Int32(kDAReturnNotFound))
+            for: .mountFailed(outcome: .targetUnavailable)
         )
 
         #expect(outcome == .retryableFailure)
     }
 
-    @Test func nonRetryableMountStatusIsTerminal() {
+    @Test func ambiguousMountTargetIsTerminal() {
         let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .mountFailed(status: Int32(kDAReturnUnsupported))
+            for: .mountFailed(outcome: .targetAmbiguous)
         )
 
         #expect(outcome == .terminalFailure)
@@ -194,7 +110,7 @@ struct VolumeOperationOutcomePolicyTests {
 
     @Test func busyUnmountRemainsPendingUntilWakeReconciliationSucceeds() {
         let unmountDisposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(
-            after: .unmountCompleted(success: false, status: 49_168)
+            after: .unmountCompleted(success: false)
         )
         let wakeOutcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
             for: .mountSucceeded
@@ -232,7 +148,7 @@ struct VolumeOperationOutcomePolicyTests {
 
     @Test func confirmedLockedEncryptedAPFSMountFailureStartsNativeUnlockGrace() {
         let shouldStart = VolumeOperationOutcomePolicy.shouldStartNativeUnlockGrace(
-            after: .mountFailed(status: Int32(kDAReturnNotPermitted)),
+            after: .mountFailed(outcome: .failed),
             isEncrypted: true,
             isAPFS: true,
             ejectModeEnabled: false,
@@ -245,7 +161,7 @@ struct VolumeOperationOutcomePolicyTests {
 
     @Test func nativeUnlockGraceRunsOnlyOncePerRemountSequence() {
         let shouldStart = VolumeOperationOutcomePolicy.shouldStartNativeUnlockGrace(
-            after: .mountFailed(status: nil),
+            after: .mountFailed(outcome: .failed),
             isEncrypted: true,
             isAPFS: true,
             ejectModeEnabled: false,
@@ -283,7 +199,7 @@ struct VolumeOperationOutcomePolicyTests {
         lockState: APFSVolumeLockStateProbe.LockState
     ) {
         let shouldStart = VolumeOperationOutcomePolicy.shouldStartNativeUnlockGrace(
-            after: .mountFailed(status: nil),
+            after: .mountFailed(outcome: .failed),
             isEncrypted: true,
             isAPFS: true,
             ejectModeEnabled: false,

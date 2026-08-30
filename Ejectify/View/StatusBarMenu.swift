@@ -23,6 +23,7 @@ final class StatusBarMenu: NSMenu {
         volumes = Volume.mountedVolumes()
         super.init(coder: coder)
         listenForOperationRouterNotifications()
+        listenForVolumeDiscoveryNotifications()
         updateMenu()
         listenForVolumeNotifications()
     }
@@ -32,6 +33,7 @@ final class StatusBarMenu: NSMenu {
         volumes = Volume.mountedVolumes()
         super.init(title: "Ejectify")
         listenForOperationRouterNotifications()
+        listenForVolumeDiscoveryNotifications()
         updateMenu()
         listenForVolumeNotifications()
     }
@@ -40,6 +42,7 @@ final class StatusBarMenu: NSMenu {
     deinit {
         NSWorkspace.shared.notificationCenter.removeObserver(self)
         NotificationCenter.default.removeObserver(self, name: .volumeOperationRouterDidChange, object: VolumeOperationRouter.shared)
+        NotificationCenter.default.removeObserver(self, name: .volumeDiscoveryDidChange, object: nil)
     }
 
     /// Starts observing mount, unmount, and rename events to keep the menu current.
@@ -52,6 +55,17 @@ final class StatusBarMenu: NSMenu {
     /// Observes router state changes so the menu can reflect daemon availability updates.
     private func listenForOperationRouterNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(operationRouterDidChange(_:)), name: .volumeOperationRouterDidChange, object: VolumeOperationRouter.shared)
+    }
+
+    /// Observes Disk Arbitration inventory changes and rebuilds the mounted-volume cache.
+    private func listenForVolumeDiscoveryNotifications() {
+        NotificationCenter.default.addObserver(self, selector: #selector(volumeDiscoveryDidChange(_:)), name: .volumeDiscoveryDidChange, object: nil)
+    }
+
+    /// Reloads managed volumes after a coalesced Disk Arbitration topology change.
+    @objc private func volumeDiscoveryDidChange(_ notification: Notification) {
+        volumes = Volume.mountedVolumes()
+        updateMenu()
     }
 
     /// Rebuilds the menu whenever operation routing availability changes.
@@ -191,7 +205,7 @@ final class StatusBarMenu: NSMenu {
 
         removeAllItems()
         buildActionsMenu()
-        buildVolumesMenu()
+        buildManagedStorageMenu()
         buildPreferencesMenu()
         buildAppMenu()
     }
@@ -215,8 +229,8 @@ final class StatusBarMenu: NSMenu {
         addItem(unmountAllItem)
     }
 
-    /// Builds the "Volumes" section with one toggle row per mounted volume.
-    private func buildVolumesMenu() {
+    /// Builds the same selectable volume rows for unmount and eject modes.
+    private func buildManagedStorageMenu() {
         addItem(NSMenuItem.separator())
 
         addVolumeSection(title: String(localized: "Internal"), category: .internalVolume)
@@ -298,9 +312,9 @@ final class StatusBarMenu: NSMenu {
         state == .off
     }
 
-    /// Represents enabled elevated permissions only when routing is actively using the privileged helper.
+    /// Represents whether elevated permissions are registered and enabled in ServiceManagement.
     private var elevatedPermissionsMenuState: NSControl.StateValue {
-        VolumeOperationRouter.shared.isUsingPrivilegedHelper ? .on : .off
+        VolumeOperationRouter.shared.isDaemonEnabled ? .on : .off
     }
 
     /// Returns whether force-muting notifications is enabled in the system Disk Arbitration plist, treating any read failure or missing value as unmuted (`false`).
@@ -451,9 +465,15 @@ final class StatusBarMenu: NSMenu {
         updateMenu()
     }
 
-    /// Toggles whole-disk eject mode from the menu.
+    /// Toggles volume-targeted eject mode from the menu.
     @objc private func ejectInsteadOfUnmountClicked(menuItem: NSMenuItem) {
-        Preference.ejectInsteadOfUnmount = toggledValue(for: menuItem.state)
+        let shouldEnable = toggledValue(for: menuItem.state)
+        Preference.ejectInsteadOfUnmount = shouldEnable
+        if shouldEnable {
+            MainActor.assumeIsolated {
+                AppDelegate.shared.activityController?.clearRemountStateForEjectMode()
+            }
+        }
         updateMenu()
     }
 
