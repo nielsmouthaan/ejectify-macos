@@ -10,9 +10,6 @@ import Foundation
 /// XPC interface exposed by the privileged helper daemon.
 @objc protocol PrivilegedDiskServiceProtocol {
 
-    /// Pings the privileged helper to prewarm XPC routing before the first volume operation.
-    func ping(withReply reply: @escaping (Bool, String?) -> Void)
-
     /// Reports helper support for diskutil-backed fixed operations.
     func capabilityVersion(withReply reply: @escaping (Int) -> Void)
 

@@ -64,8 +64,7 @@ final class StatusBarMenu: NSMenu {
 
     /// Reloads managed volumes after a coalesced Disk Arbitration topology change.
     @objc private func volumeDiscoveryDidChange(_ notification: Notification) {
-        volumes = Volume.mountedVolumes()
-        updateMenu()
+        reloadVolumes()
     }
 
     /// Rebuilds the menu whenever operation routing availability changes.
@@ -90,13 +89,10 @@ final class StatusBarMenu: NSMenu {
             return
         }
 
-        guard let volume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) else {
-            return
+        if let volume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
+            Log.volumeOperations.log("Volume did mount: \(volume.logLabel)")
         }
-
-        Log.volumeOperations.log("Volume did mount: \(volume.logLabel)")
-        upsertCachedVolume(volume)
-        updateMenu()
+        reloadVolumes()
     }
 
     /// Handles unmount notifications and logs unmount metadata provided by NSWorkspace.
@@ -106,14 +102,11 @@ final class StatusBarMenu: NSMenu {
             return
         }
 
-        guard let url = notificationURL(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey),
-              let volumeIndex = cachedVolumeIndex(for: url) else {
-            return
+        if let url = notificationURL(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey),
+           let volumeIndex = cachedVolumeIndex(for: url) {
+            Log.volumeOperations.log("Volume did unmount: \(volumes[volumeIndex].logLabel)")
         }
-
-        let volume = volumes.remove(at: volumeIndex)
-        Log.volumeOperations.log("Volume did unmount: \(volume.logLabel)")
-        updateMenu()
+        reloadVolumes()
     }
 
     /// Handles rename notifications and logs stable volume correlation metadata.
@@ -123,26 +116,13 @@ final class StatusBarMenu: NSMenu {
             return
         }
 
-        let oldVolumeIndex = notificationURL(from: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey)
-            .flatMap(cachedVolumeIndex(for:))
-        let renamedVolume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey)
-
-        if let oldVolumeIndex {
+        if let oldVolumeIndex = notificationURL(from: notification, urlKey: NSWorkspace.oldVolumeURLUserInfoKey)
+            .flatMap(cachedVolumeIndex(for:)) {
             Log.volumeOperations.log("Volume did rename; \(volumes[oldVolumeIndex].logLabel)")
+        } else if let renamedVolume = managedVolume(from: notification, urlKey: NSWorkspace.volumeURLUserInfoKey) {
+            Log.volumeOperations.log("Volume did rename; \(renamedVolume.logLabel)")
         }
-
-        switch (oldVolumeIndex, renamedVolume) {
-        case let (oldVolumeIndex?, renamedVolume?):
-            replaceCachedVolume(at: oldVolumeIndex, with: renamedVolume)
-        case let (oldVolumeIndex?, nil):
-            volumes.remove(at: oldVolumeIndex)
-        case let (nil, renamedVolume?):
-            upsertCachedVolume(renamedVolume)
-        case (nil, nil):
-            return
-        }
-
-        updateMenu()
+        reloadVolumes()
     }
 
     /// Returns the volume URL stored under a workspace notification user-info key.
@@ -156,37 +136,6 @@ final class StatusBarMenu: NSMenu {
         return volumes.firstIndex(where: { $0.url.standardizedFileURL.path == targetPath })
     }
 
-    /// Returns the cached index matching a volume's stable identifier or normalized mounted path.
-    private func cachedVolumeIndex(matching volume: Volume, excluding excludedIndex: Int? = nil) -> Int? {
-        let targetPath = volume.url.standardizedFileURL.path
-        return volumes.indices.first { index in
-            index != excludedIndex
-                && (volumes[index].id == volume.id || volumes[index].url.standardizedFileURL.path == targetPath)
-        }
-    }
-
-    /// Replaces a matching cached volume or appends a newly mounted volume.
-    private func upsertCachedVolume(_ volume: Volume) {
-        if let volumeIndex = cachedVolumeIndex(matching: volume) {
-            volumes[volumeIndex] = volume
-        } else {
-            volumes.append(volume)
-        }
-    }
-
-    /// Replaces a renamed cache entry while removing any duplicate entry for the resolved volume.
-    private func replaceCachedVolume(at oldVolumeIndex: Int, with renamedVolume: Volume) {
-        var replacementIndex = oldVolumeIndex
-        if let duplicateIndex = cachedVolumeIndex(matching: renamedVolume, excluding: oldVolumeIndex) {
-            volumes.remove(at: duplicateIndex)
-            if duplicateIndex < replacementIndex {
-                replacementIndex -= 1
-            }
-        }
-
-        volumes[replacementIndex] = renamedVolume
-    }
-
     /// Resolves a notification URL to a managed volume using the same filter as `mountedVolumes`.
     private func managedVolume(from notification: Notification, urlKey: String) -> Volume? {
         guard let url = notification.userInfo?[urlKey] as? URL else {
@@ -194,6 +143,12 @@ final class StatusBarMenu: NSMenu {
         }
 
         return Volume.fromURL(url: url)
+    }
+
+    /// Replaces the menu inventory with one authoritative full scan.
+    private func reloadVolumes() {
+        volumes = Volume.mountedVolumes()
+        updateMenu()
     }
 
     /// Rebuilds all top-level menu sections from current app state.

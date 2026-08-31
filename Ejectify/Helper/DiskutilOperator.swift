@@ -9,7 +9,7 @@ import Darwin
 @preconcurrency import DiskArbitration
 import Foundation
 
-/// Executes the fixed set of diskutil commands used by Ejectify and reconciles their effects through Disk Arbitration.
+/// Executes the fixed set of diskutil commands used by Ejectify after validating targets through Disk Arbitration.
 enum DiskutilOperator {
 
     /// Creates configured Disk Arbitration sessions for shared app and helper usage.
@@ -121,18 +121,9 @@ enum DiskutilOperator {
         case invalidTarget
     }
 
-    /// Semantic effect observed after a command.
-    enum ReconciledState: String, Equatable, Sendable {
-        case mounted
-        case unmounted
-        case absent
-        case unknown
-    }
-
     /// Semantic result of a diskutil operation.
     enum Outcome: String, Equatable, Sendable {
         case succeeded
-        case satisfiedAfterReconciliation
         case failed
         case timedOut
         case launchFailed
@@ -147,23 +138,15 @@ enum DiskutilOperator {
         let exitCode: Int32?
         let terminationReason: TerminationReason
         let durationMilliseconds: Int
-        let timedOut: Bool
-        let reconciledState: ReconciledState
-        let resolvedBSDName: String?
 
         /// Whether the requested semantic state was reached.
         var success: Bool {
-            outcome == .succeeded || outcome == .satisfiedAfterReconciliation
+            outcome == .succeeded
         }
 
-        /// Privacy-safe result classification suitable for XPC and diagnostics.
-        var safeMessage: String {
-            outcome.rawValue
-        }
-
-        /// Exit code used by the compatible XPC reply, with a sentinel when no process exited normally.
-        var xpcStatus: Int32 {
-            exitCode ?? Int32.min
+        /// Whether the child exceeded its process deadline.
+        var timedOut: Bool {
+            terminationReason == .timeout
         }
     }
 
@@ -199,13 +182,16 @@ enum DiskutilOperator {
         let exitCode: Int32?
         let terminationReason: TerminationReason
         let durationMilliseconds: Int
-        let timedOut: Bool
-        let resolvedBSDName: String?
         let metadata: APFSMetadata
 
         /// Whether diskutil reported a successful unlock.
         var success: Bool {
             outcome == .succeeded
+        }
+
+        /// Whether the child exceeded its process deadline.
+        var timedOut: Bool {
+            terminationReason == .timeout
         }
     }
 
@@ -214,9 +200,12 @@ enum DiskutilOperator {
         let exitCode: Int32?
         let terminationReason: TerminationReason
         let durationMilliseconds: Int
-        let timedOut: Bool
         let stdout: Data
-        let stderr: Data
+
+        /// Whether the child exceeded its process deadline.
+        var timedOut: Bool {
+            terminationReason == .timeout
+        }
     }
 
     /// Abstraction used to test command execution deterministically.
@@ -224,10 +213,10 @@ enum DiskutilOperator {
         func run(arguments: [String], standardInput: Data?, timeout: TimeInterval) -> ProcessResult
     }
 
-    /// Runs diskutil directly, drains both output streams concurrently, and enforces a deadline.
+    /// Runs diskutil directly, retains bounded plist output when requested, and enforces a deadline.
     final class ProcessRunner: ProcessRunning, @unchecked Sendable {
 
-        /// Maximum amount retained from each output stream while the rest is drained.
+        /// Maximum amount retained from structured standard output while the rest is drained.
         static let maximumRetainedOutputBytes = 64 * 1024
 
         /// Executable invoked by this runner. Production always uses diskutil, while tests may use controlled fixtures.
@@ -267,18 +256,18 @@ enum DiskutilOperator {
             process.executableURL = executableURL
             process.arguments = arguments
 
-            let standardOutputPipe = Pipe()
-            let standardErrorPipe = Pipe()
+            let capturesStandardOutput = arguments.contains("-plist")
+            let standardOutputPipe = capturesStandardOutput ? Pipe() : nil
             let standardInputPipe = standardInput == nil ? nil : Pipe()
-            process.standardOutput = standardOutputPipe
-            process.standardError = standardErrorPipe
+            process.standardOutput = standardOutputPipe ?? FileHandle.nullDevice
+            process.standardError = FileHandle.nullDevice
             process.standardInput = standardInputPipe
 
             let standardOutput = BoundedData()
-            let standardError = BoundedData()
             let drainGroup = DispatchGroup()
-            drain(pipe: standardOutputPipe, into: standardOutput, group: drainGroup)
-            drain(pipe: standardErrorPipe, into: standardError, group: drainGroup)
+            if let standardOutputPipe {
+                drain(pipe: standardOutputPipe, into: standardOutput, group: drainGroup)
+            }
 
             let terminationSemaphore = DispatchSemaphore(value: 0)
             process.terminationHandler = { _ in
@@ -289,15 +278,12 @@ enum DiskutilOperator {
                 try process.run()
             } catch {
                 try? standardInputPipe?.fileHandleForWriting.close()
-                try? standardOutputPipe.fileHandleForReading.close()
-                try? standardErrorPipe.fileHandleForReading.close()
+                try? standardOutputPipe?.fileHandleForReading.close()
                 return ProcessResult(
                     exitCode: nil,
                     terminationReason: .launchFailure,
                     durationMilliseconds: Self.elapsedMilliseconds(since: startedAt),
-                    timedOut: false,
-                    stdout: standardOutput.value,
-                    stderr: standardError.value
+                    stdout: standardOutput.value
                 )
             }
 
@@ -330,9 +316,7 @@ enum DiskutilOperator {
                 exitCode: exitCode,
                 terminationReason: terminationReason,
                 durationMilliseconds: Self.elapsedMilliseconds(since: startedAt),
-                timedOut: didTimeOut,
-                stdout: standardOutput.value,
-                stderr: standardError.value
+                stdout: standardOutput.value
             )
         }
 
@@ -382,43 +366,19 @@ enum DiskutilOperator {
     ) -> OperationResult {
         let resolution = resolveTarget(identityUUID: identityUUID, bsdName: bsdName)
         guard case .resolved(let liveBSDName) = resolution else {
-            if resolution == .unavailable, case .eject = operation {
-                return OperationResult(
-                    outcome: .satisfiedAfterReconciliation,
-                    exitCode: nil,
-                    terminationReason: .targetUnavailable,
-                    durationMilliseconds: 0,
-                    timedOut: false,
-                    reconciledState: .absent,
-                    resolvedBSDName: nil
-                )
-            }
             return resolution.operationFailureResult()
         }
 
         let processResult = runner.run(arguments: operation.arguments(bsdName: liveBSDName), standardInput: nil, timeout: timeout)
-        let state = reconciledState(identityUUID: identityUUID, originalBSDName: liveBSDName)
-        return classifyOperationResult(
-            processResult: processResult,
-            operation: operation,
-            reconciledState: state,
-            resolvedBSDName: liveBSDName
-        )
+        return classifyOperationResult(processResult: processResult)
     }
 
-    /// Classifies a process result and reconciled semantic state without retaining raw output.
-    static func classifyOperationResult(
-        processResult: ProcessResult,
-        operation: Operation,
-        reconciledState state: ReconciledState,
-        resolvedBSDName: String
-    ) -> OperationResult {
+    /// Classifies a process result without retaining raw output.
+    static func classifyOperationResult(processResult: ProcessResult) -> OperationResult {
         let outcome: Outcome
         if processResult.terminationReason == .exit, processResult.exitCode == 0 {
             outcome = .succeeded
-        } else if requestedStateIsSatisfied(operation: operation, reconciledState: state) {
-            outcome = .satisfiedAfterReconciliation
-        } else if processResult.timedOut {
+        } else if processResult.terminationReason == .timeout {
             outcome = .timedOut
         } else if processResult.terminationReason == .launchFailure {
             outcome = .launchFailed
@@ -430,10 +390,7 @@ enum DiskutilOperator {
             outcome: outcome,
             exitCode: processResult.exitCode,
             terminationReason: processResult.terminationReason,
-            durationMilliseconds: processResult.durationMilliseconds,
-            timedOut: processResult.timedOut,
-            reconciledState: state,
-            resolvedBSDName: resolvedBSDName
+            durationMilliseconds: processResult.durationMilliseconds
         )
     }
 
@@ -496,7 +453,7 @@ enum DiskutilOperator {
                   metadata.rateLimitBackoff != true,
                   metadata.rateLimitLockout != true {
             outcome = .invalidPassword
-        } else if processResult.timedOut {
+        } else if processResult.terminationReason == .timeout {
             outcome = .timedOut
         } else if processResult.terminationReason == .launchFailure {
             outcome = .launchFailed
@@ -509,18 +466,8 @@ enum DiskutilOperator {
             exitCode: processResult.exitCode,
             terminationReason: processResult.terminationReason,
             durationMilliseconds: processResult.durationMilliseconds,
-            timedOut: processResult.timedOut,
-            resolvedBSDName: bsdName,
             metadata: metadata
         )
-    }
-
-    /// Returns whether a target can currently be uniquely resolved through Disk Arbitration.
-    static func canResolve(identityUUID: UUID?, bsdName: String) -> Bool {
-        if case .resolved = resolveTarget(identityUUID: identityUUID, bsdName: bsdName) {
-            return true
-        }
-        return false
     }
 
     /// Validates a BSD identifier accepted by the fixed helper endpoints.
@@ -544,6 +491,10 @@ enum DiskutilOperator {
         } else {
             originalMatchesIdentity = false
         }
+        if originalMatchesIdentity {
+            return .resolved(bsdName: bsdName)
+        }
+
         let matches = identityUUID.map { liveBSDNames(session: session, matching: $0) } ?? []
         return targetResolution(
             originalBSDName: bsdName,
@@ -602,35 +553,6 @@ enum DiskutilOperator {
         return (try? PropertyListSerialization.propertyList(from: data, options: [], format: nil)) as? [String: Any]
     }
 
-    /// Reads the current semantic state through Disk Arbitration after a command completes or times out.
-    private static func reconciledState(identityUUID: UUID?, originalBSDName: String) -> ReconciledState {
-        switch resolveTarget(identityUUID: identityUUID, bsdName: originalBSDName) {
-        case .resolved(let currentBSDName):
-            guard let session = diskArbitrationSession,
-                  let disk = createDisk(session: session, bsdName: currentBSDName),
-                  let description = DADiskCopyDescription(disk) as? [NSString: Any] else {
-                return .unknown
-            }
-            return description[kDADiskDescriptionVolumePathKey] == nil ? .unmounted : .mounted
-        case .unavailable:
-            return .absent
-        case .ambiguous, .invalid:
-            return .unknown
-        }
-    }
-
-    /// Returns whether reconciliation proves the requested state was achieved.
-    private static func requestedStateIsSatisfied(operation: Operation, reconciledState: ReconciledState) -> Bool {
-        switch operation {
-        case .mount:
-            return reconciledState == .mounted
-        case .unmount:
-            return reconciledState == .unmounted
-        case .eject:
-            return reconciledState == .absent
-        }
-    }
-
     /// Creates one Disk Arbitration object for a validated BSD name.
     private static func createDisk(session: DASession, bsdName: String) -> DADisk? {
         bsdName.withCString { pointer in
@@ -674,10 +596,7 @@ private extension DiskutilOperator.TargetResolution {
             outcome: outcome,
             exitCode: nil,
             terminationReason: reason,
-            durationMilliseconds: 0,
-            timedOut: false,
-            reconciledState: .unknown,
-            resolvedBSDName: nil
+            durationMilliseconds: 0
         )
     }
 
@@ -703,8 +622,6 @@ private extension DiskutilOperator.TargetResolution {
             exitCode: nil,
             terminationReason: reason,
             durationMilliseconds: 0,
-            timedOut: false,
-            resolvedBSDName: nil,
             metadata: DiskutilOperator.APFSMetadata(
                 diskManagementErrorCode: nil,
                 rateLimitBackoff: nil,

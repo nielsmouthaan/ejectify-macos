@@ -23,7 +23,7 @@ enum VolumeOperationTrigger: String, Sendable {
     case encryptedRecovery
 }
 
-/// Routes all diskutil operations through a compatible helper when enabled, with explicit local fallback on XPC failure.
+/// Routes diskutil operations through a compatible helper when enabled, switching later requests to local execution after XPC failure.
 final class VolumeOperationRouter: @unchecked Sendable {
 
     /// Describes where diskutil is currently executed.
@@ -32,55 +32,62 @@ final class VolumeOperationRouter: @unchecked Sendable {
         case privilegedHelper
     }
 
-    /// Wraps result callbacks for use from sendable queues.
-    private final class OperationCompletionBox: @unchecked Sendable {
-        let completion: (DiskutilOperator.OperationResult) -> Void
+    /// Semantic mutation result exposed without process details owned by another executable.
+    struct MutationResult: Equatable, Sendable {
+        let outcome: DiskutilOperator.Outcome
 
-        init(_ completion: @escaping (DiskutilOperator.OperationResult) -> Void) {
-            self.completion = completion
+        /// Whether the requested semantic state was reached.
+        var success: Bool {
+            outcome == .succeeded
         }
     }
 
-    /// Wraps lock-state callbacks for use from sendable queues.
-    private final class LockCompletionBox: @unchecked Sendable {
-        let completion: (DiskutilOperator.LockState) -> Void
+    /// Semantic APFS unlock result exposed without reconstructed process details.
+    struct UnlockResult: Equatable, Sendable {
+        let outcome: DiskutilOperator.UnlockOutcome
+        let metadata: DiskutilOperator.APFSMetadata
 
-        init(_ completion: @escaping (DiskutilOperator.LockState) -> Void) {
-            self.completion = completion
+        /// Whether diskutil reported a successful unlock.
+        var success: Bool {
+            outcome == .succeeded
         }
     }
 
-    /// Wraps unlock callbacks for use from sendable queues.
-    private final class UnlockCompletionBox: @unchecked Sendable {
-        let completion: (DiskutilOperator.UnlockResult) -> Void
-
-        init(_ completion: @escaping (DiskutilOperator.UnlockResult) -> Void) {
-            self.completion = completion
-        }
-    }
-
-    /// Wraps preference-setting callbacks for use from XPC sendable closures.
-    private final class SettingCompletionBox: @unchecked Sendable {
-        let completion: (Bool, String?) -> Void
-
-        init(_ completion: @escaping (Bool, String?) -> Void) {
-            self.completion = completion
-        }
-    }
-
-    /// Executes an action no more than once across competing XPC callbacks.
-    private final class CompletionGate: @unchecked Sendable {
+    /// Resumes an async operation no more than once across competing XPC callbacks.
+    private final class ContinuationGate<Value: Sendable>: @unchecked Sendable {
         private let lock = NSLock()
-        private var completed = false
+        private var continuation: CheckedContinuation<Value, Never>?
 
-        func run(_ action: () -> Void) {
-            lock.lock()
-            defer { lock.unlock() }
-            guard !completed else {
-                return
+        init(_ continuation: CheckedContinuation<Value, Never>) {
+            self.continuation = continuation
+        }
+
+        func resume(returning value: Value) {
+            let continuation = lock.withLock {
+                let current = self.continuation
+                self.continuation = nil
+                return current
             }
-            completed = true
-            action()
+            continuation?.resume(returning: value)
+        }
+    }
+
+    /// Invokes a callback no more than once across competing XPC callbacks.
+    private final class CallbackGate<Value>: @unchecked Sendable {
+        private let lock = NSLock()
+        private var completion: ((Value) -> Void)?
+
+        init(_ completion: @escaping (Value) -> Void) {
+            self.completion = completion
+        }
+
+        func complete(with value: Value) {
+            let completion = lock.withLock {
+                let current = self.completion
+                self.completion = nil
+                return current
+            }
+            completion?(value)
         }
     }
 
@@ -177,147 +184,116 @@ final class VolumeOperationRouter: @unchecked Sendable {
     }
 
     /// Requests diskutil mount.
-    func mount(
-        identityUUID: NSUUID?,
-        bsdName: String,
-        logLabel: String,
-        trigger: VolumeOperationTrigger,
-        completion: @escaping (DiskutilOperator.OperationResult) -> Void
-    ) {
-        route(
-            operation: .mount,
-            identityUUID: identityUUID,
-            bsdName: bsdName,
-            logLabel: logLabel,
-            trigger: trigger,
-            completion: completion
-        ) { proxy, reply in
+    func mount(identityUUID: NSUUID?, bsdName: String, trigger: VolumeOperationTrigger) async -> MutationResult {
+        await route(operation: .mount, identityUUID: identityUUID, bsdName: bsdName, trigger: trigger) { proxy, reply in
             proxy.mount(volumeUUID: identityUUID, volumeName: "", bsdName: bsdName, withReply: reply)
         }
     }
 
     /// Requests diskutil unmount.
-    func unmount(
-        identityUUID: NSUUID?,
-        bsdName: String,
-        logLabel: String,
-        force: Bool,
-        trigger: VolumeOperationTrigger,
-        completion: @escaping (DiskutilOperator.OperationResult) -> Void
-    ) {
-        route(
-            operation: .unmount(force: force),
-            identityUUID: identityUUID,
-            bsdName: bsdName,
-            logLabel: logLabel,
-            trigger: trigger,
-            completion: completion
-        ) { proxy, reply in
+    func unmount(identityUUID: NSUUID?, bsdName: String, force: Bool, trigger: VolumeOperationTrigger) async -> MutationResult {
+        await route(operation: .unmount(force: force), identityUUID: identityUUID, bsdName: bsdName, trigger: trigger) { proxy, reply in
             proxy.unmount(volumeUUID: identityUUID, volumeName: "", bsdName: bsdName, force: force, withReply: reply)
         }
     }
 
     /// Requests diskutil eject using the selected volume as the target.
-    func eject(
-        identityUUID: NSUUID?,
-        bsdName: String,
-        logLabel: String,
-        force: Bool,
-        trigger: VolumeOperationTrigger,
-        completion: @escaping (DiskutilOperator.OperationResult) -> Void
-    ) {
-        route(
-            operation: .eject(force: force),
-            identityUUID: identityUUID,
-            bsdName: bsdName,
-            logLabel: logLabel,
-            trigger: trigger,
-            completion: completion
-        ) { proxy, reply in
+    func eject(identityUUID: NSUUID?, bsdName: String, force: Bool, trigger: VolumeOperationTrigger) async -> MutationResult {
+        await route(operation: .eject(force: force), identityUUID: identityUUID, bsdName: bsdName, trigger: trigger) { proxy, reply in
             proxy.eject(volumeUUID: identityUUID, volumeName: "", bsdName: bsdName, forceUnmount: force, withReply: reply)
         }
     }
 
     /// Reads APFS lock state through the active diskutil execution location.
-    func inspectAPFSLockState(
-        identityUUID: NSUUID?,
-        bsdName: String,
-        logLabel: String,
-        completion: @escaping (DiskutilOperator.LockState) -> Void
-    ) {
-        let completionBox = LockCompletionBox(completion)
-        if executionMode == .privilegedHelper,
-           let connection = currentHelperConnection(),
-           let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] _ in
-               guard let self else { return }
-               self.switchToLocalAfterXPCFailure(reason: "APFS lock-state XPC failure")
-               self.performLocalLockState(identityUUID: identityUUID, bsdName: bsdName, logLabel: logLabel, completion: completionBox.completion)
-           }) as? PrivilegedDiskServiceProtocol {
-            proxy.inspectAPFSLockState(volumeUUID: identityUUID, bsdName: bsdName) { rawState in
-                DispatchQueue.main.async {
-                    completionBox.completion(DiskutilOperator.LockState(rawValue: rawState) ?? .unknown)
-                }
-            }
-            return
+    func inspectAPFSLockState(identityUUID: NSUUID?, bsdName: String) async -> DiskutilOperator.LockState {
+        let location = executionMode
+        Self.logDispatch(operationName: "apfsLockState", force: false, location: location, trigger: .encryptedRecovery, identityUUID: identityUUID, bsdName: bsdName)
+        guard location == .privilegedHelper else {
+            return await performLocalLockState(identityUUID: identityUUID, bsdName: bsdName)
         }
-        performLocalLockState(identityUUID: identityUUID, bsdName: bsdName, logLabel: logLabel, completion: completion)
+
+        guard let connection = currentHelperConnection() else {
+            switchToLocalAfterXPCFailure(reason: "APFS lock-state helper connection unavailable")
+            Self.logXPCFailure(operationName: "apfsLockState", force: false, trigger: .encryptedRecovery, identityUUID: identityUUID, bsdName: bsdName)
+            return .unknown
+        }
+
+        return await withCheckedContinuation { continuation in
+            let gate = ContinuationGate(continuation)
+            guard let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] _ in
+                self?.switchToLocalAfterXPCFailure(reason: "APFS lock-state XPC failure")
+                Self.logXPCFailure(operationName: "apfsLockState", force: false, trigger: .encryptedRecovery, identityUUID: identityUUID, bsdName: bsdName)
+                gate.resume(returning: .unknown)
+            }) as? PrivilegedDiskServiceProtocol else {
+                switchToLocalAfterXPCFailure(reason: "APFS lock-state helper proxy unavailable")
+                Self.logXPCFailure(operationName: "apfsLockState", force: false, trigger: .encryptedRecovery, identityUUID: identityUUID, bsdName: bsdName)
+                gate.resume(returning: .unknown)
+                return
+            }
+            proxy.inspectAPFSLockState(volumeUUID: identityUUID, bsdName: bsdName) { rawState in
+                gate.resume(returning: DiskutilOperator.LockState(rawValue: rawState) ?? .unknown)
+            }
+        }
     }
 
     /// Unlocks APFS through the active diskutil execution location.
-    func unlockAPFSVolume(
-        identityUUID: NSUUID?,
-        bsdName: String,
-        logLabel: String,
-        password: String,
-        completion: @escaping (DiskutilOperator.UnlockResult) -> Void
-    ) {
-        let completionBox = UnlockCompletionBox(completion)
-        if executionMode == .privilegedHelper,
-           let connection = currentHelperConnection(),
-           let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] _ in
-               guard let self else { return }
-               self.switchToLocalAfterXPCFailure(reason: "APFS unlock XPC failure")
-               self.performLocalUnlock(identityUUID: identityUUID, bsdName: bsdName, logLabel: logLabel, password: password, completion: completionBox.completion)
-           }) as? PrivilegedDiskServiceProtocol {
-            let startedAt = ContinuousClock.now
-            proxy.unlockAPFSVolume(volumeUUID: identityUUID, bsdName: bsdName, password: password) { success, rawOutcome, exitCode, duration, errorCode, backoff, lockout in
+    func unlockAPFSVolume(identityUUID: NSUUID?, bsdName: String, password: String) async -> UnlockResult {
+        let location = executionMode
+        Self.logDispatch(operationName: "apfsUnlock", force: false, location: location, trigger: .encryptedRecovery, identityUUID: identityUUID, bsdName: bsdName)
+        guard location == .privilegedHelper else {
+            return await performLocalUnlock(identityUUID: identityUUID, bsdName: bsdName, password: password)
+        }
+
+        let emptyMetadata = DiskutilOperator.APFSMetadata(diskManagementErrorCode: nil, rateLimitBackoff: nil, rateLimitLockout: nil)
+        guard let connection = currentHelperConnection() else {
+            switchToLocalAfterXPCFailure(reason: "APFS unlock helper connection unavailable")
+            Self.logXPCFailure(operationName: "apfsUnlock", force: false, trigger: .encryptedRecovery, identityUUID: identityUUID, bsdName: bsdName)
+            return UnlockResult(outcome: .failed, metadata: emptyMetadata)
+        }
+
+        return await withCheckedContinuation { continuation in
+            let gate = ContinuationGate(continuation)
+            guard let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] _ in
+                self?.switchToLocalAfterXPCFailure(reason: "APFS unlock XPC failure")
+                Self.logXPCFailure(operationName: "apfsUnlock", force: false, trigger: .encryptedRecovery, identityUUID: identityUUID, bsdName: bsdName)
+                gate.resume(returning: UnlockResult(outcome: .failed, metadata: emptyMetadata))
+            }) as? PrivilegedDiskServiceProtocol else {
+                switchToLocalAfterXPCFailure(reason: "APFS unlock helper proxy unavailable")
+                Self.logXPCFailure(operationName: "apfsUnlock", force: false, trigger: .encryptedRecovery, identityUUID: identityUUID, bsdName: bsdName)
+                gate.resume(returning: UnlockResult(outcome: .failed, metadata: emptyMetadata))
+                return
+            }
+            proxy.unlockAPFSVolume(volumeUUID: identityUUID, bsdName: bsdName, password: password) { success, rawOutcome, _, _, errorCode, backoff, lockout in
                 let outcome = DiskutilOperator.UnlockOutcome(rawValue: rawOutcome) ?? (success ? .succeeded : .failed)
-                let result = DiskutilOperator.UnlockResult(
+                gate.resume(returning: UnlockResult(
                     outcome: outcome,
-                    exitCode: exitCode == Int32.min ? nil : exitCode,
-                    terminationReason: Self.unlockTerminationReason(outcome: outcome, exitCode: exitCode),
-                    durationMilliseconds: duration > 0 ? duration : Self.elapsedMilliseconds(since: startedAt),
-                    timedOut: outcome == .timedOut,
-                    resolvedBSDName: bsdName,
                     metadata: DiskutilOperator.APFSMetadata(
                         diskManagementErrorCode: errorCode?.intValue,
                         rateLimitBackoff: backoff?.boolValue,
                         rateLimitLockout: lockout?.boolValue
                     )
-                )
-                DispatchQueue.main.async {
-                    Self.logUnlockResult(result, location: .privilegedHelper, logLabel: logLabel)
-                    completionBox.completion(result)
-                }
+                ))
             }
-            return
         }
-        performLocalUnlock(identityUUID: identityUUID, bsdName: bsdName, logLabel: logLabel, password: password, completion: completion)
     }
 
     /// Updates the privileged Disk Arbitration notification preference.
     func setEjectNotificationsMuted(_ muted: Bool, completion: @escaping (Bool, String?) -> Void) {
-        let completionBox = SettingCompletionBox(completion)
+        let gate = CallbackGate<(Bool, String?)> { result in
+            completion(result.0, result.1)
+        }
         guard executionMode == .privilegedHelper,
               let connection = currentHelperConnection(),
               let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] error in
                   self?.switchToLocalAfterXPCFailure(reason: "notification setting XPC failure")
-                  DispatchQueue.main.async { completionBox.completion(false, error.localizedDescription) }
+                  DispatchQueue.main.async { gate.complete(with: (false, error.localizedDescription)) }
               }) as? PrivilegedDiskServiceProtocol else {
-            completion(false, "Privileged helper is unavailable")
+            gate.complete(with: (false, "Privileged helper is unavailable"))
             return
         }
-        proxy.setEjectNotificationsMuted(muted: muted, withReply: completionBox.completion)
+        proxy.setEjectNotificationsMuted(muted: muted) { success, message in
+            gate.complete(with: (success, message))
+        }
     }
 
     /// Sends a best-effort helper shutdown request.
@@ -329,55 +305,43 @@ final class VolumeOperationRouter: @unchecked Sendable {
         proxy?.requestTermination { _, _ in }
     }
 
-    /// Routes a mutation and performs local fallback only after changing router mode.
+    /// Routes one mutation without retrying the same request after an XPC failure.
     private func route(
         operation: DiskutilOperator.Operation,
         identityUUID: NSUUID?,
         bsdName: String,
-        logLabel: String,
         trigger: VolumeOperationTrigger,
-        completion: @escaping (DiskutilOperator.OperationResult) -> Void,
-        helperRequest: (PrivilegedDiskServiceProtocol, @escaping (Bool, String?, Int32) -> Void) -> Void
-    ) {
-        let completionBox = OperationCompletionBox(completion)
-        if executionMode == .privilegedHelper, let connection = currentHelperConnection() {
-            let gate = CompletionGate()
-            let startedAt = ContinuousClock.now
-            guard let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] _ in
-                gate.run {
-                    guard let self else { return }
-                    self.switchToLocalAfterXPCFailure(reason: "diskutil operation XPC failure")
-                    self.performLocal(operation: operation, identityUUID: identityUUID, bsdName: bsdName, logLabel: logLabel, trigger: trigger, completion: completionBox.completion)
-                }
-            }) as? PrivilegedDiskServiceProtocol else {
-                switchToLocalAfterXPCFailure(reason: "diskutil helper proxy unavailable")
-                performLocal(operation: operation, identityUUID: identityUUID, bsdName: bsdName, logLabel: logLabel, trigger: trigger, completion: completionBox.completion)
-                return
-            }
-
-            Self.logDispatch(operation: operation, location: .privilegedHelper, trigger: trigger, identityUUID: identityUUID, bsdName: bsdName)
-            helperRequest(proxy) { success, message, exitCode in
-                gate.run {
-                    let outcome = message.flatMap(DiskutilOperator.Outcome.init(rawValue:)) ?? (success ? .succeeded : .failed)
-                    let result = DiskutilOperator.OperationResult(
-                        outcome: outcome,
-                        exitCode: exitCode == Int32.min ? nil : exitCode,
-                        terminationReason: Self.operationTerminationReason(outcome: outcome, exitCode: exitCode),
-                        durationMilliseconds: Self.elapsedMilliseconds(since: startedAt),
-                        timedOut: outcome == .timedOut,
-                        reconciledState: .unknown,
-                        resolvedBSDName: bsdName
-                    )
-                    DispatchQueue.main.async {
-                        Self.logResult(result, operation: operation, location: .privilegedHelper, trigger: trigger, identityUUID: identityUUID, bsdName: bsdName)
-                        completionBox.completion(result)
-                    }
-                }
-            }
-            return
+        helperRequest: @escaping (PrivilegedDiskServiceProtocol, @escaping (Bool, String?, Int32) -> Void) -> Void
+    ) async -> MutationResult {
+        let location = executionMode
+        Self.logDispatch(operation: operation, location: location, trigger: trigger, identityUUID: identityUUID, bsdName: bsdName)
+        guard location == .privilegedHelper else {
+            return await performLocal(operation: operation, identityUUID: identityUUID, bsdName: bsdName, trigger: trigger)
         }
 
-        performLocal(operation: operation, identityUUID: identityUUID, bsdName: bsdName, logLabel: logLabel, trigger: trigger, completion: completion)
+        guard let connection = currentHelperConnection() else {
+            switchToLocalAfterXPCFailure(reason: "diskutil helper connection unavailable")
+            Self.logXPCFailure(operation: operation, trigger: trigger, identityUUID: identityUUID, bsdName: bsdName)
+            return MutationResult(outcome: .failed)
+        }
+
+        return await withCheckedContinuation { continuation in
+            let gate = ContinuationGate(continuation)
+            guard let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] _ in
+                self?.switchToLocalAfterXPCFailure(reason: "diskutil operation XPC failure")
+                Self.logXPCFailure(operation: operation, trigger: trigger, identityUUID: identityUUID, bsdName: bsdName)
+                gate.resume(returning: MutationResult(outcome: .failed))
+            }) as? PrivilegedDiskServiceProtocol else {
+                switchToLocalAfterXPCFailure(reason: "diskutil helper proxy unavailable")
+                Self.logXPCFailure(operation: operation, trigger: trigger, identityUUID: identityUUID, bsdName: bsdName)
+                gate.resume(returning: MutationResult(outcome: .failed))
+                return
+            }
+            helperRequest(proxy) { success, message, _ in
+                let outcome = message.flatMap(DiskutilOperator.Outcome.init(rawValue:)) ?? (success ? .succeeded : .failed)
+                gate.resume(returning: MutationResult(outcome: outcome))
+            }
+        }
     }
 
     /// Executes one local diskutil mutation.
@@ -385,60 +349,43 @@ final class VolumeOperationRouter: @unchecked Sendable {
         operation: DiskutilOperator.Operation,
         identityUUID: NSUUID?,
         bsdName: String,
-        logLabel _: String,
-        trigger: VolumeOperationTrigger,
-        completion: @escaping (DiskutilOperator.OperationResult) -> Void
-    ) {
-        let completionBox = OperationCompletionBox(completion)
+        trigger: VolumeOperationTrigger
+    ) async -> MutationResult {
         let uuid = identityUUID.map { $0 as UUID }
-        Self.logDispatch(operation: operation, location: .local, trigger: trigger, identityUUID: identityUUID, bsdName: bsdName)
-        localOperationQueue.async {
-            let result = DiskutilOperator.perform(identityUUID: uuid, bsdName: bsdName, operation: operation)
-            DispatchQueue.main.async {
+        return await withCheckedContinuation { continuation in
+            localOperationQueue.async {
+                let result = DiskutilOperator.perform(identityUUID: uuid, bsdName: bsdName, operation: operation)
                 Self.logResult(result, operation: operation, location: .local, trigger: trigger, identityUUID: identityUUID, bsdName: bsdName)
-                completionBox.completion(result)
+                continuation.resume(returning: MutationResult(outcome: result.outcome))
             }
         }
     }
 
     /// Executes one local APFS lock-state query.
-    private func performLocalLockState(
-        identityUUID: NSUUID?,
-        bsdName: String,
-        logLabel: String,
-        completion: @escaping (DiskutilOperator.LockState) -> Void
-    ) {
-        let completionBox = LockCompletionBox(completion)
+    private func performLocalLockState(identityUUID: NSUUID?, bsdName: String) async -> DiskutilOperator.LockState {
         let uuid = identityUUID.map { $0 as UUID }
-        localOperationQueue.async {
-            let state = DiskutilOperator.lockState(identityUUID: uuid, bsdName: bsdName)
-            DispatchQueue.main.async {
-                Log.volumeOperations.log("APFS lock-state query completed; executionLocation=local; state=\(state.rawValue); \(logLabel)")
-                completionBox.completion(state)
+        return await withCheckedContinuation { continuation in
+            localOperationQueue.async {
+                let state = DiskutilOperator.lockState(identityUUID: uuid, bsdName: bsdName)
+                Log.volumeOperations.log("APFS lock-state query completed; executionLocation=local; state=\(state.rawValue); \(VolumeLogLabelFormatter.label(uuid: uuid, bsdName: bsdName))")
+                continuation.resume(returning: state)
             }
         }
     }
 
     /// Executes one local APFS unlock.
-    private func performLocalUnlock(
-        identityUUID: NSUUID?,
-        bsdName: String,
-        logLabel: String,
-        password: String,
-        completion: @escaping (DiskutilOperator.UnlockResult) -> Void
-    ) {
-        let completionBox = UnlockCompletionBox(completion)
+    private func performLocalUnlock(identityUUID: NSUUID?, bsdName: String, password: String) async -> UnlockResult {
         let uuid = identityUUID.map { $0 as UUID }
-        localOperationQueue.async {
-            let result = DiskutilOperator.unlock(identityUUID: uuid, bsdName: bsdName, password: password)
-            DispatchQueue.main.async {
-                Self.logUnlockResult(result, location: .local, logLabel: logLabel)
-                completionBox.completion(result)
+        return await withCheckedContinuation { continuation in
+            localOperationQueue.async {
+                let result = DiskutilOperator.unlock(identityUUID: uuid, bsdName: bsdName, password: password)
+                Self.logUnlockResult(result, location: .local, identityUUID: identityUUID, bsdName: bsdName)
+                continuation.resume(returning: UnlockResult(outcome: result.outcome, metadata: result.metadata))
             }
         }
     }
 
-    /// Opens a helper connection, pings it, and confirms the diskutil capability.
+    /// Opens a helper connection and confirms the diskutil capability.
     private func initializeHelperRouting() {
         let shouldStart = withStateLock { () -> Bool in
             guard !helperInitializationInProgress else { return false }
@@ -462,23 +409,15 @@ final class VolumeOperationRouter: @unchecked Sendable {
             return
         }
 
-        proxy.ping { [weak self, weak connection] success, _ in
-            guard let self, success else {
-                self?.finishHelperInitialization()
-                self?.invalidateHelperConnection(matching: connection)
-                self?.setExecutionMode(.local, reason: "privileged helper ping failed")
+        proxy.capabilityVersion { [weak self, weak connection] version in
+            guard let self else { return }
+            self.finishHelperInitialization()
+            guard Self.supportsHelperCapability(version) else {
+                self.refreshIncompatibleHelper(connection: connection)
                 return
             }
-            proxy.capabilityVersion { [weak self, weak connection] version in
-                guard let self else { return }
-                self.finishHelperInitialization()
-                guard Self.supportsHelperCapability(version) else {
-                    self.refreshIncompatibleHelper(connection: connection)
-                    return
-                }
-                self.setExecutionMode(.privilegedHelper, reason: "diskutil helper capability confirmed")
-                Log.privilegedHelper.log("Privileged helper will execute all diskutil operations; capabilityVersion=\(version)")
-            }
+            self.setExecutionMode(.privilegedHelper, reason: "diskutil helper capability confirmed")
+            Log.privilegedHelper.log("Privileged helper will execute all diskutil operations; capabilityVersion=\(version)")
         }
     }
 
@@ -529,7 +468,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         return connection
     }
 
-    /// Switches mode before starting a local retry.
+    /// Switches future requests to local execution after an XPC failure.
     private func switchToLocalAfterXPCFailure(reason: String) {
         invalidateHelperConnection()
         setExecutionMode(.local, reason: reason)
@@ -588,10 +527,22 @@ final class VolumeOperationRouter: @unchecked Sendable {
         identityUUID: NSUUID?,
         bsdName: String
     ) {
-        Log.volumeOperations.log("Volume operation dispatched; trigger=\(trigger.rawValue); operation=\(operation.operationName); executionLocation=\(location.rawValue); identityUUID=\(identityUUID?.uuidString ?? "none"); bsdName=\(bsdName); force=\(operation.isForced)")
+        logDispatch(operationName: operation.operationName, force: operation.isForced, location: location, trigger: trigger, identityUUID: identityUUID, bsdName: bsdName)
     }
 
-    /// Logs one final semantic mutation result.
+    /// Logs one diskutil dispatch without volume names or paths.
+    private static func logDispatch(
+        operationName: String,
+        force: Bool,
+        location: ExecutionMode,
+        trigger: VolumeOperationTrigger,
+        identityUUID: NSUUID?,
+        bsdName: String
+    ) {
+        Log.volumeOperations.log("Volume operation dispatched; trigger=\(trigger.rawValue); operation=\(operationName); executionLocation=\(location.rawValue); identityUUID=\(identityUUID?.uuidString ?? "none"); bsdName=\(bsdName); force=\(force)")
+    }
+
+    /// Logs one final semantic mutation result owned by the local process.
     private static func logResult(
         _ result: DiskutilOperator.OperationResult,
         operation: DiskutilOperator.Operation,
@@ -600,7 +551,7 @@ final class VolumeOperationRouter: @unchecked Sendable {
         identityUUID: NSUUID?,
         bsdName: String
     ) {
-        let details = "trigger=\(trigger.rawValue); operation=\(operation.operationName); executionLocation=\(location.rawValue); identityUUID=\(identityUUID?.uuidString ?? "none"); bsdName=\(bsdName); force=\(operation.isForced); outcome=\(result.outcome.rawValue); exitCode=\(result.exitCode.map(String.init) ?? "none"); terminationReason=\(result.terminationReason.rawValue); durationMilliseconds=\(result.durationMilliseconds); timeout=\(result.timedOut); reconciledState=\(result.reconciledState.rawValue)"
+        let details = "trigger=\(trigger.rawValue); operation=\(operation.operationName); executionLocation=\(location.rawValue); identityUUID=\(identityUUID?.uuidString ?? "none"); bsdName=\(bsdName); force=\(operation.isForced); outcome=\(result.outcome.rawValue); exitCode=\(result.exitCode.map(String.init) ?? "none"); terminationReason=\(result.terminationReason.rawValue); durationMilliseconds=\(result.durationMilliseconds); timeout=\(result.timedOut)"
         if result.success {
             Log.volumeOperations.log("Volume operation completed; \(details)")
         } else {
@@ -608,10 +559,16 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
-    /// Logs one APFS unlock result using only structured metadata.
-    private static func logUnlockResult(_ result: DiskutilOperator.UnlockResult, location: ExecutionMode, logLabel: String) {
+    /// Logs one local APFS unlock result using only structured metadata.
+    private static func logUnlockResult(
+        _ result: DiskutilOperator.UnlockResult,
+        location: ExecutionMode,
+        identityUUID: NSUUID?,
+        bsdName: String
+    ) {
         let metadata = result.metadata
-        let details = "operation=apfsUnlock; executionLocation=\(location.rawValue); outcome=\(result.outcome.rawValue); exitCode=\(result.exitCode.map(String.init) ?? "none"); terminationReason=\(result.terminationReason.rawValue); durationMilliseconds=\(result.durationMilliseconds); timeout=\(result.timedOut); diskManagementErrorCode=\(metadata.diskManagementErrorCode.map(String.init) ?? "none"); rateLimitBackoff=\(metadata.rateLimitBackoff.map(String.init) ?? "none"); rateLimitLockout=\(metadata.rateLimitLockout.map(String.init) ?? "none"); \(logLabel)"
+        let label = VolumeLogLabelFormatter.label(uuid: identityUUID.map { $0 as UUID }, bsdName: bsdName)
+        let details = "operation=apfsUnlock; executionLocation=\(location.rawValue); outcome=\(result.outcome.rawValue); exitCode=\(result.exitCode.map(String.init) ?? "none"); terminationReason=\(result.terminationReason.rawValue); durationMilliseconds=\(result.durationMilliseconds); timeout=\(result.timedOut); diskManagementErrorCode=\(metadata.diskManagementErrorCode.map(String.init) ?? "none"); rateLimitBackoff=\(metadata.rateLimitBackoff.map(String.init) ?? "none"); rateLimitLockout=\(metadata.rateLimitLockout.map(String.init) ?? "none"); \(label)"
         if result.success {
             Log.volumeOperations.log("APFS unlock completed; \(details)")
         } else {
@@ -619,35 +576,24 @@ final class VolumeOperationRouter: @unchecked Sendable {
         }
     }
 
-    /// Maps an XPC outcome to the best available termination category.
-    private static func operationTerminationReason(outcome: DiskutilOperator.Outcome, exitCode: Int32) -> DiskutilOperator.TerminationReason {
-        switch outcome {
-        case .timedOut: return .timeout
-        case .launchFailed: return .launchFailure
-        case .targetUnavailable: return .targetUnavailable
-        case .targetAmbiguous: return .targetAmbiguous
-        case .invalidTarget: return .invalidTarget
-        case .succeeded, .satisfiedAfterReconciliation, .failed:
-            return exitCode == Int32.min ? .launchFailure : .exit
-        }
+    /// Logs a routed operation whose authoritative helper result became unavailable.
+    private static func logXPCFailure(
+        operation: DiskutilOperator.Operation,
+        trigger: VolumeOperationTrigger,
+        identityUUID: NSUUID?,
+        bsdName: String
+    ) {
+        logXPCFailure(operationName: operation.operationName, force: operation.isForced, trigger: trigger, identityUUID: identityUUID, bsdName: bsdName)
     }
 
-    /// Maps an unlock XPC outcome to the best available termination category.
-    private static func unlockTerminationReason(outcome: DiskutilOperator.UnlockOutcome, exitCode: Int32) -> DiskutilOperator.TerminationReason {
-        switch outcome {
-        case .timedOut: return .timeout
-        case .launchFailed: return .launchFailure
-        case .targetUnavailable: return .targetUnavailable
-        case .targetAmbiguous: return .targetAmbiguous
-        case .invalidTarget: return .invalidTarget
-        case .succeeded, .invalidPassword, .failed:
-            return exitCode == Int32.min ? .launchFailure : .exit
-        }
-    }
-
-    /// Converts monotonic elapsed time to milliseconds.
-    private static func elapsedMilliseconds(since start: ContinuousClock.Instant) -> Int {
-        let duration = start.duration(to: .now)
-        return Int(duration.components.seconds * 1_000 + duration.components.attoseconds / 1_000_000_000_000_000)
+    /// Logs a routed operation whose authoritative helper result became unavailable.
+    private static func logXPCFailure(
+        operationName: String,
+        force: Bool,
+        trigger: VolumeOperationTrigger,
+        identityUUID: NSUUID?,
+        bsdName: String
+    ) {
+        Log.volumeOperations.error("Volume operation failed; trigger=\(trigger.rawValue); operation=\(operationName); executionLocation=privilegedHelper; identityUUID=\(identityUUID?.uuidString ?? "none"); bsdName=\(bsdName); force=\(force); outcome=failed; reason=xpc_failure")
     }
 }

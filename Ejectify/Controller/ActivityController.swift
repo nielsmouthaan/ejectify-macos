@@ -12,14 +12,8 @@ import AppKit
 final class ActivityController {
 
 
-    /// Volumes still pending wake-time reconciliation after an automatic unmount attempt.
-    private var remountCandidates: [Volume] = []
-
-    /// Volume identifiers currently processing an unmount request.
-    private var inFlightUnmounts: Set<String> = []
-
-    /// Volume identifiers currently processing an eject request.
-    private var inFlightEjects: Set<String> = []
+    /// Volumes targeted by automatic unmounting that remain pending for wake-time remounting.
+    private var remountCandidates: [String: Volume] = [:]
 
     /// Pending mount tasks keyed by volume identifier.
     private var pendingMountTasks: [String: Task<Void, Never>] = [:]
@@ -27,28 +21,37 @@ final class ActivityController {
     /// Volume identifiers currently owned by an encrypted APFS unlock workflow.
     private var encryptedUnlocksInProgress: Set<String> = []
 
-    /// Pending completion handlers for each in-flight unmount keyed by volume identifier.
-    private var pendingUnmountCompletions: [String: [(Bool) -> Void]] = [:]
-
-    /// Pending completion handlers for each in-flight eject keyed by volume identifier.
-    private var pendingEjectCompletions: [String: [(Bool) -> Void]] = [:]
+    /// Pending completion handlers for each in-flight mutation.
+    private var pendingOperationCompletions: [OperationKey: [(Bool) -> Void]] = [:]
 
     /// Store used for encrypted APFS volume unlock passwords.
     private let encryptedVolumeCredentialStore = EncryptedVolumeCredentialStore.shared
 
-    /// Probe used to confirm that an encrypted APFS volume is locked after a normal mount failure.
-    private let encryptedVolumeLockStateProbe = APFSVolumeLockStateProbe.shared
-
-    /// Unlocker used when an encrypted APFS volume remains locked after a normal mount failure.
-    private let encryptedVolumeUnlocker = APFSEncryptedVolumeUnlocker.shared
-
     /// Prompt used to ask for encrypted volume passwords when needed.
     private let encryptedVolumePasswordPrompt = EncryptedVolumePasswordPrompt()
+
+    /// Mutation types tracked for request joining.
+    private enum RequestedVolumeOperation: Hashable {
+        case unmount
+        case eject
+
+        var operationName: String {
+            switch self {
+            case .unmount: "unmount"
+            case .eject: "eject"
+            }
+        }
+    }
+
+    /// Stable key for joining duplicate in-flight requests without mixing mutation types.
+    private struct OperationKey: Hashable {
+        let volumeID: String
+        let operation: RequestedVolumeOperation
+    }
 
     /// Describes the final effect of encrypted APFS unlock handling on its remount candidate.
     private enum EncryptedVolumeUnlockOutcome {
         case succeeded
-        case mountNormally
         case failed
         case deferred
     }
@@ -215,7 +218,7 @@ final class ActivityController {
         }
     }
 
-    /// Registers notifications that reconcile remount candidates when volumes reappear outside the app's own mount flow.
+    /// Registers notifications that clear remount candidates when volumes reappear outside the app's own mount flow.
     private func registerRemountCandidateObservers() {
         NSWorkspace.shared.notificationCenter.addObserver(
             self,
@@ -289,7 +292,7 @@ final class ActivityController {
         }
 
         Log.volumeOperations.log("Mount pass triggered: \(self.remountCandidates.count) candidate(s)")
-        for volume in self.remountCandidates {
+        for volume in self.remountCandidates.values {
             scheduleMountTask(for: volume)
         }
     }
@@ -305,21 +308,16 @@ final class ActivityController {
             return
         }
 
-        var mergedCandidates = remountCandidates
         var addedCount = 0
         var refreshedCount = 0
 
         for volume in volumes {
-            if let index = mergedCandidates.firstIndex(where: { $0.id == volume.id }) {
-                mergedCandidates[index] = volume
+            if remountCandidates.updateValue(volume, forKey: volume.id) != nil {
                 refreshedCount += 1
             } else {
-                mergedCandidates.append(volume)
                 addedCount += 1
             }
         }
-
-        remountCandidates = mergedCandidates
 
         if existingCount > 0 {
             Log.volumeOperations.info(
@@ -330,26 +328,12 @@ final class ActivityController {
 
     /// Returns whether the pending remount set still includes a volume ID.
     private func hasRemountCandidate(withID volumeID: String) -> Bool {
-        remountCandidates.contains { $0.id == volumeID }
+        remountCandidates[volumeID] != nil
     }
 
     /// Removes a volume from the pending remount set.
     private func removeRemountCandidate(withID volumeID: String) {
-        remountCandidates.removeAll { $0.id == volumeID }
-    }
-
-    /// Applies the shared candidate-retention policy after an automatic remount workflow event.
-    @discardableResult
-    private func applyRemountCandidateDisposition(
-        after event: VolumeOperationOutcomePolicy.AutomaticRemountCandidateEvent,
-        volumeID: String
-    ) -> VolumeOperationOutcomePolicy.AutomaticRemountCandidateDisposition {
-        let disposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(after: event)
-        if disposition == .remove {
-            removeRemountCandidate(withID: volumeID)
-        }
-
-        return disposition
+        remountCandidates.removeValue(forKey: volumeID)
     }
 
     /// Applies readiness-state updates from workspace and distributed notifications.
@@ -430,7 +414,6 @@ final class ActivityController {
             }
 
             var attemptIndex = 0
-            var hasWaitedForNativeUnlock = false
 
             while !Task.isCancelled {
                 guard !Preference.ejectInsteadOfUnmount else {
@@ -446,164 +429,76 @@ final class ActivityController {
                     return
                 }
 
-                let attemptResult: VolumeOperationOutcomePolicy.AutomaticRemountAttemptResult
+                let result = await VolumeOperationRouter.shared.mount(
+                    identityUUID: volume.identityUUID.map { $0 as NSUUID },
+                    bsdName: volume.bsdName,
+                    trigger: .automaticRemount
+                )
 
-                if DiskutilOperator.canResolve(identityUUID: volume.identityUUID, bsdName: volume.bsdName) {
-                    let result: DiskutilOperator.OperationResult = await withCheckedContinuation { continuation in
-                        VolumeOperationRouter.shared.mount(
-                            identityUUID: volume.identityUUID.map { $0 as NSUUID },
-                            bsdName: volume.bsdName,
-                            logLabel: volume.logLabel,
-                            trigger: .automaticRemount
-                        ) { result in
-                            continuation.resume(returning: result)
-                        }
-                    }
-
-                    guard !Task.isCancelled else {
-                        return
-                    }
-
-                    if result.success {
-                        attemptResult = .mountSucceeded
-                    } else {
-                        attemptResult = .mountFailed(outcome: result.outcome)
-                    }
-                } else {
-                    let attemptNumber = attemptIndex + 1
-                    Log.volumeOperations.warning("Disk unavailable during automatic remount attempt; attempt=\(attemptNumber); \(volume.logLabel)")
-                    attemptResult = .diskUnavailable
+                guard !Task.isCancelled else {
+                    return
                 }
 
-                if case .mountFailed = attemptResult,
-                   VolumeOperationOutcomePolicy.shouldProbeEncryptedAPFSLockState(
-                       isEncrypted: volume.isEncrypted,
-                       isAPFS: volume.isAPFS,
-                       ejectModeEnabled: Preference.ejectInsteadOfUnmount
-                   ) {
-                    let lockState = await self.encryptedVolumeLockStateProbe.lockState(
-                        request: APFSVolumeLockStateProbe.Request(volume: volume)
-                    )
+                let attemptResult: VolumeOperationOutcomePolicy.AutomaticRemountAttemptResult = result.success
+                    ? .mountSucceeded
+                    : .mountFailed(outcome: result.outcome)
+                let attemptOutcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(for: attemptResult)
 
-                    guard !Task.isCancelled,
-                          !Preference.ejectInsteadOfUnmount,
-                          self.hasRemountCandidate(withID: volumeID) else {
-                        return
-                    }
-
-                    var shouldUseEncryptedFallback = false
-
-                    if VolumeOperationOutcomePolicy.shouldStartNativeUnlockGrace(
-                        after: attemptResult,
-                        isEncrypted: volume.isEncrypted,
-                        isAPFS: volume.isAPFS,
-                        ejectModeEnabled: Preference.ejectInsteadOfUnmount,
-                        lockState: lockState,
-                        hasAlreadyWaited: hasWaitedForNativeUnlock
-                    ) {
-                        hasWaitedForNativeUnlock = true
-                        Log.volumeOperations.log("Native unlock grace started; delaySeconds=5; \(volume.logLabel)")
-
-                        do {
-                            try await Task.sleep(for: VolumeOperationOutcomePolicy.nativeUnlockGraceDelay)
-                        } catch {
-                            Log.volumeOperations.info("Native unlock grace cancelled; reason=task_cancelled; \(volume.logLabel)")
-                            return
-                        }
-
-                        guard !Task.isCancelled else {
-                            Log.volumeOperations.info("Native unlock grace cancelled; reason=task_cancelled; \(volume.logLabel)")
-                            return
-                        }
-
-                        let postGraceState: VolumeOperationOutcomePolicy.NativeUnlockPostGraceState
-                        if self.isVolumeMounted(withID: volumeID) {
-                            postGraceState = .externallyMounted
-                        } else if !DiskutilOperator.canResolve(identityUUID: volume.identityUUID, bsdName: volume.bsdName) {
-                            postGraceState = .unavailable
-                        } else {
-                            let postGraceLockState = await self.encryptedVolumeLockStateProbe.lockState(
-                                request: APFSVolumeLockStateProbe.Request(volume: volume)
-                            )
-
-                            switch postGraceLockState {
-                            case .unlocked:
-                                postGraceState = .unlocked
-                            case .locked:
-                                postGraceState = .locked
-                            case .unknown:
-                                postGraceState = .unknown
-                            }
-                        }
-
-                        let graceContinuation = VolumeOperationOutcomePolicy.nativeUnlockGraceContinuation(
-                            candidateExists: self.hasRemountCandidate(withID: volumeID),
-                            isReadyToMount: self.isReadyToMount,
-                            ejectModeEnabled: Preference.ejectInsteadOfUnmount,
-                            state: postGraceState
-                        )
-
-                        switch graceContinuation {
-                        case .completeAfterExternalMount:
-                            Log.volumeOperations.log("Native unlock grace completed; state=externally_mounted; \(volume.logLabel)")
-                            self.applyRemountCandidateDisposition(after: .remountSucceeded, volumeID: volumeID)
-                            return
-                        case .attemptNormalMount:
-                            Log.volumeOperations.log("Native unlock grace completed; state=unlocked; action=resume_normal_mount; \(volume.logLabel)")
-                            continue
-                        case .useEncryptedFallback:
-                            Log.volumeOperations.warning("Native unlock grace expired; state=locked; \(volume.logLabel)")
-                            shouldUseEncryptedFallback = true
-                        case .resumeNormalRetryPolicy:
-                            let stateDescription = postGraceState == .unavailable ? "unavailable" : "unknown"
-                            Log.volumeOperations.warning("Native unlock grace expired; state=\(stateDescription); action=resume_normal_retry_policy; \(volume.logLabel)")
-                        case .deferUntilLater:
-                            Log.volumeOperations.info("Native unlock grace cancelled; reason=stale_remount_state; \(volume.logLabel)")
-                            return
-                        }
-                    } else if lockState == .locked, hasWaitedForNativeUnlock {
-                        shouldUseEncryptedFallback = true
-                    }
-
-                    if shouldUseEncryptedFallback {
-                        switch VolumeOperationOutcomePolicy.encryptedAPFSFallbackDecision(
-                            unlockVolumesWhenNeeded: Preference.unlockVolumesWhenNeeded
-                        ) {
-                        case .useFallback:
-                            break
-                        case .endRecovery:
-                            Log.volumeOperations.log("Encrypted APFS fallback skipped; reason=preference_disabled; \(volume.logLabel)")
-                            self.applyRemountCandidateDisposition(after: .terminalRemountFailure, volumeID: volumeID)
-                            return
-                        }
-
-                        switch await self.unlockEncryptedVolume(for: volume) {
-                        case .succeeded:
-                            self.applyRemountCandidateDisposition(after: .remountSucceeded, volumeID: volumeID)
-                        case .mountNormally:
-                            Log.volumeOperations.log("Normal mounting resumed after encrypted APFS state became unlocked; \(volume.logLabel)")
-                            continue
-                        case .failed:
-                            self.applyRemountCandidateDisposition(after: .terminalRemountFailure, volumeID: volumeID)
-                        case .deferred:
-                            Log.volumeOperations.info("Encrypted APFS unlock deferred while preserving remount candidate for \(volume.logLabel)")
-                        }
-                        return
-                    }
-                }
-
-                switch VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(for: attemptResult) {
+                switch attemptOutcome {
                 case .succeeded:
-                    self.applyRemountCandidateDisposition(after: .remountSucceeded, volumeID: volumeID)
+                    self.removeRemountCandidate(withID: volumeID)
                     return
                 case .terminalFailure:
                     Log.volumeOperations.info("Automatic remount stopped due to non-retryable status for \(volume.logLabel)")
-                    self.applyRemountCandidateDisposition(after: .terminalRemountFailure, volumeID: volumeID)
+                    self.removeRemountCandidate(withID: volumeID)
                     return
                 case .retryableFailure:
+                    if VolumeOperationOutcomePolicy.shouldProbeEncryptedAPFSLockState(
+                           isEncrypted: volume.isEncrypted,
+                           isAPFS: volume.isAPFS,
+                           ejectModeEnabled: Preference.ejectInsteadOfUnmount
+                       ) {
+                        let lockState = await VolumeOperationRouter.shared.inspectAPFSLockState(
+                            identityUUID: volume.identityUUID.map { $0 as NSUUID },
+                            bsdName: volume.bsdName
+                        )
+
+                        guard !Task.isCancelled,
+                              !Preference.ejectInsteadOfUnmount,
+                              self.isReadyToMount,
+                              self.hasRemountCandidate(withID: volumeID) else {
+                            return
+                        }
+
+                        if lockState == .locked {
+                            switch VolumeOperationOutcomePolicy.encryptedAPFSFallbackDecision(
+                                unlockVolumesWhenNeeded: Preference.unlockVolumesWhenNeeded
+                            ) {
+                            case .useFallback:
+                                break
+                            case .endRecovery:
+                                Log.volumeOperations.log("Encrypted APFS fallback skipped; reason=preference_disabled; \(volume.logLabel)")
+                                self.removeRemountCandidate(withID: volumeID)
+                                return
+                            }
+
+                            switch await self.unlockEncryptedVolume(for: volume) {
+                            case .succeeded:
+                                self.removeRemountCandidate(withID: volumeID)
+                            case .failed:
+                                self.removeRemountCandidate(withID: volumeID)
+                            case .deferred:
+                                Log.volumeOperations.info("Encrypted APFS unlock deferred while preserving remount candidate for \(volume.logLabel)")
+                            }
+                            return
+                        }
+
+                        Log.volumeOperations.info("Encrypted APFS lock-state check completed; state=\(lockState.rawValue); action=resume_normal_retry_policy; \(volume.logLabel)")
+                    }
+
                     guard let retryDelay = VolumeOperationOutcomePolicy.automaticRemountRetryDelay(afterFailedAttemptAt: attemptIndex) else {
                         Log.volumeOperations.warning("Automatic remount retry limit reached for \(volume.logLabel)")
-                        self.applyRemountCandidateDisposition(after: .retryExhausted, volumeID: volumeID)
+                        self.removeRemountCandidate(withID: volumeID)
                         return
                     }
 
@@ -614,18 +509,12 @@ final class ActivityController {
                     do {
                         try await Task.sleep(for: retryDelay)
                     } catch {
-                        self.applyRemountCandidateDisposition(after: .retryCancelled, volumeID: volumeID)
                         Log.volumeOperations.info("Automatic remount retry cancelled; preserving candidate for \(volume.logLabel)")
                         return
                     }
                 }
             }
         }
-    }
-
-    /// Returns whether the current mounted-volume inventory includes a volume identifier.
-    private func isVolumeMounted(withID volumeID: String) -> Bool {
-        Volume.mountedVolumes().contains { $0.id == volumeID }
     }
 
     /// Attempts to unlock and mount an encrypted APFS volume using Keychain first, then a user prompt.
@@ -647,29 +536,25 @@ final class ActivityController {
             if let savedPassword = try encryptedVolumeCredentialStore.password(for: volume.id) {
                 Log.volumeOperations.log("Encrypted APFS fallback selected; source=saved_credential; \(volume.logLabel)")
 
-                switch await encryptedUnlockContinuation(for: volume) {
-                case .attemptUnlock:
-                    break
-                case .attemptNormalMount:
-                    return .mountNormally
-                case .deferUntilLater:
+                guard canContinueEncryptedUnlock(for: volume) else {
                     return .deferred
                 }
 
-                let result = await encryptedVolumeUnlocker.unlock(
-                    request: APFSEncryptedVolumeUnlocker.UnlockRequest(volume: volume),
+                let result = await VolumeOperationRouter.shared.unlockAPFSVolume(
+                    identityUUID: volume.identityUUID.map { $0 as NSUUID },
+                    bsdName: volume.bsdName,
                     password: savedPassword
                 )
 
-                switch result {
-                case .success:
+                switch result.outcome {
+                case .succeeded:
                     return .succeeded
                 case .invalidPassword:
                     Log.volumeOperations.warning("Saved encrypted APFS password was rejected for \(volume.logLabel)")
                     deleteEncryptedVolumePassword(for: volume)
                     return await promptForEncryptedVolumePassword(for: volume)
-                case .failed(let message):
-                    showEncryptedVolumeUnlockFailure(for: volume, details: message)
+                case .failed, .timedOut, .launchFailed, .targetUnavailable, .targetAmbiguous, .invalidTarget:
+                    showEncryptedVolumeUnlockFailure(for: volume, details: result.outcome.rawValue)
                     return .failed
                 }
             }
@@ -684,7 +569,7 @@ final class ActivityController {
     /// Prompts for an encrypted APFS password until unlock succeeds or the user ends the recovery cycle.
     private func promptForEncryptedVolumePassword(for volume: Volume) async -> EncryptedVolumeUnlockOutcome {
         Log.volumeOperations.log("Encrypted APFS fallback selected; source=prompt; \(volume.logLabel)")
-        while !Preference.ejectInsteadOfUnmount {
+        while canContinueEncryptedUnlock(for: volume) {
             Log.volumeOperations.log("Encrypted APFS password prompt presented for \(volume.logLabel)")
             let outcome = encryptedVolumePasswordPrompt.requestPassword(for: volume)
 
@@ -695,24 +580,19 @@ final class ActivityController {
             case .unlock(let response):
                 Log.volumeOperations.info("Encrypted APFS password prompt action selected; action=unlock; saveRequested=\(response.shouldSaveInKeychain); \(volume.logLabel)")
 
-                switch await encryptedUnlockContinuation(for: volume) {
-                case .attemptUnlock:
-                    break
-                case .attemptNormalMount:
-                    Log.volumeOperations.info("Stale encrypted APFS prompt skipped because normal mounting can resume for \(volume.logLabel)")
-                    return .mountNormally
-                case .deferUntilLater:
+                guard canContinueEncryptedUnlock(for: volume) else {
                     Log.volumeOperations.info("Stale encrypted APFS prompt response ignored for \(volume.logLabel)")
                     return .deferred
                 }
 
-                let result = await encryptedVolumeUnlocker.unlock(
-                    request: APFSEncryptedVolumeUnlocker.UnlockRequest(volume: volume),
+                let result = await VolumeOperationRouter.shared.unlockAPFSVolume(
+                    identityUUID: volume.identityUUID.map { $0 as NSUUID },
+                    bsdName: volume.bsdName,
                     password: response.password
                 )
 
-                switch result {
-                case .success:
+                switch result.outcome {
+                case .succeeded:
                     updateEncryptedVolumePassword(
                         response.password,
                         shouldSave: response.shouldSaveInKeychain,
@@ -721,8 +601,8 @@ final class ActivityController {
                     return .succeeded
                 case .invalidPassword:
                     Log.volumeOperations.warning("Entered encrypted APFS password was rejected for \(volume.logLabel)")
-                case .failed(let message):
-                    showEncryptedVolumeUnlockFailure(for: volume, details: message)
+                case .failed, .timedOut, .launchFailed, .targetUnavailable, .targetAmbiguous, .invalidTarget:
+                    showEncryptedVolumeUnlockFailure(for: volume, details: result.outcome.rawValue)
                     return .failed
                 }
             }
@@ -731,26 +611,12 @@ final class ActivityController {
         return .deferred
     }
 
-    /// Revalidates the candidate and live lock state before invoking encrypted APFS unlock handling.
-    private func encryptedUnlockContinuation(
-        for volume: Volume
-    ) async -> VolumeOperationOutcomePolicy.EncryptedAPFSUnlockContinuation {
-        guard !Preference.ejectInsteadOfUnmount,
-              isReadyToMount,
-              hasRemountCandidate(withID: volume.id) else {
-            return .deferUntilLater
-        }
-
-        let lockState = await encryptedVolumeLockStateProbe.lockState(
-            request: APFSVolumeLockStateProbe.Request(volume: volume)
-        )
-
-        return VolumeOperationOutcomePolicy.encryptedAPFSUnlockContinuation(
-            candidateExists: hasRemountCandidate(withID: volume.id),
-            isReadyToMount: isReadyToMount,
-            ejectModeEnabled: Preference.ejectInsteadOfUnmount,
-            lockState: lockState
-        )
+    /// Returns whether a delayed credential action still belongs to the active remount workflow.
+    private func canContinueEncryptedUnlock(for volume: Volume) -> Bool {
+        !Task.isCancelled
+            && !Preference.ejectInsteadOfUnmount
+            && isReadyToMount
+            && hasRemountCandidate(withID: volume.id)
     }
 
     /// Saves or removes an encrypted volume password after a successful unlock.
@@ -968,72 +834,56 @@ final class ActivityController {
 
     /// Enqueues a routed eject request for one selected volume and tracks in-flight state.
     private func requestEject(for volume: Volume, trigger: VolumeOperationTrigger, completion: @escaping (Bool) -> Void) {
-        let operationID = volume.id
-        pendingEjectCompletions[operationID, default: []].append(completion)
-
-        guard inFlightEjects.insert(operationID).inserted else {
-            Log.volumeOperations.info("Eject request joined existing in-flight operation: \(volume.logLabel)")
-            return
-        }
-
-        Log.volumeOperations.log("Eject request scheduled for \(volume.logLabel)")
-        VolumeOperationRouter.shared.eject(
-            identityUUID: volume.identityUUID.map { $0 as NSUUID },
-            bsdName: volume.bsdName,
-            logLabel: volume.logLabel,
-            force: Preference.forceUnmount,
-            trigger: trigger
-        ) { [weak self] result in
-            Task { @MainActor [weak self] in
-                guard let self else {
-                    completion(result.success)
-                    return
-                }
-
-                self.inFlightEjects.remove(operationID)
-                let completions = self.pendingEjectCompletions.removeValue(forKey: operationID) ?? []
-                completions.forEach { $0(result.success) }
-            }
-        }
+        requestOperation(.eject, for: volume, trigger: trigger, completion: completion)
     }
 
     /// Enqueues a routed unmount request for one volume and tracks in-flight state.
     private func requestUnmount(for volume: Volume, trigger: VolumeOperationTrigger, completion: @escaping (Bool) -> Void) {
-        let volumeID = volume.id
-        cancelPendingMountTask(for: volumeID)
-        pendingUnmountCompletions[volumeID, default: []].append(completion)
+        cancelPendingMountTask(for: volume.id)
+        requestOperation(.unmount, for: volume, trigger: trigger, completion: completion)
+    }
 
-        guard !inFlightUnmounts.contains(volumeID) else {
-            Log.volumeOperations.info("Unmount request joined existing in-flight operation: \(volume.logLabel)")
+    /// Starts or joins one routed mutation keyed by volume and operation type.
+    private func requestOperation(
+        _ operation: RequestedVolumeOperation,
+        for volume: Volume,
+        trigger: VolumeOperationTrigger,
+        completion: @escaping (Bool) -> Void
+    ) {
+        let key = OperationKey(volumeID: volume.id, operation: operation)
+        if pendingOperationCompletions[key] != nil {
+            pendingOperationCompletions[key, default: []].append(completion)
+            Log.volumeOperations.info("\(operation.operationName.capitalized) request joined existing in-flight operation: \(volume.logLabel)")
             return
         }
+        pendingOperationCompletions[key] = [completion]
 
-        inFlightUnmounts.insert(volumeID)
-        Log.volumeOperations.log("Unmount request scheduled for \(volume.logLabel)")
-        VolumeOperationRouter.shared.unmount(
-            identityUUID: volume.identityUUID.map { $0 as NSUUID },
-            bsdName: volume.bsdName,
-            logLabel: volume.logLabel,
-            force: Preference.forceUnmount,
-            trigger: trigger
-        ) { [weak self] result in
-            Task { @MainActor [weak self] in
-                guard let self else {
-                    completion(result.success)
-                    return
-                }
-
-                self.inFlightUnmounts.remove(volumeID)
-                self.applyRemountCandidateDisposition(
-                    after: .unmountCompleted(success: result.success),
-                    volumeID: volumeID
+        Task { @MainActor [weak self] in
+            let result: VolumeOperationRouter.MutationResult
+            switch operation {
+            case .unmount:
+                result = await VolumeOperationRouter.shared.unmount(
+                    identityUUID: volume.identityUUID.map { $0 as NSUUID },
+                    bsdName: volume.bsdName,
+                    force: Preference.forceUnmount,
+                    trigger: trigger
                 )
-                if !result.success {
-                    Log.volumeOperations.info("Automatic unmount failed; preserving candidate for wake reconciliation; outcome=\(result.outcome.rawValue); \(volume.logLabel)")
-                }
-                let completions = self.pendingUnmountCompletions.removeValue(forKey: volumeID) ?? []
-                completions.forEach { $0(result.success) }
+            case .eject:
+                result = await VolumeOperationRouter.shared.eject(
+                    identityUUID: volume.identityUUID.map { $0 as NSUUID },
+                    bsdName: volume.bsdName,
+                    force: Preference.forceUnmount,
+                    trigger: trigger
+                )
             }
+
+            guard let self else {
+                completion(result.success)
+                return
+            }
+
+            let completions = self.pendingOperationCompletions.removeValue(forKey: key) ?? []
+            completions.forEach { $0(result.success) }
         }
     }
 

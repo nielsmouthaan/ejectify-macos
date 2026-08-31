@@ -88,21 +88,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         for volume in enabledVolumes {
             if Preference.ejectInsteadOfUnmount {
-                VolumeOperationRouter.shared.eject(
-                    identityUUID: volume.identityUUID.map { $0 as NSUUID },
-                    bsdName: volume.bsdName,
-                    logLabel: volume.logLabel,
-                    force: Preference.forceUnmount,
-                    trigger: trigger
-                ) { _ in }
+                Task {
+                    _ = await VolumeOperationRouter.shared.eject(
+                        identityUUID: volume.identityUUID.map { $0 as NSUUID },
+                        bsdName: volume.bsdName,
+                        force: Preference.forceUnmount,
+                        trigger: trigger
+                    )
+                }
             } else {
-                VolumeOperationRouter.shared.unmount(
-                    identityUUID: volume.identityUUID.map { $0 as NSUUID },
-                    bsdName: volume.bsdName,
-                    logLabel: volume.logLabel,
-                    force: Preference.forceUnmount,
-                    trigger: trigger
-                ) { _ in }
+                Task {
+                    _ = await VolumeOperationRouter.shared.unmount(
+                        identityUUID: volume.identityUUID.map { $0 as NSUUID },
+                        bsdName: volume.bsdName,
+                        force: Preference.forceUnmount,
+                        trigger: trigger
+                    )
+                }
             }
         }
     }

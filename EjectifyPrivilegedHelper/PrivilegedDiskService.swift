@@ -44,11 +44,6 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         attributes: .concurrent
     )
 
-    /// Confirms helper reachability.
-    func ping(withReply reply: @escaping (Bool, String?) -> Void) {
-        reply(true, nil)
-    }
-
     /// Reports support for the current fixed diskutil protocol.
     func capabilityVersion(withReply reply: @escaping (Int) -> Void) {
         reply(PrivilegedHelperConfiguration.diskutilCapabilityVersion)
@@ -178,20 +173,19 @@ final class PrivilegedDiskService: NSObject, PrivilegedDiskServiceProtocol {
         }
 
         let label = VolumeLogLabelFormatter.label(uuid: identityUUID, bsdName: bsdName)
-        Log.privilegedHelper.log("diskutil operation dispatched; operation=\(operation.operationName); force=\(operation.isForced); \(label)")
         operationQueue.async {
             let result = DiskutilOperator.perform(
                 identityUUID: identityUUID,
                 bsdName: bsdName,
                 operation: operation
             )
-            let details = "operation=\(operation.operationName); force=\(operation.isForced); outcome=\(result.outcome.rawValue); exitCode=\(result.exitCode.map(String.init) ?? "none"); terminationReason=\(result.terminationReason.rawValue); durationMilliseconds=\(result.durationMilliseconds); timeout=\(result.timedOut); reconciledState=\(result.reconciledState.rawValue); \(label)"
+            let details = "operation=\(operation.operationName); force=\(operation.isForced); outcome=\(result.outcome.rawValue); exitCode=\(result.exitCode.map(String.init) ?? "none"); terminationReason=\(result.terminationReason.rawValue); durationMilliseconds=\(result.durationMilliseconds); timeout=\(result.timedOut); \(label)"
             if result.success {
                 Log.privilegedHelper.log("diskutil operation completed; \(details)")
             } else {
                 Log.privilegedHelper.error("diskutil operation failed; \(details)")
             }
-            replyBox.reply(result.success, result.safeMessage, result.xpcStatus)
+            replyBox.reply(result.success, result.outcome.rawValue, result.exitCode ?? Int32.min)
         }
     }
 }

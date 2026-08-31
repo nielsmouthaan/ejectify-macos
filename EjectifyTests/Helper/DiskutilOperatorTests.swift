@@ -130,41 +130,28 @@ struct DiskutilOperatorTests {
     }
 
     @Test func zeroExitIsSuccessful() {
-        let result = DiskutilOperator.classifyOperationResult(
-            processResult: processResult(exitCode: 0),
-            operation: .unmount(force: false),
-            reconciledState: .unmounted,
-            resolvedBSDName: "disk7s1"
-        )
+        let result = DiskutilOperator.classifyOperationResult(processResult: processResult(exitCode: 0))
         #expect(result.outcome == .succeeded)
         #expect(result.success)
     }
 
     @Test(arguments: [
-        (DiskutilOperator.Operation.mount, DiskutilOperator.ReconciledState.mounted),
-        (.unmount(force: false), .unmounted),
-        (.eject(force: false), .absent)
+        (reason: DiskutilOperator.TerminationReason.exit, exitCode: Optional<Int32>.some(1)),
+        (reason: .signal, exitCode: Optional<Int32>.none)
     ])
-    func reconciledStateCanSatisfyFailedCommand(
-        operation: DiskutilOperator.Operation,
-        state: DiskutilOperator.ReconciledState
+    func nonzeroExitAndSignalAreFailures(
+        fixture: (reason: DiskutilOperator.TerminationReason, exitCode: Int32?)
     ) {
         let result = DiskutilOperator.classifyOperationResult(
-            processResult: processResult(exitCode: 1),
-            operation: operation,
-            reconciledState: state,
-            resolvedBSDName: "disk7s1"
+            processResult: processResult(exitCode: fixture.exitCode, reason: fixture.reason)
         )
-        #expect(result.outcome == .satisfiedAfterReconciliation)
-        #expect(result.success)
+        #expect(result.outcome == .failed)
+        #expect(result.success == false)
     }
 
-    @Test func timeoutRemainsDistinctWhenStateWasNotSatisfied() {
+    @Test func timeoutRemainsDistinct() {
         let result = DiskutilOperator.classifyOperationResult(
-            processResult: processResult(exitCode: SIGTERM, reason: .timeout, timedOut: true),
-            operation: .eject(force: false),
-            reconciledState: .mounted,
-            resolvedBSDName: "disk7s1"
+            processResult: processResult(exitCode: nil, reason: .timeout)
         )
         #expect(result.outcome == .timedOut)
         #expect(result.timedOut)
@@ -173,10 +160,7 @@ struct DiskutilOperatorTests {
 
     @Test func launchFailureRemainsDistinct() {
         let result = DiskutilOperator.classifyOperationResult(
-            processResult: processResult(exitCode: nil, reason: .launchFailure),
-            operation: .mount,
-            reconciledState: .unmounted,
-            resolvedBSDName: "disk7s1"
+            processResult: processResult(exitCode: nil, reason: .launchFailure)
         )
         #expect(result.outcome == .launchFailed)
     }
@@ -188,16 +172,23 @@ struct DiskutilOperatorTests {
         #expect(result.exitCode == nil)
     }
 
-    @Test func processRunnerTimesOutAndBoundsOutput() {
+    @Test func processRunnerDiscardsOutputForNonPlistCommands() {
         let runner = DiskutilOperator.ProcessRunner(executableURL: URL(fileURLWithPath: "/usr/bin/yes"))
         let result = runner.run(arguments: [], standardInput: nil, timeout: 0.05)
         #expect(result.timedOut)
         #expect(result.terminationReason == .timeout)
-        #expect(result.stdout.count <= DiskutilOperator.ProcessRunner.maximumRetainedOutputBytes)
-        #expect(result.stderr.count <= DiskutilOperator.ProcessRunner.maximumRetainedOutputBytes)
+        #expect(result.stdout.isEmpty)
     }
 
-    @Test func unlockPassphraseUsesOnlyStandardInput() {
+    @Test func processRunnerTimesOutAndBoundsPlistOutput() {
+        let runner = DiskutilOperator.ProcessRunner(executableURL: URL(fileURLWithPath: "/usr/bin/yes"))
+        let result = runner.run(arguments: ["-plist"], standardInput: nil, timeout: 0.05)
+        #expect(result.timedOut)
+        #expect(result.stdout.isEmpty == false)
+        #expect(result.stdout.count <= DiskutilOperator.ProcessRunner.maximumRetainedOutputBytes)
+    }
+
+    @Test func unlockUsesOnlyStandardInputAndKeepsAutomaticMounting() {
         let runner = RecordingRunner(result: processResult(exitCode: 0, stdout: successUnlockPlist()))
         let result = DiskutilOperator.unlockResolved(
             bsdName: "disk7s1",
@@ -208,6 +199,7 @@ struct DiskutilOperatorTests {
 
         #expect(result.success)
         #expect(runner.arguments == ["apfs", "unlockVolume", "disk7s1", "-stdinpassphrase", "-plist"])
+        #expect(runner.arguments.contains("-nomount") == false)
         #expect(runner.arguments.contains(where: { $0.contains("secret") }) == false)
         #expect(runner.standardInput == Data("secret passphrase\n".utf8))
         #expect(runner.timeout == 60)
@@ -241,17 +233,13 @@ struct DiskutilOperatorTests {
     private func processResult(
         exitCode: Int32?,
         reason: DiskutilOperator.TerminationReason = .exit,
-        timedOut: Bool = false,
-        stdout: Data = Data(),
-        stderr: Data = Data()
+        stdout: Data = Data()
     ) -> DiskutilOperator.ProcessResult {
         DiskutilOperator.ProcessResult(
             exitCode: exitCode,
             terminationReason: reason,
             durationMilliseconds: 12,
-            timedOut: timedOut,
-            stdout: stdout,
-            stderr: stderr
+            stdout: stdout
         )
     }
 

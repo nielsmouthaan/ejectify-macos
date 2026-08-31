@@ -10,118 +10,34 @@ import Testing
 
 struct VolumeOperationOutcomePolicyTests {
 
-    struct UnmountCompletion: Sendable {
-        let success: Bool
+    @Test(arguments: [
+        DiskutilOperator.Outcome.failed,
+        .timedOut,
+        .launchFailed,
+        .targetUnavailable
+    ])
+    func retryableMountFailuresRemainRetryable(_ operationOutcome: DiskutilOperator.Outcome) {
+        let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
+            for: .mountFailed(outcome: operationOutcome)
+        )
+
+        #expect(outcome == .retryableFailure)
     }
 
     @Test(arguments: [
-        UnmountCompletion(success: true),
-        UnmountCompletion(success: false)
+        DiskutilOperator.Outcome.invalidTarget,
+        .targetAmbiguous
     ])
-    func automaticUnmountCompletionAlwaysPreservesRemountCandidate(_ completion: UnmountCompletion) {
-        let disposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(
-            after: .unmountCompleted(success: completion.success)
-        )
-
-        #expect(disposition == .preserve)
-    }
-
-    @Test func retryCancellationPreservesRemountCandidate() {
-        let disposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(
-            after: .retryCancelled
-        )
-
-        #expect(disposition == .preserve)
-    }
-
-    @Test func completedAndTerminalRemountEventsRemoveCandidate() {
-        let events: [VolumeOperationOutcomePolicy.AutomaticRemountCandidateEvent] = [
-            .ejectModeEnabled,
-            .remountSucceeded,
-            .terminalRemountFailure,
-            .retryExhausted
-        ]
-
-        for event in events {
-            let disposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(after: event)
-            #expect(disposition == .remove)
-        }
-    }
-
-    @Test func unavailableDiskIsRetryable() {
+    func invalidOrAmbiguousMountTargetIsTerminal(_ operationOutcome: DiskutilOperator.Outcome) {
         let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .diskUnavailable
-        )
-
-        #expect(outcome == .retryableFailure)
-    }
-
-    @Test func diskThatBecomesAvailableCanCompleteRemount() {
-        let unavailableOutcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .diskUnavailable
-        )
-        let mountedOutcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .mountSucceeded
-        )
-
-        #expect(unavailableOutcome == .retryableFailure)
-        #expect(mountedOutcome == .succeeded)
-    }
-
-    @Test func helperBackedMountTimeoutIsRetryable() {
-        let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .mountFailed(outcome: .timedOut)
-        )
-
-        #expect(outcome == .retryableFailure)
-    }
-
-    @Test func failedMountIsRetryable() {
-        let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .mountFailed(outcome: .failed)
-        )
-
-        #expect(outcome == .retryableFailure)
-    }
-
-    @Test func missingDiskMountIsRetryable() {
-        let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .mountFailed(outcome: .targetUnavailable)
-        )
-
-        #expect(outcome == .retryableFailure)
-    }
-
-    @Test func ambiguousMountTargetIsTerminal() {
-        let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .mountFailed(outcome: .targetAmbiguous)
+            for: .mountFailed(outcome: operationOutcome)
         )
 
         #expect(outcome == .terminalFailure)
     }
 
     @Test func successfulMountCompletesRemount() {
-        let outcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .mountSucceeded
-        )
-
-        #expect(outcome == .succeeded)
-    }
-
-    @Test func busyUnmountRemainsPendingUntilWakeReconciliationSucceeds() {
-        let unmountDisposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(
-            after: .unmountCompleted(success: false)
-        )
-        let wakeOutcome = VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(
-            for: .mountSucceeded
-        )
-        let reconciledDisposition = VolumeOperationOutcomePolicy.automaticRemountCandidateDisposition(
-            after: .remountSucceeded
-        )
-
-        #expect(unmountDisposition == .preserve)
-        #expect(wakeOutcome == .succeeded)
-        #expect(reconciledDisposition == .remove)
+        #expect(VolumeOperationOutcomePolicy.automaticRemountAttemptOutcome(for: .mountSucceeded) == .succeeded)
     }
 
     @Test func retryScheduleUsesExistingDelaysBeforeExhaustion() {
@@ -132,82 +48,16 @@ struct VolumeOperationOutcomePolicyTests {
         #expect(delays == [.seconds(3), .seconds(10), .seconds(30), nil])
     }
 
-    @Test func encryptedAPFSMountFailureRequestsLockStateProbeInUnmountMode() {
-        let shouldProbe = VolumeOperationOutcomePolicy.shouldProbeEncryptedAPFSLockState(
-            isEncrypted: true,
-            isAPFS: true,
-            ejectModeEnabled: false
-        )
+    @Test func everyFailedEncryptedAPFSMountCanProbeLockState() {
+        let decisions = (0...3).map { _ in
+            VolumeOperationOutcomePolicy.shouldProbeEncryptedAPFSLockState(
+                isEncrypted: true,
+                isAPFS: true,
+                ejectModeEnabled: false
+            )
+        }
 
-        #expect(shouldProbe)
-    }
-
-    @Test func nativeUnlockGraceUsesFixedFiveSecondDelay() {
-        #expect(VolumeOperationOutcomePolicy.nativeUnlockGraceDelay == .seconds(5))
-    }
-
-    @Test func confirmedLockedEncryptedAPFSMountFailureStartsNativeUnlockGrace() {
-        let shouldStart = VolumeOperationOutcomePolicy.shouldStartNativeUnlockGrace(
-            after: .mountFailed(outcome: .failed),
-            isEncrypted: true,
-            isAPFS: true,
-            ejectModeEnabled: false,
-            lockState: .locked,
-            hasAlreadyWaited: false
-        )
-
-        #expect(shouldStart)
-    }
-
-    @Test func nativeUnlockGraceRunsOnlyOncePerRemountSequence() {
-        let shouldStart = VolumeOperationOutcomePolicy.shouldStartNativeUnlockGrace(
-            after: .mountFailed(outcome: .failed),
-            isEncrypted: true,
-            isAPFS: true,
-            ejectModeEnabled: false,
-            lockState: .locked,
-            hasAlreadyWaited: true
-        )
-
-        #expect(shouldStart == false)
-    }
-
-    @Test(arguments: [
-        VolumeOperationOutcomePolicy.AutomaticRemountAttemptResult.mountSucceeded,
-        VolumeOperationOutcomePolicy.AutomaticRemountAttemptResult.diskUnavailable
-    ])
-    func nativeUnlockGraceRequiresFailedNormalMount(
-        result: VolumeOperationOutcomePolicy.AutomaticRemountAttemptResult
-    ) {
-        let shouldStart = VolumeOperationOutcomePolicy.shouldStartNativeUnlockGrace(
-            after: result,
-            isEncrypted: true,
-            isAPFS: true,
-            ejectModeEnabled: false,
-            lockState: .locked,
-            hasAlreadyWaited: false
-        )
-
-        #expect(shouldStart == false)
-    }
-
-    @Test(arguments: [
-        APFSVolumeLockStateProbe.LockState.unlocked,
-        APFSVolumeLockStateProbe.LockState.unknown
-    ])
-    func nativeUnlockGraceRequiresConfirmedLockedState(
-        lockState: APFSVolumeLockStateProbe.LockState
-    ) {
-        let shouldStart = VolumeOperationOutcomePolicy.shouldStartNativeUnlockGrace(
-            after: .mountFailed(outcome: .failed),
-            isEncrypted: true,
-            isAPFS: true,
-            ejectModeEnabled: false,
-            lockState: lockState,
-            hasAlreadyWaited: false
-        )
-
-        #expect(shouldStart == false)
+        #expect(decisions == [true, true, true, true])
     }
 
     @Test(arguments: [
@@ -215,7 +65,7 @@ struct VolumeOperationOutcomePolicyTests {
         (isEncrypted: true, isAPFS: false, ejectModeEnabled: false),
         (isEncrypted: true, isAPFS: true, ejectModeEnabled: true)
     ])
-    func mountFailureDoesNotProbeOutsideEncryptedAPFSUnmountMode(
+    func lockStateIsNotProbedOutsideEncryptedAPFSUnmountMode(
         fixture: (isEncrypted: Bool, isAPFS: Bool, ejectModeEnabled: Bool)
     ) {
         let shouldProbe = VolumeOperationOutcomePolicy.shouldProbeEncryptedAPFSLockState(
@@ -225,93 +75,6 @@ struct VolumeOperationOutcomePolicyTests {
         )
 
         #expect(shouldProbe == false)
-    }
-
-    @Test(arguments: [
-        (candidateExists: false, isReadyToMount: true, ejectModeEnabled: false),
-        (candidateExists: true, isReadyToMount: false, ejectModeEnabled: false),
-        (candidateExists: true, isReadyToMount: true, ejectModeEnabled: true)
-    ])
-    func staleEncryptedAPFSUnlockIsDeferred(
-        fixture: (candidateExists: Bool, isReadyToMount: Bool, ejectModeEnabled: Bool)
-    ) {
-        let continuation = VolumeOperationOutcomePolicy.encryptedAPFSUnlockContinuation(
-            candidateExists: fixture.candidateExists,
-            isReadyToMount: fixture.isReadyToMount,
-            ejectModeEnabled: fixture.ejectModeEnabled,
-            lockState: .locked
-        )
-
-        #expect(continuation == .deferUntilLater)
-    }
-
-    @Test func alreadyUnlockedEncryptedAPFSVolumeRequestsNormalMount() {
-        let continuation = VolumeOperationOutcomePolicy.encryptedAPFSUnlockContinuation(
-            candidateExists: true,
-            isReadyToMount: true,
-            ejectModeEnabled: false,
-            lockState: .unlocked
-        )
-
-        #expect(continuation == .attemptNormalMount)
-    }
-
-    @Test(arguments: [
-        APFSVolumeLockStateProbe.LockState.locked,
-        APFSVolumeLockStateProbe.LockState.unknown
-    ])
-    func currentEncryptedAPFSVolumeAttemptsUnlock(
-        lockState: APFSVolumeLockStateProbe.LockState
-    ) {
-        let continuation = VolumeOperationOutcomePolicy.encryptedAPFSUnlockContinuation(
-            candidateExists: true,
-            isReadyToMount: true,
-            ejectModeEnabled: false,
-            lockState: lockState
-        )
-
-        #expect(continuation == .attemptUnlock)
-    }
-
-    @Test(arguments: [
-        (state: VolumeOperationOutcomePolicy.NativeUnlockPostGraceState.externallyMounted, expected: VolumeOperationOutcomePolicy.NativeUnlockGraceContinuation.completeAfterExternalMount),
-        (state: VolumeOperationOutcomePolicy.NativeUnlockPostGraceState.unlocked, expected: VolumeOperationOutcomePolicy.NativeUnlockGraceContinuation.attemptNormalMount),
-        (state: VolumeOperationOutcomePolicy.NativeUnlockPostGraceState.locked, expected: VolumeOperationOutcomePolicy.NativeUnlockGraceContinuation.useEncryptedFallback),
-        (state: VolumeOperationOutcomePolicy.NativeUnlockPostGraceState.unknown, expected: VolumeOperationOutcomePolicy.NativeUnlockGraceContinuation.resumeNormalRetryPolicy),
-        (state: VolumeOperationOutcomePolicy.NativeUnlockPostGraceState.unavailable, expected: VolumeOperationOutcomePolicy.NativeUnlockGraceContinuation.resumeNormalRetryPolicy)
-    ])
-    func postGraceStateSelectsExpectedContinuation(
-        fixture: (
-            state: VolumeOperationOutcomePolicy.NativeUnlockPostGraceState,
-            expected: VolumeOperationOutcomePolicy.NativeUnlockGraceContinuation
-        )
-    ) {
-        let continuation = VolumeOperationOutcomePolicy.nativeUnlockGraceContinuation(
-            candidateExists: true,
-            isReadyToMount: true,
-            ejectModeEnabled: false,
-            state: fixture.state
-        )
-
-        #expect(continuation == fixture.expected)
-    }
-
-    @Test(arguments: [
-        (candidateExists: false, isReadyToMount: true, ejectModeEnabled: false),
-        (candidateExists: true, isReadyToMount: false, ejectModeEnabled: false),
-        (candidateExists: true, isReadyToMount: true, ejectModeEnabled: true)
-    ])
-    func stalePostGraceStateDefersFallback(
-        fixture: (candidateExists: Bool, isReadyToMount: Bool, ejectModeEnabled: Bool)
-    ) {
-        let continuation = VolumeOperationOutcomePolicy.nativeUnlockGraceContinuation(
-            candidateExists: fixture.candidateExists,
-            isReadyToMount: fixture.isReadyToMount,
-            ejectModeEnabled: fixture.ejectModeEnabled,
-            state: .locked
-        )
-
-        #expect(continuation == .deferUntilLater)
     }
 
     @Test(arguments: [

@@ -66,18 +66,12 @@
 		F0CE00140000000000000014 /* PrivilegedHelperLifecycleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E700A32F8A000100C0D001 /* PrivilegedHelperLifecycleManager.swift */; };
 		F0CE00150000000000000015 /* SMAppService+StatusDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000054 /* SMAppService+StatusDescription.swift */; };
 		F0CE00160000000000000016 /* VolumeOperationRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0CE00170000000000000017 /* VolumeOperationRouterTests.swift */; };
-		E8A100010000000000000001 /* APFSEncryptedVolumeUnlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100040000000000000004 /* APFSEncryptedVolumeUnlocker.swift */; };
 		E8A100020000000000000002 /* EncryptedVolumeCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100050000000000000005 /* EncryptedVolumeCredentialStore.swift */; };
 		E8A100030000000000000003 /* EncryptedVolumePasswordPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100060000000000000006 /* EncryptedVolumePasswordPrompt.swift */; };
-		E8A100070000000000000007 /* APFSEncryptedVolumeUnlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A100040000000000000004 /* APFSEncryptedVolumeUnlocker.swift */; };
 		E8A100080000000000000008 /* Volume.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DFADB2256CF511009E9296 /* Volume.swift */; };
 		E8A100090000000000000009 /* DADisk+DiskImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89F412425AC9D7200E0B8C1 /* DADisk+DiskImage.swift */; };
-		E8A1000A000000000000000A /* APFSEncryptedVolumeUnlockerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A1000C000000000000000C /* APFSEncryptedVolumeUnlockerTests.swift */; };
 		E8A1000B000000000000000B /* VolumeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A1000D000000000000000D /* VolumeTests.swift */; };
 		E8A1000F000000000000000F /* DiskutilOperator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A100000000000000000053 /* DiskutilOperator.swift */; };
-		E9B200010000000000000001 /* APFSVolumeLockStateProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B200040000000000000004 /* APFSVolumeLockStateProbe.swift */; };
-		E9B200020000000000000002 /* APFSVolumeLockStateProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B200040000000000000004 /* APFSVolumeLockStateProbe.swift */; };
-		E9B200030000000000000003 /* APFSVolumeLockStateProbeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B200050000000000000005 /* APFSVolumeLockStateProbeTests.swift */; };
 		EB8200010000000000000001 /* UnlockVolumesWhenNeededPreference.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB8200040000000000000004 /* UnlockVolumesWhenNeededPreference.swift */; };
 		EB8200020000000000000002 /* UnlockVolumesWhenNeededPreference.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB8200040000000000000004 /* UnlockVolumesWhenNeededPreference.swift */; };
 		EB8200030000000000000003 /* UnlockVolumesWhenNeededPreferenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB8200050000000000000005 /* UnlockVolumesWhenNeededPreferenceTests.swift */; };
@@ -188,13 +182,9 @@
 		E7C700080000000000000008 /* EjectifyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EjectifyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E7C710020000000000000002 /* VolumeOperationOutcomePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeOperationOutcomePolicy.swift; sourceTree = "<group>"; };
 		E7C710040000000000000004 /* VolumeOperationOutcomePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeOperationOutcomePolicyTests.swift; sourceTree = "<group>"; };
-		E8A100040000000000000004 /* APFSEncryptedVolumeUnlocker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APFSEncryptedVolumeUnlocker.swift; sourceTree = "<group>"; };
 		E8A100050000000000000005 /* EncryptedVolumeCredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncryptedVolumeCredentialStore.swift; sourceTree = "<group>"; };
 		E8A100060000000000000006 /* EncryptedVolumePasswordPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncryptedVolumePasswordPrompt.swift; sourceTree = "<group>"; };
-		E8A1000C000000000000000C /* APFSEncryptedVolumeUnlockerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APFSEncryptedVolumeUnlockerTests.swift; sourceTree = "<group>"; };
 		E8A1000D000000000000000D /* VolumeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeTests.swift; sourceTree = "<group>"; };
-		E9B200040000000000000004 /* APFSVolumeLockStateProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APFSVolumeLockStateProbe.swift; sourceTree = "<group>"; };
-		E9B200050000000000000005 /* APFSVolumeLockStateProbeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APFSVolumeLockStateProbeTests.swift; sourceTree = "<group>"; };
 		EB8200040000000000000004 /* UnlockVolumesWhenNeededPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockVolumesWhenNeededPreference.swift; sourceTree = "<group>"; };
 		EB8200050000000000000005 /* UnlockVolumesWhenNeededPreferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockVolumesWhenNeededPreferenceTests.swift; sourceTree = "<group>"; };
 		F01400020000000000000002 /* PowerManagementLogPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerManagementLogPolicy.swift; sourceTree = "<group>"; };
@@ -319,8 +309,6 @@
 		C0A100000000000000000021 /* Helper */ = {
 			isa = PBXGroup;
 			children = (
-				E8A100040000000000000004 /* APFSEncryptedVolumeUnlocker.swift */,
-				E9B200040000000000000004 /* APFSVolumeLockStateProbe.swift */,
 				E8A100050000000000000005 /* EncryptedVolumeCredentialStore.swift */,
 				C0A100000000000000000066 /* PrivilegedHelperConfiguration.swift */,
 				C0A100000000000000000073 /* Log.swift */,
@@ -357,8 +345,6 @@
 		E7C7000B000000000000000B /* Helper */ = {
 			isa = PBXGroup;
 			children = (
-				E8A1000C000000000000000C /* APFSEncryptedVolumeUnlockerTests.swift */,
-				E9B200050000000000000005 /* APFSVolumeLockStateProbeTests.swift */,
 				F0CE00020000000000000002 /* DiskutilOperatorTests.swift */,
 				F0CE00170000000000000017 /* VolumeOperationRouterTests.swift */,
 				E7C700060000000000000006 /* LogTests.swift */,
@@ -566,8 +552,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E8A100010000000000000001 /* APFSEncryptedVolumeUnlocker.swift in Sources */,
-				E9B200010000000000000001 /* APFSVolumeLockStateProbe.swift in Sources */,
 				E8A100020000000000000002 /* EncryptedVolumeCredentialStore.swift in Sources */,
 				E8A100030000000000000003 /* EncryptedVolumePasswordPrompt.swift in Sources */,
 				C0A100000000000000000061 /* VolumeLogLabelFormatter.swift in Sources */,
@@ -620,13 +604,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E8A100070000000000000007 /* APFSEncryptedVolumeUnlocker.swift in Sources */,
-				E9B200020000000000000002 /* APFSVolumeLockStateProbe.swift in Sources */,
 				EB8200020000000000000002 /* UnlockVolumesWhenNeededPreference.swift in Sources */,
 				E8A100080000000000000008 /* Volume.swift in Sources */,
 				E8A100090000000000000009 /* DADisk+DiskImage.swift in Sources */,
-				E8A1000A000000000000000A /* APFSEncryptedVolumeUnlockerTests.swift in Sources */,
-				E9B200030000000000000003 /* APFSVolumeLockStateProbeTests.swift in Sources */,
 				EB8200030000000000000003 /* UnlockVolumesWhenNeededPreferenceTests.swift in Sources */,
 				E8A1000B000000000000000B /* VolumeTests.swift in Sources */,
 				E8A1000F000000000000000F /* DiskutilOperator.swift in Sources */,
