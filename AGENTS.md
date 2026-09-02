@@ -21,6 +21,7 @@ Ejectify is a macOS menu bar utility that helps users avoid “Disk Not Ejected 
 - Permit only fixed diskutil commands, validate BSD identifiers, drain and bound stdout and stderr, enforce process timeouts, and never log raw command output, passwords, volume names, or private paths.
 - When helper execution is active, route every diskutil command through the authenticated privileged helper. Do not execute part of a storage workflow locally unless routing has explicitly switched to local mode.
 - Document code with concise descriptions above type, function, and property declarations using `///`, unless the declaration name already makes its purpose and usage immediately clear. Add inline comments (`//`) for non-obvious logic within function bodies. When updating code, also update documentation where applicable.
+- Do not hard-wrap documentation or inline comments. Start a new comment line only when the line break represents a meaningful separation between ideas or paragraphs.
 - Insert a blank line before every documented declaration so each `///` comment is visually separated from the preceding code and clearly attached to the declaration it documents. Also insert a blank line between declarations when at least one of the two declarations is documented. Consecutive undocumented property declarations may remain adjacent without blank lines.
 - When notarizing Ejectify, use the `ejectify-notary` notarytool keychain profile, for example `./release/release.sh --notary-profile ejectify-notary`.
 

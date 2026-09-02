@@ -12,7 +12,7 @@ import AppKit
 final class ActivityController {
 
 
-    /// Volumes targeted by automatic unmounting that remain pending for wake-time remounting.
+    /// Volumes targeted by automatic unmounting that remain pending for wake-time remounting, including after a request failure because the volume can still unmount later or outside Ejectify.
     private var remountCandidates: [String: Volume] = [:]
 
     /// Pending mount tasks keyed by volume identifier.
