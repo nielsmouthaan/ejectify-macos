@@ -196,7 +196,6 @@ Write a send-ready response that is informal, easy to understand, and straight t
 - Do not expose internal speculation, code-level detail, or the app-improvement assessment unless it helps set expectations.
 - Do not promise a fix, timeline, or follow-up that is not supported.
 - Avoid generic closers that invite an indefinite conversation. If there is no useful next step, state the limitation kindly and let the response end naturally.
-- Do not add a sign-off, closing salutation, sender name, or signature text, such as `Best, Niels`. The email signature is added automatically. End the draft after its final substantive sentence.
 
 Never offer a refund proactively. If the user explicitly requests one and no practical solution remains, the reply may agree to a refund when the sender has authority to provide it. Request only the information required to process it, and do not claim it has been completed unless it actually has.
 
