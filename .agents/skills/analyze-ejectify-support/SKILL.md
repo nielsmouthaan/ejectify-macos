@@ -60,10 +60,10 @@ Apply these rules:
 Apply statuses consistently:
 
 - Use `investigating` while analysis is incomplete or the latest response remains a draft.
-- Use `awaiting-customer` only after a sent response requests information, diagnostics, confirmation, or another customer action.
+- Use `awaiting-customer` only after a sent response requests a reply or customer action whose result is needed to continue Ejectify support. Self-service guidance in a closing reply does not make the case awaiting-customer.
 - Use `awaiting-release` only for a confirmed product change that the customer needs but cannot install yet.
 - Use `resolved` only when the solution or outcome is confirmed.
-- Use `closed-no-solution` only when the case is concluded without a reliable solution.
+- Use `closed-no-solution` when a closing response has been sent and the case is concluded without a confirmed reliable solution, including an external limitation with self-service guidance. Keep an unsent closing draft as `investigating`; advice alone does not establish `resolved`.
 
 Validate JSON syntax with `jq empty`. Inspect every field before finishing; do not rely on syntax validation alone.
 
@@ -126,9 +126,13 @@ Prefer confirmed resolutions and recent, compatible app behavior. Treat earlier 
 4. Rank plausible explanations by evidence and state confidence. Prefer the narrowest explanation supported by the case, while checking whether multiple symptoms share a root cause.
 5. Avoid changing code during this workflow unless the user separately asks for implementation.
 
-## Decide whether diagnostics are needed
+## Decide support scope and whether more evidence is useful
 
-Request a diagnostic report in the drafted reply only when it could materially distinguish likely causes, confirm an important sequence, or reveal the next useful action.
+Before asking for more evidence, decide whether it could establish an Ejectify defect, change a supported recommendation, or enable a straightforward app-side fix. Continue useful investigation when an Ejectify issue is plausible. When the evidence establishes an external limitation, or no practical action is available within Ejectify support, explain the conclusion, provide relevant self-service guidance, and conclude without requesting results or promising further investigation. Do not keep a conversation open merely to eliminate residual unknowns.
+
+A confirmed macOS busy refusal after a valid unmount request is different from a timeout or an app ordering failure. Do not attribute timeout-only failures or unrelated symptoms to a busy volume without evidence.
+
+Request a diagnostic report or other follow-up information only when its result could materially change an Ejectify recommendation or support a proportionate app improvement. Identifying an external blocking process alone does not justify extending support into another app's configuration.
 
 When requesting one:
 
@@ -138,19 +142,27 @@ When requesting one:
 - Ask for any missing timestamp or reproduction detail needed to locate the event.
 - Keep the request focused. Do not add speculative troubleshooting at the same time unless it is safe and likely to help.
 
-Do not request diagnostics as a routine delay when the cause or solution is already sufficiently clear. If diagnostics would not produce an actionable next step, do not ask for them merely to keep the conversation open.
+Do not request diagnostics, process listings, timestamps, screenshots, or retest results as a routine delay when the conclusion is already sufficiently clear. If the result would not enable a useful action within support scope, do not ask for it.
 
 ## Find the best user outcome
 
 Evaluate solutions in this order:
 
 1. A verified Ejectify preference or existing workflow that directly improves the behavior.
-2. A safe, simple workaround with a clear tradeoff.
+2. A safe, simple workaround with a clear tradeoff. Do not present repeated manual waiting, saving work, quitting apps, or mounting and unmounting as a solution to Ejectify's automatic workflow.
 3. A general app improvement that addresses the root cause for a meaningful group of users.
 4. A focused request for evidence that can unlock one of the above.
 5. An honest conclusion that no reliable solution is currently available.
 
 Inspect the current app before recommending a preference. Use its exact current name and describe the consequence of changing it. Do not imply that a setting fixes the issue when it only reduces its likelihood or changes the tradeoff.
+
+### Confirmed busy-volume refusals
+
+When macOS refuses a valid unmount request because the volume is busy, normal automatic unmounting depends on the responsible app or system process releasing it at the configured trigger. Ejectify cannot safely override that refusal through normal unmounting.
+
+Use the verified `disk-in-use` FAQ as self-service guidance for identifying the process. How to prevent that process from keeping the volume busy depends on its app or service and is outside Ejectify support scope; do not request the output merely to take over that troubleshooting. A relevant Ejectify preference may still be worth explaining when it directly helps.
+
+Present Force Unmount only as an optional mitigation that may help, with explicit data-loss and filesystem-corruption risks if writes are interrupted. Do not imply guaranteed success or treat it as a safe equivalent to normal unmounting. Conclude the reply without asking the customer to report back unless there is separate evidence that warrants an Ejectify investigation.
 
 ## Assess app improvements
 
@@ -181,19 +193,29 @@ When the recommended outcome requires the customer to install or retest an Eject
 - Record the selected release channel, version, build, purchase-verification source, and link-verification result in the case history.
 - Do not perform purchase lookups when the customer does not need a new download.
 
+## Paid Ejectify 2 upgrade requests
+
+For every support request about upgrading to Ejectify 2 where the customer is not eligible for a free upgrade, offer a personal EUR 2 discount. This standing owner instruction authorizes creating that discount without asking again; it does not authorize sending the reply or granting a free upgrade. Verify existing ownership and apply any established free-upgrade eligibility before choosing the paid offer; do not invent an eligibility cutoff.
+
+Explain that Niels sent various upgrade discounts in the past, those offers have expired, and he is happy to provide a new personal discount. Use the Lemon Squeezy API to create the code, preferably through the existing `../ejectify-web/scripts/generate_discount_code --name "Ejectify 2 upgrade - CUSTOMER_EMAIL" --fixed-amount-cents 200` script after reading the web repository's `AGENTS.md`. Keep its default single redemption, seven-day validity, and restriction to Ejectify variant 1658332. Reuse an existing valid personal code for the same case rather than creating duplicates.
+
+Read back the discount through the API to verify its amount, status, redemption limit, and expiry, and verify the checkout link applies it without submitting an order. Include the complete personal checkout link in the draft and record verification details, including expiry, in the case history. Mention expiry briefly when useful; do not require exact timestamps in a concise reply. If creation has an unknown outcome, look up the code before retrying. Keep codes and customer identifiers out of reusable lessons. Do not claim a discount fixes a separate checkout error.
+
 ## Draft the reply
 
 Write a send-ready response that is informal, easy to understand, and straight to the point.
 
 - Lead with the solution or clearest conclusion.
+- Do not use em dashes in generated customer replies. Use commas, periods, or parentheses instead.
 - Acknowledge the problem naturally, without excessive apology or support-script language.
 - Explain only the technical detail needed for the user to understand the answer or take action.
+- Prefer short replies focused on the immediate next step. For paid-upgrade requests, briefly explain existing ownership, link the words “paid upgrade” to the verified `download-again` FAQ, and provide the personal discount link. Let the FAQ carry background detail. Omit routine compatibility details, checkout explanations, and fallback escalation unless they materially affect the next step; do not imply that an unresolved checkout error has been fixed.
 - Give short, concrete steps when the user can change a preference or try a workaround.
 - Include the complete verified download link when the recommended outcome requires a specific production or beta version.
 - When an existing FAQ on `ejectify.app` would materially help, verify its current wording, locale route, and anchor in `../ejectify-web/src/data/homepage.ts`, then include a descriptive Markdown link to that exact FAQ entry. Prefer the customer's language when its locale is available, using `https://ejectify.app/<locale>/#<faq-id>` for translations and `https://ejectify.app/#<faq-id>` for English. Do not link the generic FAQ section, add a link merely for completeness, or use an FAQ instead of answering the user directly.
 - Render the draft directly in the user-facing response as normal Markdown paragraphs. Do not wrap it in a fenced code block, blockquote, plain-text container, or other formatting that prevents links from being clickable. Present download URLs as descriptive Markdown links when practical. This restriction applies to the user-facing result; fenced `text` blocks remain appropriate in case history when preserving the exact draft or sent reply.
-- Ask at most the smallest useful set of follow-up questions or artifacts.
-- Do not expose internal speculation, code-level detail, or the app-improvement assessment unless it helps set expectations.
+- Ask only the smallest useful set of follow-up questions or artifacts when the support-scope decision justifies continuing. For a closing reply, omit requests to send results, confirm success, or report back.
+- Keep the owner's drafting instructions and support-boundary reasoning internal; apply them without repeating them to the customer. Do not expose internal speculation, code-level detail, or the app-improvement assessment unless it helps set expectations.
 - Do not promise a fix, timeline, or follow-up that is not supported.
 - Avoid generic closers that invite an indefinite conversation. If there is no useful next step, state the limitation kindly and let the response end naturally.
 
