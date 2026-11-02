@@ -54,3 +54,7 @@ Ejectify is a macOS menu bar utility that helps users avoid “Disk Not Ejected 
 - Prefer domain events with concise `key=value` metadata. Use stable correlation fields where useful, but do not log secrets, tokens, user-authored volume names, private file paths, or fallback identifiers containing user or device metadata.
 - Main-app `Log` events write to both OSLog and persisted Diagnostics. Privileged-helper `Log` events write to OSLog and are included through the helper unified-log chapter in diagnostics reports.
 - Query unified logs only for the privileged helper and relevant non-app macOS services such as Disk Arbitration, launchd, and ServiceManagement. Do not query main-app OSLog events because Diagnostics already includes them.
+
+## Customer support
+
+Support records and the `analyze-ejectify-support` skill live in `../ejectify-support`. Handle customer cases there; live GitHub issues remain in their current repository. The support repository owns `scripts/generate_discount_code` and upgrade-discount guidance. Read its `AGENTS.md` before support work.
